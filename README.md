@@ -68,30 +68,30 @@ The simplest frontend is the Node-RED Dashboard.
 ## Project structure
 
 /
-|-- **device-node/**
-|   |-- **firmware/**
+|-- device-node/
+|   |-- firmware/
 |   |   |-- bcf-radio-co2-monitor/
 |   |   |-- (source code for custom firmware)
 |   |-- README.md (Instructions for flashing and pairing the device)
 |
-|-- **gateway/**
-|   |-- **node-red-flows/**
+|-- gateway/
+|   |-- node-red-flows/
 |   |   |-- co2-monitoring-flow.json (The actual Node-RED flow file)
-|   |-- **config/**
+|   |-- config/
 |   |   |-- mqtt-settings.txt (Optional: Settings for broker/topics)
 |   |-- README.md (Instructions for setting up Node-RED and required nodes)
 |
-|-- **cloud/**
-|   |-- **backend/**
+|-- cloud/
+|   |-- backend/
 |   |   |-- API_DESIGN.md (Blueprint for API endpoints)
 |   |   |-- server.js (Main entry point for API - Express.js)
 |   |   |-- package.json (Dependencies for backend)
-|   |   |-- **database/** (Optional: Database schema or migration files)
-|   |-- **frontend/**
+|   |   |-- database/ (Optional: Database schema or migration files)
+|   |-- frontend/
 |   |   |-- package.json (Dependencies for frontend - React)
-|   |   |-- **src/** (Source files for the web application)
+|   |   |-- src/ (Source files for the web application)
 |
-|-- **docs/**
+|-- docs/
 |   |-- business-model.md
 |   |-- hardware-setup.md
 |   |-- deployment-guide.md
