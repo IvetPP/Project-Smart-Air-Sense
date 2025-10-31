@@ -67,9 +67,10 @@ The simplest frontend is the Node-RED Dashboard.
 
 ## Project structure
 
+```
 /
-|-- device-node/
-|   |-- firmware/
+|-- **device-node/**
+|   |-- **firmware/**
 |   |   |-- bcf-radio-co2-monitor/
 |   |   |-- (source code for custom firmware)
 |   |-- README.md (Instructions for flashing and pairing the device)
@@ -98,3 +99,4 @@ The simplest frontend is the Node-RED Dashboard.
 |
 |-- .gitignore
 |-- README.md
+```
