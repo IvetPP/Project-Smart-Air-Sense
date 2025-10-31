@@ -1,4 +1,4 @@
-# Air Quality Monitoring System (Hardwario IoT Project) 🌬️
+# Air Quality Monitoring System (Hardwario IoT Project)
 
 A low-power wireless system for monitoring indoor air quality, specifically Carbon Dioxide (CO2) levels, using Hardwario TOWER components.
 
