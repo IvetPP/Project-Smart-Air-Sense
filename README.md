@@ -10,7 +10,7 @@ A low-power wireless system for monitoring indoor air quality, specifically Carb
     * Hardwario Radio Dongle
     * Host computer (PC, Mac, or Raspberry Pi)
 * **Software:**
-    * [Hardwario Playground](https://www.hardwario.com/playground/)
+    * [Hardwario Playground](https://docs.hardwario.com/tower/desktop-programming/about-playground/)
     * MQTT Broker (e.g., Mosquitto, included in Playground)
     * Node-RED (Included in Playground)
     * Node-RED Dashboard nodes (`node-red-dashboard`)
