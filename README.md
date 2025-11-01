@@ -6,7 +6,17 @@ A low-power wireless system for monitoring indoor air quality, specifically Carb
 ## Prerequisites
 
 * **Hardware:**
-    * Hardwario CO2 Monitor Kit (Core Module, CO2 Module, Humidity tag, Barometer tag, Temperature tag and Battery Module)
+    * Hardwario CO2 Monitor Kit
+         * Cover Module
+         * Core Module
+         * Humidity Tag
+         * Barometer Tag
+         * Temperature Tag
+         * CO2 Module
+         * Battery Module
+         * 4x AAA battery
+         * 3D printed case 201
+         * 2x fastening rubber bands
     * Hardwario Radio Dongle (USB sub GHz radio 868/915 MHz band)
     * Host computer and visualization (PC, Mac, or Raspberry Pi)
 * **Software:**
@@ -63,7 +73,7 @@ The simplest frontend is the Node-RED Dashboard.
 
 1. **Install:** Install the `node-red-dashboard` package via the Node-RED Palette Manager.
 2. **Flow:** Add dashboard nodes to the main flow:
-* **Gauge Node:** Connect to the mqtt in node to display the real-time $\text{CO}_2$ level (in ppm).
+* **Gauge Node:** Connect to the mqtt in node to display the real-time $\text{CO}_2$ level (in ppm) and other required quantities.
 * **Chart Node:** Connect to the database or a flow that retrieves historical data to show a time-series graph.
 
 ## Project structure
@@ -95,8 +105,10 @@ The simplest frontend is the Node-RED Dashboard.
 |
 |-- docs/
 |   |-- business-model.md
+|   |-- business-requests.md
+|   |-- application-model.md
 |   |-- hardware-setup.md
-|   |-- deployment-guide.md
+|   |-- user-documentation.md
 |
 |-- .gitignore
 |-- README.md
