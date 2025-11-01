@@ -1,23 +1,24 @@
 # Smart-Air-Sense
 
-A low-power wireless system for monitoring indoor air quality, specifically Carbon Dioxide (CO2) levels, using Hardwario TOWER components.
+A low-power wireless system for monitoring indoor air quality, specifically Carbon Dioxide concentration (CO2) levels, temperature, humidity and barometric pressure using Hardwario TOWER components and Radio Dongle 868/915 MHz band.
 
 
 ## Prerequisites
 
 * **Hardware:**
-    * Hardwario CO2 Monitor Kit (Core Module, CO2 Module, Power Module)
-    * Hardwario Radio Dongle
-    * Host computer (PC, Mac, or Raspberry Pi)
+    * Hardwario CO2 Monitor Kit (Core Module, CO2 Module, Humidity tag, Barometer tag, Temperature tag and Battery Module)
+    * Hardwario Radio Dongle (USB sub GHz radio 868/915 MHz band)
+    * Host computer and visualization (PC, Mac, or Raspberry Pi)
 * **Software:**
-    * [Hardwario Playground](https://docs.hardwario.com/tower/desktop-programming/about-playground/)
+    * [Hardwario Playground](https://docs.hardwario.com/tower/desktop-programming/about-playground/) (quick extra local visualization and test IoT)
     * MQTT Broker (e.g., Mosquitto, included in Playground)
     * Node-RED (Included in Playground)
     * Node-RED Dashboard nodes (`node-red-dashboard`)
 
 ### Hardware Setup
 
-**Assemble the CO2 Monitor Kit:** Connect the CO2 Module to the Core Module. Connect to a power source.
+**Assemble the CO2 Monitor Kit:** 
+1. **Connect the CO2 Module and other modules to the Core Module.** Connect to a power source.
 2.  **Flash Firmware:** Check whether the Core Module already has the appropriate firmware (e.g., `bcf-radio-co2-monitor`). If not then use Hardwario Playground to flash it.
 3.  **Connect Gateway:** Plug the **Radio Dongle** into the USB port of your host computer.
 4.  **Pair Device:** Use the **Hardwario Playground** application to pair the CO2 Monitor Kit with the Radio Dongle. It should appear in the 'Devices' tab.
@@ -70,33 +71,35 @@ The simplest frontend is the Node-RED Dashboard.
 ```
 /
 |-- device-node/
-|   |-- firmware/
-|   |   |-- bcf-radio-co2-monitor/
-|   |   |-- (source code for custom firmware)
-|   |-- README.md (Instructions for flashing and pairing the device)
+|   |-- firmware/
+|   |   |-- bcf-radio-co2-monitor/
+|   |   |-- (source code for custom firmware)
+|   |-- README.md (Instructions for flashing and pairing the device)
 |
 |-- gateway/
-|   |-- node-red-flows/
-|   |   |-- co2-monitoring-flow.json (The actual Node-RED flow file)
-|   |-- config/
-|   |   |-- mqtt-settings.txt (Optional: Settings for broker/topics)
-|   |-- README.md (Instructions for setting up Node-RED and required nodes)
+|   |-- node-red-flows/
+|   |   |-- co2-monitoring-flow.json (The actual Node-RED flow file)
+|   |-- config/
+|   |   |-- mqtt-settings.txt (Optional: Settings for broker/topics)
+|   |-- README.md (Instructions for setting up Node-RED and required nodes)
 |
 |-- cloud/
-|   |-- backend/
-|   |   |-- API_DESIGN.md (Blueprint for API endpoints)
-|   |   |-- server.js (Main entry point for API - Express.js)
-|   |   |-- package.json (Dependencies for backend)
-|   |   |-- **database/** (Optional: Database schema or migration files)
-|   |-- frontend/
-|   |   |-- package.json (Dependencies for frontend - React)
-|   |   |-- src/ (Source files for the web application)
+|   |-- backend/
+|   |   |-- API_DESIGN.md (Blueprint for API endpoints)
+|   |   |-- server.js (Main entry point for API - Express.js)
+|   |   |-- package.json (Dependencies for backend)
+|   |   |-- **database/** (Optional: Database schema or migration files)
+|   |-- frontend/
+|   |   |-- package.json (Dependencies for frontend - React)
+|   |   |-- src/ (Source files for the web application)
 |
 |-- docs/
-|   |-- business-model.md
-|   |-- hardware-setup.md
-|   |-- deployment-guide.md
+|   |-- business-model.md
+|   |-- hardware-setup.md
+|   |-- deployment-guide.md
 |
 |-- .gitignore
 |-- README.md
 ```
+
+
