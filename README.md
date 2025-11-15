@@ -1,4 +1,4 @@
-# Air Quality Monitoring System (Hardwario IoT Project) 🌬️
+# Air Quality Monitoring System (Hardwario IoT Project)
 
 A low-power wireless system for monitoring indoor air quality, specifically Carbon Dioxide (CO2) levels, using Hardwario TOWER components.
 
@@ -87,6 +87,28 @@ The simplest frontend is the Node-RED Dashboard.
 |   |   |-- server.js (Main entry point for API - Express.js)
 |   |   |-- package.json (Dependencies for backend)
 |   |   |-- database/ (Optional: Database schema or migration files)
+|   |   │-- /scripts/
+|   |   |   │-- initDb.js          # DB initialization & seeding
+|   |   |   │-- generateTestData.js # Optional: generate mock measurements
+|   |   │-- db/
+|   |   |   │-- connection.js      # SQLite connection helper
+|   |   |   │-- users.js           # User queries
+|   |   |   │-- devices.js         # Device queries
+|   |   |   │-- measurements.js    # Measurement queries
+|   |   |   │-- thresholds.js      # Threshold queries
+|   |   |   │-- alerts.js          # Alerts queries
+|   |   │-- routes/
+|   |   |   │-- auth.js
+|   |   |   │-- devices.js
+|   |   |   │-- measurements.js
+|   |   |   │-- thresholds.js
+|   |   |   │-- alerts.js
+|   |   |   │-- user.js
+|   |   │-- middleware/
+|   |   |   │-- auth.js
+|   |   |   │-- validation.js
+|   |   │-- database/               # Folder for SQLite file
+|   |
 |   |-- frontend/
 |   |   |-- package.json (Dependencies for frontend - React)
 |   |   |-- src/ (Source files for the web application)
