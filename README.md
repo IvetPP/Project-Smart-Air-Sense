@@ -1,23 +1,34 @@
-# Air Quality Monitoring System (Hardwario IoT Project)
+# Smart-Air-Sense
 
-A low-power wireless system for monitoring indoor air quality, specifically Carbon Dioxide (CO2) levels, using Hardwario TOWER components.
+A low-power wireless system for monitoring indoor air quality, specifically Carbon Dioxide concentration (CO2) levels, temperature, humidity and barometric pressure using Hardwario TOWER components and Radio Dongle 868/915 MHz band.
 
 
 ## Prerequisites
 
 * **Hardware:**
-    * Hardwario CO2 Monitor Kit (Core Module, CO2 Module, Power Module)
-    * Hardwario Radio Dongle
-    * Host computer (PC, Mac, or Raspberry Pi)
+    * Hardwario CO2 Monitor Kit
+         * Cover Module
+         * Core Module
+         * Humidity Tag
+         * Barometer Tag
+         * Temperature Tag
+         * CO2 Module
+         * Battery Module
+         * 4x AAA battery
+         * 3D printed case 201
+         * 2x fastening rubber bands
+    * Hardwario Radio Dongle (USB sub GHz radio 868/915 MHz band)
+    * Host computer and visualization (PC, Mac, or Raspberry Pi)
 * **Software:**
-    * [Hardwario Playground](https://www.hardwario.com/playground/)
+    * [Hardwario Playground](https://docs.hardwario.com/tower/desktop-programming/about-playground/) (quick extra local visualization and test IoT)
     * MQTT Broker (e.g., Mosquitto, included in Playground)
     * Node-RED (Included in Playground)
     * Node-RED Dashboard nodes (`node-red-dashboard`)
 
 ### Hardware Setup
 
-**Assemble the CO2 Monitor Kit:** Connect the CO2 Module to the Core Module. Connect to a power source.
+**Assemble the CO2 Monitor Kit:** 
+1. **Connect the CO2 Module and other modules to the Core Module.** Connect to a power source.
 2.  **Flash Firmware:** Check whether the Core Module already has the appropriate firmware (e.g., `bcf-radio-co2-monitor`). If not then use Hardwario Playground to flash it.
 3.  **Connect Gateway:** Plug the **Radio Dongle** into the USB port of your host computer.
 4.  **Pair Device:** Use the **Hardwario Playground** application to pair the CO2 Monitor Kit with the Radio Dongle. It should appear in the 'Devices' tab.
@@ -62,7 +73,7 @@ The simplest frontend is the Node-RED Dashboard.
 
 1. **Install:** Install the `node-red-dashboard` package via the Node-RED Palette Manager.
 2. **Flow:** Add dashboard nodes to the main flow:
-* **Gauge Node:** Connect to the mqtt in node to display the real-time $\text{CO}_2$ level (in ppm).
+* **Gauge Node:** Connect to the mqtt in node to display the real-time $\text{CO}_2$ level (in ppm) and other required quantities.
 * **Chart Node:** Connect to the database or a flow that retrieves historical data to show a time-series graph.
 
 ## Project structure
@@ -121,3 +132,5 @@ The simplest frontend is the Node-RED Dashboard.
 |-- .gitignore
 |-- README.md
 ```
+
+
