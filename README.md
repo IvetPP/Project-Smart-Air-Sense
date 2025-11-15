@@ -66,7 +66,7 @@ The simplest frontend is the Node-RED Dashboard.
 * **Chart Node:** Connect to the database or a flow that retrieves historical data to show a time-series graph.
 
 ## Project structure
-
+```
 /
 |-- device-node/
 |   |-- firmware/
@@ -120,3 +120,4 @@ The simplest frontend is the Node-RED Dashboard.
 |
 |-- .gitignore
 |-- README.md
+```
