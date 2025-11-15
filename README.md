@@ -77,38 +77,57 @@ The simplest frontend is the Node-RED Dashboard.
 * **Chart Node:** Connect to the database or a flow that retrieves historical data to show a time-series graph.
 
 ## Project structure
-
 ```
 /
 |-- device-node/
-|   |-- firmware/
-|   |   |-- bcf-radio-co2-monitor/
-|   |   |-- (source code for custom firmware)
-|   |-- README.md (Instructions for flashing and pairing the device)
+|   |-- firmware/
+|   |   |-- bcf-radio-co2-monitor/
+|   |   |-- (source code for custom firmware)
+|   |-- README.md (Instructions for flashing and pairing the device)
 |
 |-- gateway/
-|   |-- node-red-flows/
-|   |   |-- co2-monitoring-flow.json (The actual Node-RED flow file)
-|   |-- config/
-|   |   |-- mqtt-settings.txt (Optional: Settings for broker/topics)
-|   |-- README.md (Instructions for setting up Node-RED and required nodes)
+|   |-- node-red-flows/
+|   |   |-- co2-monitoring-flow.json (The actual Node-RED flow file)
+|   |-- config/
+|   |   |-- mqtt-settings.txt (Optional: Settings for broker/topics)
+|   |-- README.md (Instructions for setting up Node-RED and required nodes)
 |
 |-- cloud/
-|   |-- backend/
-|   |   |-- API_DESIGN.md (Blueprint for API endpoints)
-|   |   |-- server.js (Main entry point for API - Express.js)
-|   |   |-- package.json (Dependencies for backend)
-|   |   |-- **database/** (Optional: Database schema or migration files)
-|   |-- frontend/
-|   |   |-- package.json (Dependencies for frontend - React)
-|   |   |-- src/ (Source files for the web application)
+|   |-- backend/
+|   |   |-- API_DESIGN.md (Blueprint for API endpoints)
+|   |   |-- server.js (Main entry point for API - Express.js)
+|   |   |-- package.json (Dependencies for backend)
+|   |   |-- database/ (Optional: Database schema or migration files)
+|   |   │-- /scripts/
+|   |   |   │-- initDb.js          # DB initialization & seeding
+|   |   |   │-- generateTestData.js # Optional: generate mock measurements
+|   |   │-- db/
+|   |   |   │-- connection.js      # SQLite connection helper
+|   |   |   │-- users.js           # User queries
+|   |   |   │-- devices.js         # Device queries
+|   |   |   │-- measurements.js    # Measurement queries
+|   |   |   │-- thresholds.js      # Threshold queries
+|   |   |   │-- alerts.js          # Alerts queries
+|   |   │-- routes/
+|   |   |   │-- auth.js
+|   |   |   │-- devices.js
+|   |   |   │-- measurements.js
+|   |   |   │-- thresholds.js
+|   |   |   │-- alerts.js
+|   |   |   │-- user.js
+|   |   │-- middleware/
+|   |   |   │-- auth.js
+|   |   |   │-- validation.js
+|   |   │-- database/               # Folder for SQLite file
+|   |
+|   |-- frontend/
+|   |   |-- package.json (Dependencies for frontend - React)
+|   |   |-- src/ (Source files for the web application)
 |
 |-- docs/
-|   |-- business-model.md
-|   |-- business-requests.md
-|   |-- application-model.md
-|   |-- hardware-setup.md
-|   |-- user-documentation.md
+|   |-- business-model.md
+|   |-- hardware-setup.md
+|   |-- deployment-guide.md
 |
 |-- .gitignore
 |-- README.md
