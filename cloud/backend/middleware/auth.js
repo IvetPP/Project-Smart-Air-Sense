@@ -16,4 +16,22 @@ function authMiddleware(req, res, next) {
   }
 }
 
-module.exports = { authMiddleware, JWT_SECRET };
+
+function roleMiddleware(requiredRoles) {
+    return (req, res, next) => {
+        // The role(s) are extracted from the JWT payload by authMiddleware
+        const userRoles = Array.isArray(req.user.roles) ? req.user.roles : [req.user.roles];
+
+        const hasRole = userRoles.some(role => requiredRoles.includes(role));
+
+        if (hasRole) {
+            next();
+        } else {
+            // Use 403 Forbidden for insufficient permissions
+            res.status(403).json({ error: 'Forbidden: Insufficient permissions' });
+        }
+    };
+}
+
+// Add the new function to the exports
+module.exports = { authMiddleware, roleMiddleware, JWT_SECRET }; 
