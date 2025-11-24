@@ -12,4 +12,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
   else console.log('Connected to SQLite DB');
 });
 
+// ENABLE FOREIGN KEY CONSTRAINTS
+db.run("PRAGMA foreign_keys = ON;"); 
+
 module.exports = db;
