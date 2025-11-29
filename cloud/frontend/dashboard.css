@@ -1,0 +1,149 @@
+body {
+    background-color: white;
+    color: #9400D3;
+    font-family: 'ADLaM Display';
+}
+
+.container {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.logo {
+    width: 200px;
+}
+
+h1{
+    font-size: 16pt;
+    color: black;
+}
+
+button {
+    font-family: 'ADLaM Display';
+    border: 1px solid #9400D3;
+    border-radius: 20px;
+}
+
+.cur-his-values {
+    background-color: #dcdcdc;
+    padding: 20px;
+    color: #9400D3;
+    margin-right: 15px;
+}
+
+.cur-his-values:hover {
+    background-color: white;
+}
+
+.custom-select {
+    font-family: 'ADLaM Display';
+    width: 150px;
+}
+
+.custom-select select {
+    appearance: none;
+    width: 100%;
+    font-size: 15px;
+    padding: 10px;
+    background-color: white;
+    border: 1px solid #9400D3;
+    border-radius: 5px;
+    color: #9400D3;
+}
+
+.office {
+    color: #6E6D6D;
+    border: 1px solid #9400D3;
+    border-radius: 5px;
+    margin: 10px 0px;
+    padding: 5px;
+}
+
+.edit{
+    background-color: #9400D3;
+    border: none;
+    border-radius: 5px;
+    padding: 3px;
+    margin-left: 7px;
+    color: white;
+}
+
+.add-device{
+    background-color: white;
+    padding: 10px;
+    border-radius: 5px;
+    width: 150px;
+}
+
+.add-device:hover {
+    background-color: #dcdcdc;
+}
+
+.user {
+    background-color: #dcdcdc;
+    border: 1px solid #9400D3;
+    border-radius: 50%;
+    padding: 15px;
+}
+
+.measurements-row {
+    display: flex;
+    gap: 20px;
+}
+
+.measurements-row .column {
+    flex: 1;
+    width: 200px;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+h2 {
+    font-size: medium;
+}
+
+.box, .state{
+    background-color: #dcdcdc;
+    height: 150px;
+    border: 1px solid #9400D3;
+    border-radius: 5px;
+    display: flex;             
+    flex-direction: column;
+    justify-content: center; 
+    align-items: center;
+    gap: 5px;  
+    color: black;
+}
+
+.value {
+    font-size: xxx-large;
+}
+
+.state {
+    margin: 5px 0px;
+    height: 25px;
+}
+
+.stats {
+    background-color: #dcdcdc;
+    border: 1px solid #228B22;
+    border-radius: 5px;
+    color: #228B22;
+    height: 80px;
+    margin-bottom: 15px;
+}
+
+.status-row {
+  display: flex;
+  gap: 20px;       
+  align-items: center;
+}
+
+.iot-status, .time {
+    border: 1px solid #6E6D6D;
+    border-radius: 5px;
+    padding: 5px;
+    color: #6E6D6D;
+}
+
