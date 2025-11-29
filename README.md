@@ -63,11 +63,10 @@ The simplest frontend is the Node-RED Dashboard.
 
 1. **Install:** Install the `node-red-dashboard` package via the Node-RED Palette Manager.
 2. **Flow:** Add dashboard nodes to the main flow:
-* **Gauge Node:** Connect to the mqtt in node to display the real-time $\text{CO}_2$ level (in ppm).
+* **Gauge Node:** Connect to the mqtt in node to display the real-time $\text{CO}_2$ level (in ppm) and other required quantities.
 * **Chart Node:** Connect to the database or a flow that retrieves historical data to show a time-series graph.
 
 ## Project structure
-
 ```
 /
 |-- device-node/
