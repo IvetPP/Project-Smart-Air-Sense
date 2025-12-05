@@ -4,9 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/cloud\frontend\logo.jpg" />
-    <title>Overview</title>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   </head>
   <body>
     
@@ -15,8 +17,8 @@
       <div class="column">
         <h1>Dashboard overview</h1>
           <div class="row">
-            <button class="cur-his-values">Current values</button>
-            <button class="cur-his-values">History of values</button>
+            <button class="cur-values">Current values</button>
+            <button class="his-values">History of values</button>
       </div>
       </div>
       <div class="column">
@@ -44,9 +46,9 @@
       <div class="measurements-row">
         <div class="column">
           <div class="co2">
-            <h2>CO2 concentration</h2>
+            <h2>CO₂ concentration</h2>
             <div class="box">
-              <div class="co2 value">550</div>
+              <div class="co2 value">0</div>
               <div class="unit">ppm</div>
             </div>
             <div class="co2 state">Normal</div>
@@ -57,7 +59,7 @@
           <div class="temp">
             <h2>Temperature</h2>
             <div class="box">
-              <div class="temp value">23</div>
+              <div class="temp value">0</div>
               <div class="unit">°C</div>
             </div>
             <div class="temp state">Normal</div>
@@ -68,7 +70,7 @@
           <div class="hum">
             <h2>Humidity</h2>
             <div class="box">
-              <div class="hum value">30</div>
+              <div class="hum value">0</div>
               <div class="unit">%</div>
             </div>
             <div class="hum state">Low</div>
@@ -79,7 +81,7 @@
           <div class="bar">
             <h2>Barometric pressure</h2>
             <div class="box">
-              <div class="bar value">1020</div>
+              <div class="bar value">0</div>
               <div class="unit">hPa</div>
             </div>
             <div class="bar state">Higher</div>
@@ -93,11 +95,12 @@
       <div class="column">
         <div class="status-row">
           <div class="iot-status">Status IoT: ON</div>
-          <div class="time">Date and time value: 29.11.2025 15:30</div>
+          <div class="time">Date and time value: 00.00.0000 00:00</div>
+          <button class="update">Update values</button>
       </div>
       </div>
     </div>
 
-    <script type="module" src="/src/main.jsx"></script>
+    <script src="dashboard.js"></script>
   </body>
 </html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/cloud/frontend/logo.jpg" />
+    <title>History of values</title>
+    <link rel="stylesheet" href="history.css">
+    <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  </head>
+  <body>
+
+    <div class="container">
+        <div class="header-row">
+            <img src="/cloud/frontend/logo.jpg" class="logo">
+            <div class="header-nav">
+            <button class="back"><</button>
+            <h1 class="history-title">History of values</h1>
+            <div class="user">USER</div>
+            </div>
+        </div>
+
+    <div class="main-content">
+        <div class="left-column">
+            <div class="filter">
+                Filter by:
+                <div class="filter-buttons">
+                    <button class="filter-btn device">Device</button>
+                    <button class="filter-btn time">Time</button>
+                    <button class="filter-btn par">Parameter</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div class="history-table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>DATE - measurement</th>
+                            <th>DEVICE NAME</th>
+                            <th>VALUE PARAMETER</th>
+                            <th>VALUE incl. units</th>
+                            <th>VALUE STATUS</th>
+                            <th>Limit NORMAL values</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- js -->
+                    </tbody>
+                </table>
+
+                <div class="pagination">
+                    <button class="prev"><- Předchozí</button>
+                    <span class="page-info">1</span>
+                    <button class="next">Další -></button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+    <script src="history.js"></script>
+  </body>
+</html>

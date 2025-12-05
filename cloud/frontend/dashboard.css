@@ -1,40 +1,12 @@
-body {
-    background-color: white;
-    color: #9400D3;
-    font-family: 'ADLaM Display';
-}
-
-.container {
-    display: flex;
-    justify-content: center;
-}
-
-.logo {
-    width: 200px;
-}
-
-h1{
-    font-size: 16pt;
-    color: black;
-}
-
-button {
-    font-family: 'ADLaM Display';
-    border: 1px solid #9400D3;
-    border-radius: 20px;
-}
-
-.cur-his-values {
-    background-color: #dcdcdc;
+.cur-values, .his-values {
     padding: 20px;
     color: #9400D3;
     margin-right: 15px;
 }
 
-.cur-his-values:hover {
+.cur-values {
     background-color: white;
 }
-
 .custom-select {
     font-family: 'ADLaM Display';
     width: 150px;
@@ -79,13 +51,6 @@ button {
     background-color: #dcdcdc;
 }
 
-.user {
-    background-color: #dcdcdc;
-    border: 1px solid #9400D3;
-    border-radius: 50%;
-    padding: 15px;
-}
-
 .measurements-row {
     display: flex;
     gap: 20px;
@@ -97,10 +62,6 @@ button {
     text-align: center;
     flex-direction: column;
     align-items: center;
-}
-
-h2 {
-    font-size: medium;
 }
 
 .box, .state{
@@ -147,3 +108,11 @@ h2 {
     color: #6E6D6D;
 }
 
+.update {
+    background-color: white;
+    padding: 5px;
+}
+
+.update:hover{
+    background-color: #dcdcdc;
+}
