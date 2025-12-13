@@ -144,4 +144,14 @@ $(document).ready(function () {
     $(".add-device").on("click", function () {
         window.location.href = "addDevice.html";
     });
+
+    //redirect to edit device page
+    $(".edit").on("click", function () {
+        window.location.href = "editDevice.html";
+    });
+
+    //redirect to users man page
+    $(".user").on("click", function () {
+        window.location.href = "users.html";
+    });
 });

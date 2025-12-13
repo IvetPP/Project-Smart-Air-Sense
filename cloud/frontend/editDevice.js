@@ -5,8 +5,15 @@ $(document).ready(function () {
         window.location.href = "index.html";
     });
 
-    // Delete
+    // cancel
+    $(".cancel-btn").on("click", function() {
+        window.location.href = "index.html";
+    });
+
+    // cancel 
+    //TO-DO delete
     $(".delete-btn").on("click", function() {
+        alert("Device deleted");
         window.location.href = "index.html";
     });
 
@@ -16,6 +23,7 @@ $(document).ready(function () {
         alert("Device saved");
     });
 
+    //user man page
     $(".user").on("click", function () {
         window.location.href = "users.html";
     });

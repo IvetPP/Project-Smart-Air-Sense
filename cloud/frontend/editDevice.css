@@ -1,0 +1,9 @@
+.form-group input {
+    color: #999999;
+    font-family: 'ADLaM Display';
+}
+
+.form-group input[readonly] {
+    color: #cccaca;
+    cursor: not-allowed;
+}

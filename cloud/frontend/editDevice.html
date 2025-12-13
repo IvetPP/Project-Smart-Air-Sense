@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit device</title>
+    <link rel="stylesheet" href="addDevice.css">
+    <link rel="stylesheet" href="editDevice.css">
+    <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+    <div class="container">
+
+  <!-- Top bar: logo + back + title + user -->
+  <div class="top-bar">
+    <div class="top-left">
+      <img src="/cloud/frontend/logo.jpg" class="logo">
+      <button class="back"><</button>
+      <h1 class="page-title">Edit Device</h1>
+    </div>
+    <div class="user">USER</div>
+  </div>
+
+  <!-- Form section -->
+  <div class="form-container">
+    <form id="edit-device-form">
+      
+        <div class="form-group">
+            <input
+                type="text"
+                id="device-id"
+                name="device-id"
+                value="ID 1770542"
+                readonly
+            >
+        </div>
+
+        <div class="form-group">
+            <input
+                type="text"
+                id="device-type"
+                name="device-type"
+                value="CO2 monitor Kit"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <input
+                type="text"
+                id="device-name"
+                name="device-name"
+                value="Office 1"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <input
+                type="text"
+                id="device-location"
+                name="device-location"
+                value="Office No. 17 - 1.NP"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <input
+                type="text"
+                id="device-user"
+                name="device-user"
+                value="User"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <input
+                type="date"
+                id="device-date"
+                name="device-date"
+                value="2025-01-12"
+                required
+            >
+        </div>
+
+
+        <div class="form-buttons">
+            <button type="button" class="cancel-btn">Cancel</button>
+            <button type="button" class="delete-btn">Delete</button>
+            <button type="submit" class="save-btn">Save</button>
+        </div>
+
+    </form>
+  </div>
+
+</div>
+<script src="editDevice.js"></script>
+</body>
+</html>

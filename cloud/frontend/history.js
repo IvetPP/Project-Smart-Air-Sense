@@ -92,4 +92,9 @@ $(document).ready(function () {
     $(".back").on("click", function () {
         window.location.href = "index.html";
     });
+
+    //user man page
+    $(".user").on("click", function () {
+        window.location.href = "users.html";
+    });
 });

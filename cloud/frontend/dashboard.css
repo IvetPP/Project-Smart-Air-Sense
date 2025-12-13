@@ -116,3 +116,7 @@
 .update:hover{
     background-color: #dcdcdc;
 }
+
+.edit:hover {
+    background-color: #b365d4;
+}

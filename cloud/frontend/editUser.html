@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit user</title>
+    <link rel="stylesheet" href="addDevice.css">
+    <link rel="stylesheet" href="editUser.css">
+    <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+    <div class="container">
+
+  <!-- Top bar: logo + back + title + user -->
+  <div class="top-bar">
+    <div class="top-left">
+      <img src="/cloud/frontend/logo.jpg" class="logo">
+      <button class="back"><</button>
+      <h1 class="page-title">Edit User</h1>
+    </div>
+    <div class="user">USER</div>
+  </div>
+
+  <!-- Form section -->
+  <div class="form-container">
+    <form id="edit-device-form">
+      
+        <div class="form-group">
+            <input
+                type="text"
+                id="name"
+                name="name"
+                value="Pluskalová Petříková Iveta"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <input
+                type="text"
+                id="email"
+                name="email"
+                value="petrikovaiveta@seznam.cz"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <input
+                type="date"
+                id="Registration Date"
+                name="Registration Date"
+                value="2025-09-01"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <input
+                type="text"
+                id="Password reset"
+                name="Password reset"
+                value="RESET PASSWORD"
+            >
+        </div>
+
+        <div class="form-group">
+            <select id="add-device" name="add-device" required>
+                <option value="device-1">Device 1</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <select id="assigned-device" name="assigned-device" required>
+                <option value="device-1">Device 1</option>
+            </select>
+        </div>
+
+        <div class="form-buttons">
+            <button type="button" class="cancel-btn">Cancel</button>
+            <button type="button" class="delete-btn">Delete</button>
+            <button type="submit" class="save-btn">Save</button>
+        </div>
+
+    </form>
+  </div>
+
+</div>
+<script src="editUser.js"></script>
+</body>
+</html>
