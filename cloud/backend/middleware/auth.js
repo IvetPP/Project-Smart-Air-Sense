@@ -1,37 +1,35 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'change_this_secret_in_production';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 
 function authMiddleware(req, res, next) {
-  const header = req.header('Authorization');
-  if (!header || !header.startsWith('Bearer '))
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer '))
     return res.status(401).json({ error: 'Missing token' });
 
-  const token = header.slice(7);
   try {
+    const token = auth.split(' ')[1];
     const payload = jwt.verify(token, JWT_SECRET);
+
+    // IMPORTANT: normalize roles into array
+    payload.roles = payload.roles
+      ? payload.roles.split(',').map(r => r.trim())
+      : [];
+
     req.user = payload;
     next();
-  } catch {
-    res.status(401).json({ error: 'Invalid or expired token' });
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
   }
 }
 
-
-function roleMiddleware(requiredRoles) {
-    return (req, res, next) => {
-        // The role(s) are extracted from the JWT payload by authMiddleware
-        const userRoles = Array.isArray(req.user.roles) ? req.user.roles : [req.user.roles];
-
-        const hasRole = userRoles.some(role => requiredRoles.includes(role));
-
-        if (hasRole) {
-            next();
-        } else {
-            // Use 403 Forbidden for insufficient permissions
-            res.status(403).json({ error: 'Forbidden: Insufficient permissions' });
-        }
-    };
+function roleMiddleware(roles) {
+  return (req, res, next) => {
+    if (!roles.some(r => req.user.roles.includes(r))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    next();
+  };
 }
 
-// Add the new function to the exports
-module.exports = { authMiddleware, roleMiddleware, JWT_SECRET }; 
+module.exports = { authMiddleware, roleMiddleware, JWT_SECRET };

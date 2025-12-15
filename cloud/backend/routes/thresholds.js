@@ -57,4 +57,16 @@ router.post('/',
     }
 );
 
+// GET thresholds/list
+router.get('/', authMiddleware, (req, res) => {
+  db.all('SELECT * FROM thresholds', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'DB error' });
+    res.json(rows.map(r => ({
+      ...r,
+      thresholds: JSON.parse(r.thresholds)
+    })));
+  });
+});
+
+
 module.exports = router;
