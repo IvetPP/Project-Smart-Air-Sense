@@ -24,7 +24,7 @@ router.post(
       if (row) return res.status(409).json({ error: 'Email exists' });
 
       const hash = bcrypt.hashSync(password, 10);
-      const roles = 'user';
+      const roles = 'ROLE_USER';
 
       db.run(
         `INSERT INTO users(user_id, email, password_hash, full_name, roles, created_at)
