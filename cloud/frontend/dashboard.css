@@ -108,15 +108,11 @@
     color: #6E6D6D;
 }
 
-.update {
-    background-color: white;
-    padding: 5px;
-}
-
-.update:hover{
-    background-color: #dcdcdc;
-}
-
 .edit:hover {
     background-color: #b365d4;
+}
+
+.user.man {
+    margin-top: 5px;
+    background-color: #fff;
 }

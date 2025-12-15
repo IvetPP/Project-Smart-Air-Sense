@@ -1,8 +1,46 @@
 $(document).ready(function () {
 
+    const API_BASE = 'http://localhost:3000/api/measurements';
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+        alert('Missing token');
+        return;
+    }
+
+    function authHeaders() {
+        return {
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    function loadLatestMeasurements() {
+        fetch(`${API_BASE}/latest`, {
+            headers: authHeaders()
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Unauthorized or server error');
+                return res.json();
+            })
+            .then(data => {
+                if (!data.length) return;
+
+                const m = data[0];
+                updateCO2(m.co2);
+                updateTemperature(m.temperature);
+                updateHumidity(m.humidity);
+                updateBar(m.pressure);
+                updateIotStatus(m.iot_status);
+                updateDateTime(m.timestamp);
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Failed to load data');
+            });
+    }
+
     //update co2
-    function updateCO2() {
-        let co2 = Math.floor(Math.random() * (1500 - 200 + 1)) + 200; //200-1500 ppm
+    function updateCO2(co2) {
         $(".co2.value").text(co2);
 
         let stateElem = $(".co2.state");
@@ -25,10 +63,8 @@ $(document).ready(function () {
         stateElem.text(stateText);
     }
 
-
     //update temp
-    function updateTemperature() {
-        let temp = Math.floor(Math.random() * (30 - 15 + 1)) + 15; //15-30 C
+    function updateTemperature(temp) {
         $(".temp.value").text(temp);
 
         let stateElem = $(".temp.state");
@@ -51,10 +87,8 @@ $(document).ready(function () {
         stateElem.text(stateText);
     }
 
-
     //update humidity
-    function updateHumidity() {
-        let hum = Math.floor(Math.random() * (90 - 10 + 1)) + 10; //10-90 %
+    function updateHumidity(hum) {
         $(".hum.value").text(hum);
 
         let stateElem = $(".hum.state");
@@ -77,10 +111,8 @@ $(document).ready(function () {
         stateElem.text(stateText);
     }
 
-
     //update barometric pressure
-    function updateBar() {
-        let bar = Math.floor(Math.random() * (1100 - 900 + 1)) + 900; //900-1100 hpa
+    function updateBar(bar) {
         $(".bar.value").text(bar);
 
         let stateElem = $(".bar.state");
@@ -99,59 +131,31 @@ $(document).ready(function () {
         stateElem.text(stateText);
     }
 
-
     //update iot status
-    function updateIotStatus() {
-        let isOn = Math.random() < 0.5;  //on or off
+    function updateIotStatus(status) {
+        const isOn = status === 'ON' || status === 1;
 
-        let statusText = isOn ? "ON" : "OFF";
-        let color = isOn ? "#228B22" : "#FF0606";
-
-        $(".iot-status").html(`Status IoT: <span style="color:${color}">${statusText}</span>`);
+        $(".iot-status").html(
+        `Status IoT: <span style="color:${isOn ? '#228B22' : '#FF0606'}">
+            ${isOn ? 'ON' : 'OFF'}
+        </span>`
+        );
     }
-
 
     //update date and time
-    function updateDateTime() {
-        let now = new Date();
-
-        let d  = String(now.getDate()).padStart(2, "0");
-        let m  = String(now.getMonth() + 1).padStart(2, "0");
-        let y  = now.getFullYear();
-        let h  = String(now.getHours()).padStart(2, "0");
-        let mi = String(now.getMinutes()).padStart(2, "0");
-
-        $(".time").text(`Date and time value: ${d}.${m}.${y} ${h}:${mi}`);
+    function updateDateTime(timestamp) {
+        const d = new Date(timestamp);
+        $(".time")
+        .text(`Date and time value: ${d.toLocaleString()}`)
+        .css("color", "black");
     }
 
+    $(".his-values").on("click", () => location.href = "history.html");
+    $(".add-device").on("click", () => location.href = "addDevice.html");
+    $(".edit").on("click", () => location.href = "editDevice.html");
+    $(".man").on("click", () => location.href = "users.html");
 
-    //button - update all
-    $(".update").on("click", function () {
-        updateCO2();
-        updateTemperature();
-        updateHumidity();
-        updateBar();
-        updateIotStatus();
-        updateDateTime();
-    });
-
-    //redirect to history values page
-    $(".his-values").on("click", function () {
-        window.location.href = "history.html";
-    });
-
-    //redirect to add device page
-    $(".add-device").on("click", function () {
-        window.location.href = "addDevice.html";
-    });
-
-    //redirect to edit device page
-    $(".edit").on("click", function () {
-        window.location.href = "editDevice.html";
-    });
-
-    //redirect to users man page
-    $(".user").on("click", function () {
-        window.location.href = "users.html";
-    });
+    // initial load
+    loadLatestMeasurements();
+    setInterval(loadLatestMeasurements, 15000); //update every 15 sec
 });
