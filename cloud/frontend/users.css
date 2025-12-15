@@ -27,3 +27,57 @@
     border-color: #4a90e2;
     box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
 }
+
+.home {
+    font-family: inherit;
+    border: 1px solid #9400D3;
+    border-radius: 25px;
+    background-color: #fff;
+    color: #9400D3;
+    text-align: left;
+    padding: 10px 0px 10px 10px;
+}
+
+.user {
+    background-color: #dcdcdc;
+    border: 1px solid #9400D3;
+    border-radius: 50%;     
+    padding: 5px;
+    width: 50px;              
+    height: 50px;           
+    display: flex;
+    align-items: center;      
+    justify-content: center; 
+    margin-left: 15px;
+}
+
+.device-dropdown {
+    display: inline-block;
+    border: 1px solid #9400D3;
+    border-radius: 5px;
+    background: #fff;
+    width: 150px;
+    position: relative;
+}
+
+.device-dropdown-header {
+    padding: 10px;
+}
+
+.device-dropdown-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    border: 1px solid #9400D3;
+    background: #f9f9f9;
+    z-index: 10;
+}
+
+.device-item {
+    padding: 8px 10px;
+    border-bottom: 1px solid #ccc;
+}
+.device-item:last-child {
+    border-bottom: none;
+}

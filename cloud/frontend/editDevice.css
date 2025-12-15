@@ -7,3 +7,22 @@
     color: #cccaca;
     cursor: not-allowed;
 }
+
+.form-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.form-group input {
+    flex: 1; 
+    padding-right: 200px; 
+}
+
+.for-admin {
+    position: absolute;
+    left: 510px;
+    color: #999;
+    font-size: 12px;
+    pointer-events: none; 
+}

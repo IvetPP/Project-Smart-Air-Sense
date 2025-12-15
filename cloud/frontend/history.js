@@ -52,7 +52,7 @@ $(document).ready(function () {
 
         pageRows.forEach(row => {
 
-            const statusCell = row.status === "Low"  //if low then color red
+            const statusCell = (row.status === "Low" || row.status === "High") //if low or high then color red
                 ? `<td style="color: #FF0606">${row.status}</td>` 
                 : `<td>${row.status}</td>`;
             const tr = `<tr>

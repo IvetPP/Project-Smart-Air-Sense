@@ -22,17 +22,26 @@ $(document).ready(function () {
         return date.toISOString().split("T")[0];
     }
 
-    function createDeviceSelect(selectedDevice) {
-        let select = `<select class="device-select">`;
+    function createDeviceSelect() {
+        let html = `
+        <div class="device-dropdown">
+            <div class="device-dropdown-header">Device List ▾</div>
+            <div class="device-dropdown-list" style="display:none;">
+        `;
 
         devices.forEach(device => {
-            const selected = device === selectedDevice ? "selected" : "";
-            select += `<option value="${device}" ${selected}>${device}</option>`;
+            html += `<div class="device-item" style="pointer-events: none;">${device}</div>`;
         });
 
-        select += `</select>`;
-        return select;
+        html += `
+            </div>
+        </div>
+        `;
+
+        return html;
     }
+
+
 
     
     function generateUser() {
@@ -102,8 +111,17 @@ $(document).ready(function () {
         window.location.href = "index.html";
     });
 
+    $(".home").on("click", function () {
+        window.location.href = "index.html";
+    });
+
     //redirect to edit user
     $(".edit").on("click", function () {
         window.location.href = "editUser.html";
     });
+
+    $(document).on("click", ".device-dropdown-header", function() {
+        $(this).siblings(".device-dropdown-list").slideToggle();
+    });
+
 });

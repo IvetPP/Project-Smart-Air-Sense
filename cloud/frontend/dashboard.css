@@ -4,8 +4,12 @@
     margin-right: 15px;
 }
 
-.cur-values {
+.his-values {
     background-color: white;
+}
+
+.his-values:hover{
+    background-color: #dcdcdc;
 }
 .custom-select {
     font-family: 'ADLaM Display';
