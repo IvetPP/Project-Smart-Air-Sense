@@ -1,0 +1,28 @@
+.user{
+    font-size: x-small;
+}
+
+h2 {
+    color: #9400d3;
+}
+
+.form-group{
+    border: 0.5px solid #9400d3;
+}
+
+.checkbox-group{
+    border: none;
+}
+
+.checkbox-group input[type="checkbox"] {
+    accent-color: #9400d3;
+}
+
+.cancel-btn {
+  background-color: #FFCFCF;
+  color: #d32828;
+}
+
+.cancel-btn:hover{
+    background-color: #eb9797;
+}

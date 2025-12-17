@@ -2,7 +2,7 @@ $(document).ready(function () {
 
     // back
     $(".back").on("click", function () {
-        window.location.href = "users.html";
+        window.history.back();
     });
 
     // cancel
@@ -22,9 +22,27 @@ $(document).ready(function () {
         alert("User saved");
     });
 
-    //user man page
-    $(".user").on("click", function () {
-        window.location.href = "users.html";
+    $('.user').on('click', function () {
+        const token =
+            localStorage.getItem('auth_token') ||
+            sessionStorage.getItem('auth_token');
+
+            // User is NOT logged in
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // User IS logged in
+            const confirmLogout = confirm('Do you want to log out?');
+
+            if (confirmLogout) {
+                localStorage.removeItem('auth_token');
+                sessionStorage.removeItem('auth_token');
+
+                alert('You have been logged out.');
+                window.location.href = 'login.html';
+            }
     });
 
 });

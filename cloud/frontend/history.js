@@ -1,72 +1,162 @@
+const API_BASE_URL = 'http://localhost:3000/api';
+const PAGE_SIZE = 10;
+
+let currentPage = 1;
+
 $(document).ready(function () {
-    const devices = ["Device 1", "Device 2"];
-    const parameters = [
-        { name: "CO₂", unit: "ppm", min: 400, max: 1000 },
-        { name: "Temperature", unit: "°C", min: 20, max: 24 },
-        { name: "Humidity", unit: "%", min: 40, max: 60 },
-        { 
-            name: "Barometric pressure", 
-            unit: "hPa", 
-            min: 1013, 
-            max: 1013, 
-            limitText: "higher > 1013 hPa\nlower < 1013 hPa" 
-        }
-    ];
 
-    const rowsPerPage = 10;
-    let currentPage = 1;
-    let allRows = [];
+    $('.filter-btn.device').on('click', function () {
+        togglePanel('.device-panel', this);
+    });
 
-    // random gen mock data
-    function generateData() {
-        allRows = [];
-        const now = new Date();
-        devices.forEach(device => {
-            parameters.forEach(param => {
-                const value = Math.floor(Math.random() * (param.max * 1.5 - param.min * 0.5 + 1)) + param.min * 0.5;
-                let status = "Normal";
-                if (value < param.min) status = "Low";
-                if (value > param.max) status = "High";
+    $('.filter-btn.time').on('click', function () {
+        togglePanel('.time-panel', this);
+    });
 
-                const row = {
-                    date: now.toLocaleString(),
-                    device: device,
-                    parameter: param.name,
-                    value: `${value.toFixed(1)} ${param.unit}`,
-                    status: status,
-                    limit: param.limitText ? param.limitText : `${param.min} - ${param.max} ${param.unit}`
-                };
-                allRows.push(row);
-            });
-        });
+    $('.filter-btn.par').on('click', function () {
+        togglePanel('.param-panel', this);
+    });
+
+    function togglePanel(panelSelector, btn) {
+        $(panelSelector).slideToggle(200);
+        $(btn).toggleClass('active');
     }
 
-    //render table
-    function renderTable(page = 1) {
-        const tbody = $(".history-table tbody");
-        tbody.empty();
+    $('#filter-device, #filter-parameter, #filter-from, #filter-to').on('change', function () {
+        currentPage = 1;
+        loadMeasurements(getFilters());
+    });
 
-        const start = (page - 1) * rowsPerPage;
-        const end = start + rowsPerPage;
-        const pageRows = allRows.slice(start, end);
+    function getFilters() {
+        return {
+            device_id: $('#filter-device').val(),
+            parameter: $('#filter-parameter').val(),
+            from: $('#filter-from').val(),
+            to: $('#filter-to').val()
+    };
+}
 
-        pageRows.forEach(row => {
+    const API_BASE_URL = 'http://localhost:3000/api';
+    const PAGE_SIZE = 10;
 
-            const statusCell = (row.status === "Low" || row.status === "High") //if low or high then color red
-                ? `<td style="color: #FF0606">${row.status}</td>` 
-                : `<td>${row.status}</td>`;
-            const tr = `<tr>
-                <td>${row.date}</td>
-                <td>${row.device}</td>
-                <td>${row.parameter}</td>
-                <td>${row.value}</td>
-                ${statusCell}
-                <td>${row.limit}</td>
-            </tr>`;
-            tbody.append(tr);
-        });
+    let currentPage = 1;
 
-        $(".pagination .page-info").text(`Page ${page}`);
+    $(document).ready(function () {
+
+    loadMeasurements();
+
+    $('.next').on('click', function () {
+        currentPage++;
+        loadMeasurements();
+    });
+
+    $('.prev').on('click', function () {
+        if (currentPage > 1) {
+        currentPage--;
+        loadMeasurements();
+        }
+    });
+
+    });
+
+    function loadMeasurements(filters = {}) {
+
+    const token =
+        localStorage.getItem('auth_token') ||
+        sessionStorage.getItem('auth_token');
+
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const offset = (currentPage - 1) * PAGE_SIZE;
+    let url = API_BASE_URL + '/measurements?limit=' + PAGE_SIZE;
+
+    if (filters.device_id) {
+        url += '&device_id=' + filters.device_id;
+    }
+
+    if (filters.parameter) {
+        url += '&parameter=' + filters.parameter;
+    }
+
+    if (filters.from) {
+        url += '&from=' + filters.from;
+    }
+
+    if (filters.to) {
+        url += '&to=' + filters.to;
+    }
+
+    $.ajax({
+        url: url,
+        method: 'GET',
+        headers: {
+        Authorization: 'Bearer ' + token
+        },
+        success: function (data) {
+        renderTable(data);
+        $('.page-info').text(currentPage);
+
+        $('.next').prop('disabled', data.length < PAGE_SIZE);
+        $('.prev').prop('disabled', currentPage === 1);
+        },
+        error: function (xhr) {
+        if (xhr.status === 401) {
+            window.location.href = '/login.html';
+        } else {
+            alert('Failed to load measurements');
+        }
+        }
+    });
+    }
+
+    function renderTable(rows) {
+    const $tbody = $('.history-table tbody');
+    $tbody.empty();
+
+    if (!rows.length) {
+        $tbody.append(`
+        <tr>
+            <td colspan="6">No data available</td>
+        </tr>
+        `);
+        return;
+    }
+
+    rows.forEach(row => {
+        $tbody.append(`
+        <tr>
+            <td>${formatDate(row.timestamp)}</td>
+            <td>${row.device_name || row.device_id}</td>
+            <td>${row.parameter || '-'}</td>
+            <td>${row.value} ${row.unit || ''}</td>
+            <td>${renderStatus(row.status)}</td>
+            <td>${row.limit_min ?? '-'} – ${row.limit_max ?? '-'}</td>
+        </tr>
+        `);
+    });
+    }
+
+    function formatDate(ts) {
+    const d = new Date(ts);
+    return d.toLocaleString('cs-CZ');
+    }
+
+    function renderStatus(status) {
+    if (!status) return '-';
+
+    switch (status) {
+        case 'OK':
+        return '<span class="status ok">OK</span>';
+        case 'WARNING':
+        return '<span class="status warning">Warning</span>';
+        case 'CRITICAL':
+        return '<span class="status critical">Critical</span>';
+        default:
+        return status;
+    }
     }
 
     // Pagination buttons
@@ -90,11 +180,29 @@ $(document).ready(function () {
 
     //redirect to history values page
     $(".back").on("click", function () {
-        window.location.href = "index.html";
+        window.history.back();
     });
 
-    //user man page
-    $(".user").on("click", function () {
-        window.location.href = "users.html";
+    $('.user').on('click', function () {
+        const token =
+            localStorage.getItem('auth_token') ||
+            sessionStorage.getItem('auth_token');
+
+            // User is NOT logged in
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // User IS logged in
+            const confirmLogout = confirm('Do you want to log out?');
+
+            if (confirmLogout) {
+                localStorage.removeItem('auth_token');
+                sessionStorage.removeItem('auth_token');
+
+                alert('You have been logged out.');
+                window.location.href = 'login.html';
+            }
     });
 });

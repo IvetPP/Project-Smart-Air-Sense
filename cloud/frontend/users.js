@@ -1,7 +1,7 @@
 $(document).ready(function () {
     const usersCount = 5;
 
-    const firstNames = ["KlAra", "Petra", "Jana", "Michaela", "Sarka", "Monika", "Sara", "Zuzana", "Lucie"];
+    const firstNames = ["Klara", "Petra", "Jana", "Michaela", "Sarka", "Monika", "Sara", "Zuzana", "Lucie"];
     const lastNames = ["Novakova", "Kadlecova", "Dvorákova", "Smiskova", "Valentova", "Bila", "Novotna"];
     const devices = [
         "Device 1",
@@ -40,9 +40,6 @@ $(document).ready(function () {
 
         return html;
     }
-
-
-
     
     function generateUser() {
         const firstName = randomItem(firstNames);
@@ -108,7 +105,7 @@ $(document).ready(function () {
 
     //redirect to dashboard
     $(".back").on("click", function () {
-        window.location.href = "index.html";
+        window.history.back();
     });
 
     $(".home").on("click", function () {
@@ -124,4 +121,26 @@ $(document).ready(function () {
         $(this).siblings(".device-dropdown-list").slideToggle();
     });
 
+    $('.user').on('click', function () {
+        const token =
+            localStorage.getItem('auth_token') ||
+            sessionStorage.getItem('auth_token');
+
+            // User is NOT logged in
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // User IS logged in
+            const confirmLogout = confirm('Do you want to log out?');
+
+            if (confirmLogout) {
+                localStorage.removeItem('auth_token');
+                sessionStorage.removeItem('auth_token');
+
+                alert('You have been logged out.');
+                window.location.href = 'login.html';
+            }
+    });    
 });

@@ -155,6 +155,31 @@ $(document).ready(function () {
     $(".edit").on("click", () => location.href = "editDevice.html");
     $(".man").on("click", () => location.href = "users.html");
 
+      $('.user.pers').on('click', function () {
+
+    const token =
+        localStorage.getItem('auth_token') ||
+        sessionStorage.getItem('auth_token');
+
+        // User is NOT logged in
+        if (!token) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        // User IS logged in
+        const confirmLogout = confirm('Do you want to log out?');
+
+        if (confirmLogout) {
+            localStorage.removeItem('auth_token');
+            sessionStorage.removeItem('auth_token');
+
+            alert('You have been logged out.');
+            window.location.href = 'login.html';
+        }
+
+    });
+  
     // initial load
     loadLatestMeasurements();
     setInterval(loadLatestMeasurements, 15000); //update every 15 sec
