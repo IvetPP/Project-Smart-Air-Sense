@@ -9,6 +9,7 @@ const devicesRoutes = require('./routes/devices');
 const measurementsRoutes = require('./routes/measurements');
 const thresholdsRoutes = require('./routes/thresholds');
 const alertsRoutes = require('./routes/alerts');
+const iotRoutes = require('./routes/iot');
 
 const app = express();
 app.use(cors());
@@ -21,6 +22,7 @@ app.use('/api/devices', devicesRoutes);
 app.use('/api/measurements', measurementsRoutes);
 app.use('/api/thresholds', thresholdsRoutes);
 app.use('/api/alerts', alertsRoutes);
+app.use('/api/iot', iotRoutes);
 
 app.get('/api/status', (req,res) => {
   res.json({ status:'OK', api_version:'1.0.0', timestamp: new Date().toISOString() });
