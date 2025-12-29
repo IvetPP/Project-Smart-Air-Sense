@@ -7,6 +7,9 @@ $(document).ready(function () {
     }
 
     const token = getToken();
+
+    console.log('TOKEN AFTER LOGIN:', token); // <-- move it here
+
     if (!token) {
         alert('Missing token');
         window.location.href = 'login.html';
@@ -41,8 +44,7 @@ $(document).ready(function () {
             });
     }
 
-    // measurement update functions (co2, temp, hum, bar, iot, datetime)
-    // same as before, unchanged
+    // your measurement update functions (co2, temp, hum, bar, iot, datetime) go here
 
     $(".his-values").on("click", () => location.href = "history.html");
     $(".add-device").on("click", () => location.href = "addDevice.html");
