@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL + '/auth';
+// login.js
+const API_BASE_URL = import.meta.env.VITE_API_URL; // + '/auth';
 
 $(document).ready(function () {
     $('#login-form').on('submit', function (e) {
@@ -18,8 +19,11 @@ $(document).ready(function () {
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ email, password }),
-            success: function (res) {
-                const token = res.token;
+            success: function(res) {
+                console.log('Login response:', res); // <-- Debug: see what backend returns
+
+                // Detect token in response
+                const token = res.token || res.accessToken || res.data?.token;
                 if (!token) {
                     alert('Login failed: no token returned');
                     return;
@@ -35,7 +39,7 @@ $(document).ready(function () {
                 alert('Login successful');
                 window.location.href = 'index.html';
             },
-            error: function (xhr) {
+            error: function(xhr) {
                 if (xhr.status === 401) {
                     alert('Invalid email or password');
                 } else if (xhr.responseJSON && xhr.responseJSON.error) {
@@ -47,6 +51,7 @@ $(document).ready(function () {
         });
     });
 
+    // SIGNUP FORM
     const $signupForm = $('#signup-form');
     if ($signupForm.length) {
         $signupForm.on('submit', function (e) {
@@ -93,6 +98,7 @@ $(document).ready(function () {
         });
     }
 
+    // Navigation buttons
     $(".user").on("click", function () {
         window.location.href = "login.html";
     });
