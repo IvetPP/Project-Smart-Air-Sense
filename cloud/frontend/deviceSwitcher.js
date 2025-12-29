@@ -1,41 +1,36 @@
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 $(document).ready(function () {
-
     const $select = $('#device-select');
     const $officeName = $('#office-name');
     const $editBtn = $('.office .edit');
 
-    loadDevices();
-
+    function getToken() {
+        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    }
 
     function loadDevices() {
-        const token =
-        localStorage.getItem('auth_token') ||
-        sessionStorage.getItem('auth_token');
-
- 
+        const token = getToken();
+        if (!token) {
+            alert('Missing token');
+            window.location.href = 'login.html';
+            return;
+        }
 
         $.ajax({
-        url: API_BASE_URL + '/devices',
-        method: 'GET',
-        headers: {
-            Authorization: 'Bearer ' + token
-        },
-        success: function (devices) {
-            $select.find('option:not(:first)').remove();
-
-            devices.forEach(device => {
-            $select.append(`
-                <option value="${device.device_id}">
-                ${device.name}
-                </option>
-            `);
-            });
-        },
-        error: function () {
-            alert('Failed to load devices');
-        }
+            url: API_BASE_URL + '/devices',
+            method: 'GET',
+            headers: { Authorization: `Bearer ${token}` },
+            success: function (devices) {
+                $select.find('option:not(:first)').remove();
+                devices.forEach(device => {
+                    $select.append(`<option value="${device.device_id}">${device.name}</option>`);
+                });
+            },
+            error: function (xhr) {
+                console.error('Failed to load devices', xhr.status, xhr.responseText);
+                alert('Failed to load devices');
+            }
         });
     }
 
@@ -48,10 +43,10 @@ $(document).ready(function () {
             $editBtn.prop('disabled', true);
             return;
         }
+
         $officeName.text(deviceName);
         sessionStorage.setItem('active_device_id', deviceId);
-        $editBtn.prop('disabled', false)
-        .data('device-id', deviceId);
+        $editBtn.prop('disabled', false).data('device-id', deviceId);
     });
 
     $editBtn.on('click', function () {
@@ -61,4 +56,5 @@ $(document).ready(function () {
         window.location.href = `/edit-device.html?device_id=${encodeURIComponent(deviceId)}`;
     });
 
+    loadDevices();
 });
