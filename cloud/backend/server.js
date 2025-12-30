@@ -34,28 +34,22 @@ app.get('/api/status', (req, res) => {
 });
 
 /* =======================
-   FRONTEND (VITE BUILD)
-======================= */
-const frontendPath = path.join(__dirname, '../frontend/dist');
-app.use(express.static(frontendPath));
-
-/*
-  IMPORTANT:
-  Only return index.html for NON-API routes
-  that are not actual files
-*/
-app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
-});
-
-/* =======================
    API 404 HANDLER
 ======================= */
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
+/* =======================
+   FRONTEND (VITE BUILD)
+======================= */
+const frontendPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendPath));
+
+// Only return index.html for non-API routes
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log(`Server listening on port ${PORT}`)
-);
+app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
