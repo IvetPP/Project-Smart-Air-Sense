@@ -165,4 +165,29 @@ router.put('/:device_id/status', authMiddleware, checkOwnershipOrAdmin,
         });
 });
 
+// 11. devices/assign (PUT /:device_id/assign)
+// Assign an existing IoT device to the logged-in user
+router.put('/:device_id/assign', authMiddleware, (req, res) => {
+    const deviceId = req.params.device_id;
+    const userId = req.user.sub;
+
+    db.run(
+        'UPDATE devices SET owner_id=? WHERE device_id=?',
+        [userId, deviceId],
+        function (err) {
+            if (err) return res.status(500).json({ error: 'DB error' });
+            if (this.changes === 0)
+                return res.status(404).json({ error: 'Device not found' });
+
+            res.json({
+                success: true,
+                device_id: deviceId,
+                owner_id: userId
+            });
+        }
+    );
+});
+
+
+
 module.exports = router;
