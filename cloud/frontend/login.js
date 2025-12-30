@@ -1,7 +1,7 @@
-// login.js
-const API_BASE_URL = import.meta.env.VITE_API_URL; // + '/auth';
-
 $(document).ready(function () {
+
+    const API_URL = '/api/auth';
+
     $('#login-form').on('submit', function (e) {
         e.preventDefault();
 
@@ -9,101 +9,25 @@ $(document).ready(function () {
         const password = $('#login-password').val();
         const remember = $('#remember').is(':checked');
 
-        if (!email || !password) {
-            alert('Email and password are required');
-            return;
-        }
-
         $.ajax({
-            url: API_BASE_URL + '/login',
+            url: API_URL + '/login',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ email, password }),
-            success: function(res) {
-                console.log('Login response:', res); // <-- Debug: see what backend returns
+            success: function (res) {
+                console.log('LOGIN RESPONSE:', res);
 
-                // Detect token in response
-                const token = res.token || res.accessToken || res.data?.token;
-                if (!token) {
-                    alert('Login failed: no token returned');
-                    return;
-                }
-
-                // Store token consistently
                 if (remember) {
-                    localStorage.setItem('auth_token', token);
+                    localStorage.setItem('auth_token', res.token);
                 } else {
-                    sessionStorage.setItem('auth_token', token);
+                    sessionStorage.setItem('auth_token', res.token);
                 }
 
-                alert('Login successful');
                 window.location.href = 'index.html';
             },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    alert('Invalid email or password');
-                } else if (xhr.responseJSON && xhr.responseJSON.error) {
-                    alert(xhr.responseJSON.error);
-                } else {
-                    alert('Login failed');
-                }
+            error: function () {
+                alert('Login failed');
             }
         });
-    });
-
-    // SIGNUP FORM
-    const $signupForm = $('#signup-form');
-    if ($signupForm.length) {
-        $signupForm.on('submit', function (e) {
-            e.preventDefault();
-
-            const email = $('#signup-username').val().trim();
-            const fullName = $('#full-name').val().trim();
-            const password = $('#signup-password').val();
-            const passwordConfirm = $('#signup-password-confirm').val();
-
-            if (password !== passwordConfirm) {
-                alert('Passwords do not match');
-                return;
-            }
-
-            if (password.length < 8) {
-                alert('Password must be at least 8 characters long');
-                return;
-            }
-
-            $.ajax({
-                url: API_BASE_URL + '/register',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ email, password, full_name: fullName }),
-                success: function () {
-                    alert('Registration successful! You can now log in.');
-                    $signupForm.trigger('reset');
-                },
-                error: function (xhr) {
-                    if (xhr.status === 409) {
-                        alert('Email already exists');
-                    } else if (xhr.responseJSON && xhr.responseJSON.error) {
-                        alert(xhr.responseJSON.error);
-                    } else {
-                        alert('Registration failed');
-                    }
-                }
-            });
-        });
-
-        $signupForm.find('.cancel-btn').on('click', function () {
-            $signupForm.trigger('reset');
-        });
-    }
-
-    // Navigation buttons
-    $(".user").on("click", function () {
-        window.location.href = "login.html";
-    });
-
-    $(".back").on("click", function () {
-        window.history.back();
     });
 });
