@@ -11,10 +11,10 @@ $(document).ready(function () {
     console.log('DASHBOARD TOKEN:', token);
 
     if (!token) {
-        alert('Missing token');
-        window.location.href = 'login.html';
-        return;
-    }
+    console.warn('NO TOKEN FOUND — stopping dashboard JS');
+    return;
+}
+
 
     fetch(API_URL + '/measurements/latest', {
         headers: { Authorization: 'Bearer ' + token }
