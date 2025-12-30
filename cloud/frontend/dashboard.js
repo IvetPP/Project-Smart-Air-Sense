@@ -1,9 +1,16 @@
 $(document).ready(function () {
 
+    /* ============================
+       CONFIG
+    ============================ */
+
     const API_URL = '/api';
 
     function getToken() {
-        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        return (
+            localStorage.getItem('auth_token') ||
+            sessionStorage.getItem('auth_token')
+        );
     }
 
     const token = getToken();
@@ -16,61 +23,108 @@ $(document).ready(function () {
     }
 
     function authHeaders() {
-        return { 'Authorization': 'Bearer ' + token };
+        return {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        };
     }
 
     const API_MEASUREMENTS = `${API_URL}/measurements/latest`;
+
+    /* ============================
+       LOAD LATEST MEASUREMENTS
+    ============================ */
 
     function loadLatestMeasurements() {
         fetch(API_MEASUREMENTS, { headers: authHeaders() })
             .then(res => {
                 if (!res.ok) {
                     if (res.status === 401) {
-                        alert('Unauthorized — please log in again');
+                        alert('Session expired — please log in again');
                         localStorage.removeItem('auth_token');
                         sessionStorage.removeItem('auth_token');
                         window.location.href = 'login.html';
                     }
-                    throw new Error('Network response was not ok');
+                    throw new Error('Failed to fetch measurements');
                 }
                 return res.json();
             })
             .then(data => {
-                console.log('LATEST MEASUREMENTS:', data);
-                if (!data.length) return;
+                console.log('LATEST MEASUREMENTS RAW:', data);
 
-                const m = data[0];
+                if (!Array.isArray(data) || data.length === 0) {
+                    console.warn('No measurements available');
+                    return;
+                }
 
-                // update CO2
-                $(".co2.value").text(m.co2);
-                let co2State = m.co2 < 400 ? 'Low' : m.co2 <= 1000 ? 'Normal' : 'High';
-                $(".co2.state").text(co2State);
+                /*
+                  Backend returns:
+                  [
+                    { device_id, type: "co2", value, timestamp },
+                    { device_id, type: "temperature", value, timestamp },
+                    ...
+                  ]
+                */
 
-                // update Temperature
-                $(".temp.value").text(m.temperature);
-                let tempState = m.temperature < 20 ? 'Low' : m.temperature <= 24 ? 'Normal' : 'High';
-                $(".temp.state").text(tempState);
+                // Convert array -> object keyed by "type"
+                const values = {};
+                data.forEach(m => {
+                    values[m.type] = Number(m.value);
+                    values.timestamp = m.timestamp;
+                });
 
-                // update Humidity
-                $(".hum.value").text(m.humidity);
-                let humState = m.humidity < 40 ? 'Low' : m.humidity <= 60 ? 'Normal' : 'High';
-                $(".hum.state").text(humState);
+                /* ============================
+                   UPDATE UI
+                ============================ */
 
-                // update Barometric pressure
-                $(".bar.value").text(m.pressure);
-                let barState = m.pressure < 1013 ? 'Lower' : 'Higher';
-                $(".bar.state").text(barState);
+                // CO2
+                if (values.co2 !== undefined) {
+                    $(".co2.value").text(values.co2);
+                    $(".co2.state").text(
+                        values.co2 <= 1000 ? 'Normal' : 'High'
+                    );
+                }
 
-                // update IoT status
+                // Temperature
+                if (values.temperature !== undefined) {
+                    $(".temp.value").text(values.temperature.toFixed(1));
+                    $(".temp.state").text(
+                        values.temperature >= 20 && values.temperature <= 24
+                            ? 'Normal'
+                            : 'Out of range'
+                    );
+                }
+
+                // Humidity
+                if (values.humidity !== undefined) {
+                    $(".hum.value").text(values.humidity.toFixed(1));
+                    $(".hum.state").text(
+                        values.humidity >= 40 && values.humidity <= 60
+                            ? 'Normal'
+                            : 'Out of range'
+                    );
+                }
+
+                // Pressure
+                if (values.pressure !== undefined) {
+                    $(".bar.value").text(values.pressure);
+                    $(".bar.state").text(
+                        values.pressure >= 1013 ? 'Higher' : 'Lower'
+                    );
+                }
+
+                // IoT status (data exists = ON)
                 $(".iot-status").html(
-                    `Status IoT: <span style="color:${m.iot_status === 'ON' ? '#228B22' : '#FF0606'}">
-                        ${m.iot_status === 'ON' ? 'ON' : 'OFF'}
-                    </span>`
+                    `Status IoT: <span style="color:#228B22">ON</span>`
                 );
 
-                // update timestamp
-                const dt = new Date(m.timestamp);
-                $(".time").text(`Date and time value: ${dt.toLocaleString()}`);
+                // Timestamp
+                if (values.timestamp) {
+                    const dt = new Date(values.timestamp);
+                    $(".time").text(
+                        `Date and time value: ${dt.toLocaleString()}`
+                    );
+                }
             })
             .catch(err => {
                 console.error('Fetch error:', err);
@@ -78,8 +132,28 @@ $(document).ready(function () {
             });
     }
 
-    // initial load
+    /* ============================
+       INIT
+    ============================ */
+
     loadLatestMeasurements();
     setInterval(loadLatestMeasurements, 15000); // refresh every 15s
+
+    /* ============================
+       NAVIGATION BUTTONS
+    ============================ */
+
+    $(".his-values").on("click", () => location.href = "history.html");
+    $(".add-device").on("click", () => location.href = "addDevice.html");
+    $(".edit").on("click", () => location.href = "editDevice.html");
+    $(".man").on("click", () => location.href = "users.html");
+
+    $(".user.pers").on("click", function () {
+        if (confirm('Do you want to log out?')) {
+            localStorage.removeItem('auth_token');
+            sessionStorage.removeItem('auth_token');
+            window.location.href = 'login.html';
+        }
+    });
 
 });
