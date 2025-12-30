@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { authMiddleware } = require('./middleware/auth');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
@@ -15,7 +14,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- API routes ---
+/* =======================
+   API ROUTES
+======================= */
 app.use('/api', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/devices', devicesRoutes);
@@ -24,24 +25,37 @@ app.use('/api/thresholds', thresholdsRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/iot', iotRoutes);
 
-app.get('/api/status', (req,res) => {
-  res.json({ status:'OK', api_version:'1.0.0', timestamp: new Date().toISOString() });
+app.get('/api/status', (req, res) => {
+  res.json({
+    status: 'OK',
+    api_version: '1.0.0',
+    timestamp: new Date().toISOString(),
+  });
 });
 
-// --- Serve React frontend ---
+/* =======================
+   FRONTEND (VITE BUILD)
+======================= */
 const frontendPath = path.join(__dirname, '../frontend/dist');
 app.use(express.static(frontendPath));
 
-// Fallback
-app.use(express.static(frontendPath));
-
-app.get('/', (req, res) => {
+/*
+  IMPORTANT:
+  Only return index.html for NON-API routes
+  that are not actual files
+*/
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-
-// Catch-all for unmatched API routes
-app.use((req,res)=>res.status(404).json({ error:'Endpoint not found' }));
+/* =======================
+   API 404 HANDLER
+======================= */
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT,()=>console.log(`Server listening on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`Server listening on port ${PORT}`)
+);
