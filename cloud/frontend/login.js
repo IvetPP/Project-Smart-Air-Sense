@@ -11,6 +11,11 @@ $(document).ready(function () {
         const password = $('#login-password').val();
         const remember = $('#remember').is(':checked');
 
+        if (!email || !password) {
+            alert('Email and password are required');
+            return;
+        }
+
         $.ajax({
             url: API_URL + '/login',
             method: 'POST',
@@ -24,23 +29,27 @@ $(document).ready(function () {
                     return;
                 }
 
-                if (remember) {
-                    localStorage.setItem('auth_token', res.token);
-                } else {
+                // Always use localStorage to persist across page reloads
+                localStorage.setItem('auth_token', res.token);
+                if (!remember) {
+                    // Also keep in sessionStorage if not remembering
                     sessionStorage.setItem('auth_token', res.token);
                 }
 
-                console.log(
-                  'TOKEN SAVED:',
-                  localStorage.getItem('auth_token') ||
-                  sessionStorage.getItem('auth_token')
-                );
+                console.log('TOKEN SAVED:');
+                console.log('localStorage:', localStorage.getItem('auth_token'));
+                console.log('sessionStorage:', sessionStorage.getItem('auth_token'));
 
+                // Redirect after token is saved
                 window.location.href = 'index.html';
             },
             error: function (xhr) {
                 console.error('LOGIN ERROR:', xhr.responseText);
-                alert('Login failed');
+                if (xhr.status === 401) {
+                    alert('Invalid email or password');
+                } else {
+                    alert('Login failed');
+                }
             }
         });
     });
