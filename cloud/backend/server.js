@@ -32,10 +32,13 @@ app.get('/api/status', (req,res) => {
 const frontendPath = path.join(__dirname, '../frontend/dist');
 app.use(express.static(frontendPath));
 
-// Fallback: for any route not starting with /api, serve index.html
-app.get(/^\/(?!api).*/, (req, res) => {
+// Fallback
+app.use(express.static(frontendPath));
+
+app.get('/', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
+
 
 // Catch-all for unmatched API routes
 app.use((req,res)=>res.status(404).json({ error:'Endpoint not found' }));
