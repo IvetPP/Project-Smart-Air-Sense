@@ -1,2 +1,2 @@
 # ignore node.js dependencies for backend
-/cloud/backend/node_modules/
+./node_modules/

@@ -2,6 +2,8 @@ $(document).ready(function () {
 
     const API_URL = '/api/auth';
 
+    console.log('LOGIN JS LOADED');
+
     $('#login-form').on('submit', function (e) {
         e.preventDefault();
 
@@ -17,15 +19,27 @@ $(document).ready(function () {
             success: function (res) {
                 console.log('LOGIN RESPONSE:', res);
 
+                if (!res.token) {
+                    alert('NO TOKEN FROM SERVER');
+                    return;
+                }
+
                 if (remember) {
                     localStorage.setItem('auth_token', res.token);
                 } else {
                     sessionStorage.setItem('auth_token', res.token);
                 }
 
+                console.log(
+                  'TOKEN SAVED:',
+                  localStorage.getItem('auth_token') ||
+                  sessionStorage.getItem('auth_token')
+                );
+
                 window.location.href = 'index.html';
             },
-            error: function () {
+            error: function (xhr) {
+                console.error('LOGIN ERROR:', xhr.responseText);
                 alert('Login failed');
             }
         });
