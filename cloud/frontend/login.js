@@ -1,6 +1,6 @@
 $(document).ready(function () {
 
-    const API_URL = '/api';
+    const API_URL = '/api/auth';
 
     console.log('LOGIN JS LOADED');
 
