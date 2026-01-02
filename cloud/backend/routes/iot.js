@@ -1,5 +1,6 @@
 const express = require('express');
 const crypto = require('crypto');
+const supabase = require('../lib/supabase');
 
 const router = express.Router();
 
@@ -7,8 +8,8 @@ const SECRET_KEY = process.env.IOT_SECRET_KEY;
 const IV = process.env.IOT_IV;
 const API_TOKEN = process.env.IOT_API_TOKEN;
 
-router.post('/ingest', (req, res) => {
-  // Ověření tokenu
+router.post('/ingest', async (req, res) => {
+  // Token verification
   const token =
     req.query.token ||
     req.headers.authorization?.replace('Bearer ', '');
@@ -17,7 +18,6 @@ router.post('/ingest', (req, res) => {
     return res.status(401).json({ error: 'Invalid API token' });
   }
 
-  // Získání šifrovaných dat
   const encryptedText = req.body.encrypted_data;
 
   if (!encryptedText || typeof encryptedText !== 'string') {
@@ -25,7 +25,7 @@ router.post('/ingest', (req, res) => {
   }
 
   try {
-    // Dešifrování
+    // Decrypt
     const decipher = crypto.createDecipheriv(
       'aes-256-cbc',
       SECRET_KEY,
@@ -37,10 +37,21 @@ router.post('/ingest', (req, res) => {
 
     const data = JSON.parse(decrypted);
 
-    // uložit do DB
-    // await Measurements.create(data);
+    // STORE IN SUPABASE
+    const { error } = await supabase
+      .from('measurements')
+      .insert({
+        device_id: data.device_id,
+        co2: data.co2,
+        temperature: data.temperature,
+        humidity: data.humidity,
+        created_at: new Date().toISOString(),
+      });
 
-    console.log('IoT data received:', data);
+    if (error) {
+      console.error('Supabase insert error:', error);
+      return res.status(500).json({ error: 'Database insert failed' });
+    }
 
     res.json({ status: 'ok' });
   } catch (err) {
