@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = window.location.origin + '/api';
 
 $(document).ready(function () {
 
@@ -90,7 +90,7 @@ $(document).ready(function () {
 
     // back
     $(".back").on("click", function () {
-        window.history.back();
+    window.location.href = 'index.html'; // or dashboard.html
     });
 
     // cancel 

@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = window.location.origin + '/api';
 const PAGE_SIZE = 10;
 
 let currentPage = 1;
@@ -174,13 +174,10 @@ $(document).ready(function () {
         }
     });
 
-    generateData();
-    renderTable(currentPage);
-
 
     //redirect to history values page
     $(".back").on("click", function () {
-        window.history.back();
+    window.location.href = 'index.html';
     });
 
     $('.user').on('click', function () {
