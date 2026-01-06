@@ -15,10 +15,14 @@ $(document).ready(function () {
         method: 'GET',
         headers: { Authorization: 'Bearer ' + token },
         success: function (devices) {
-            console.log('Devices:', devices);
+            const $select = $('.custom-select select');
+            $select.empty();
+            $select.append('<option value="">Select device...</option>');
+            
+            devices.forEach(device => {
+                $select.append(`<option value="${device.id}">${device.name}</option>`);
+            });
+            console.log('Devices loaded into dropdown');
         },
-        error: function () {
-            alert('Failed to load devices');
-        }
     });
 });

@@ -70,7 +70,7 @@ $(document).ready(function () {
                 const values = {};
                 data.forEach(m => {
                     values[m.type] = Number(m.value);
-                    values.timestamp = m.timestamp;
+                    created_at = m.timestamp;
                 });
 
                 /* ============================
@@ -119,8 +119,8 @@ $(document).ready(function () {
                 );
 
                 // Timestamp
-                if (values.timestamp) {
-                    const dt = new Date(values.timestamp);
+                if (created_at) {
+                    const dt = new Date(created_at);
                     $(".time").text(
                         `Date and time value: ${dt.toLocaleString()}`
                     );
