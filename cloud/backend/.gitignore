@@ -1,3 +1,2 @@
-# ignore node.js dependencies for backend
 node_modules/
 .env
