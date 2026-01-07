@@ -65,10 +65,12 @@ $(document).ready(function () {
         localStorage.getItem('auth_token') ||
         sessionStorage.getItem('auth_token');
 
+    /*
     if (!token) {
         window.location.href = 'login.html';
         return;
     }
+    */
 
     const offset = (currentPage - 1) * PAGE_SIZE;
     let url = API_BASE_URL + '/measurements?limit=' + PAGE_SIZE;
@@ -186,10 +188,12 @@ $(document).ready(function () {
             sessionStorage.getItem('auth_token');
 
             // User is NOT logged in
+            /*
             if (!token) {
                 window.location.href = 'login.html';
                 return;
             }
+            */
 
             // User IS logged in
             const confirmLogout = confirm('Do you want to log out?');
