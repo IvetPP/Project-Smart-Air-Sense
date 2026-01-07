@@ -1,50 +1,31 @@
-const API_BASE_URL = window.location.origin + '/api';
-const PAGE_SIZE = 10;
-
-let currentPage = 1;
-
 $(document).ready(function () {
+    /* ============================
+       CONFIG & STATE
+    ============================ */
+    const API_BASE_URL = window.location.origin + '/api';
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
 
-    $('.filter-btn.device').on('click', function () {
-        togglePanel('.device-panel', this);
-    });
+    /* ============================
+       INIT
+    ============================ */
+    loadMeasurements();
 
-    $('.filter-btn.time').on('click', function () {
-        togglePanel('.time-panel', this);
-    });
+    /* ============================
+       EVENT HANDLERS
+    ============================ */
 
-    $('.filter-btn.par').on('click', function () {
-        togglePanel('.param-panel', this);
-    });
+    // Panel Toggles
+    $('.filter-btn.device').on('click', function () { togglePanel('.device-panel', this); });
+    $('.filter-btn.time').on('click', function () { togglePanel('.time-panel', this); });
+    $('.filter-btn.par').on('click', function () { togglePanel('.param-panel', this); });
 
     function togglePanel(panelSelector, btn) {
         $(panelSelector).slideToggle(200);
         $(btn).toggleClass('active');
     }
 
-    $('#filter-device, #filter-parameter, #filter-from, #filter-to').on('change', function () {
-        currentPage = 1;
-        loadMeasurements(getFilters());
-    });
-
-    function getFilters() {
-        return {
-            device_id: $('#filter-device').val(),
-            parameter: $('#filter-parameter').val(),
-            from: $('#filter-from').val(),
-            to: $('#filter-to').val()
-    };
-}
-
-    const API_BASE_URL = 'http://localhost:3000/api';
-    const PAGE_SIZE = 10;
-
-    let currentPage = 1;
-
-    $(document).ready(function () {
-
-    loadMeasurements();
-
+    // Pagination
     $('.next').on('click', function () {
         currentPage++;
         loadMeasurements();
@@ -52,158 +33,95 @@ $(document).ready(function () {
 
     $('.prev').on('click', function () {
         if (currentPage > 1) {
-        currentPage--;
-        loadMeasurements();
+            currentPage--;
+            loadMeasurements();
         }
     });
 
-    });
+    // Navigation
+    $(".back").on("click", () => window.location.href = 'index.html');
 
-    function loadMeasurements(filters = {}) {
-
-    const token =
-        localStorage.getItem('auth_token') ||
-        sessionStorage.getItem('auth_token');
-
-    /*
-    if (!token) {
-        window.location.href = 'login.html';
-        return;
-    }
-    */
-
-    const offset = (currentPage - 1) * PAGE_SIZE;
-    let url = API_BASE_URL + '/measurements?limit=' + PAGE_SIZE;
-
-    if (filters.device_id) {
-        url += '&device_id=' + filters.device_id;
-    }
-
-    if (filters.parameter) {
-        url += '&parameter=' + filters.parameter;
-    }
-
-    if (filters.from) {
-        url += '&from=' + filters.from;
-    }
-
-    if (filters.to) {
-        url += '&to=' + filters.to;
-    }
-
-    $.ajax({
-        url: url,
-        method: 'GET',
-        headers: {
-        Authorization: 'Bearer ' + token
-        },
-        success: function (data) {
-        renderTable(data);
-        $('.page-info').text(currentPage);
-
-        $('.next').prop('disabled', data.length < PAGE_SIZE);
-        $('.prev').prop('disabled', currentPage === 1);
-        },
-        error: function (xhr) {
-        if (xhr.status === 401) {
-            window.location.href = '/login.html';
-        } else {
-            alert('Failed to load measurements');
-        }
+    // Logout
+    $('.user').on('click', function () {
+        if (confirm('Do you want to log out?')) {
+            localStorage.removeItem('auth_token');
+            sessionStorage.removeItem('auth_token');
+            window.location.href = 'login.html';
         }
     });
+
+    /* ============================
+       CORE FUNCTIONS
+    ============================ */
+
+    function loadMeasurements() {
+        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        
+        // Use relative path to avoid localhost errors
+        const offset = (currentPage - 1) * PAGE_SIZE;
+        let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
+
+        $.ajax({
+            url: url,
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token },
+            success: function (data) {
+                renderTable(data);
+                $('.page-info').text(currentPage);
+                $('.next').prop('disabled', data.length < PAGE_SIZE);
+                $('.prev').prop('disabled', currentPage === 1);
+            },
+            error: function (xhr) {
+                if (xhr.status === 401) {
+                    window.location.href = 'login.html';
+                } else {
+                    console.error("Fetch error:", xhr);
+                }
+            }
+        });
     }
 
     function renderTable(rows) {
-    const $tbody = $('.history-table tbody');
-    $tbody.empty();
+        const $tbody = $('.history-table tbody');
+        $tbody.empty();
 
-    if (!rows.length) {
-        $tbody.append(`
-        <tr>
-            <td colspan="6">No data available</td>
-        </tr>
-        `);
-        return;
-    }
-
-    rows.forEach(row => {
-        $tbody.append(`
-        <tr>
-            <td>${formatDate(row.timestamp)}</td>
-            <td>${row.device_name || row.device_id}</td>
-            <td>${row.parameter || '-'}</td>
-            <td>${row.value} ${row.unit || ''}</td>
-            <td>${renderStatus(row.status)}</td>
-            <td>${row.limit_min ?? '-'} – ${row.limit_max ?? '-'}</td>
-        </tr>
-        `);
-    });
-    }
-
-    function formatDate(ts) {
-    const d = new Date(ts);
-    return d.toLocaleString('cs-CZ');
-    }
-
-    function renderStatus(status) {
-    if (!status) return '-';
-
-    switch (status) {
-        case 'OK':
-        return '<span class="status ok">OK</span>';
-        case 'WARNING':
-        return '<span class="status warning">Warning</span>';
-        case 'CRITICAL':
-        return '<span class="status critical">Critical</span>';
-        default:
-        return status;
-    }
-    }
-
-    // Pagination buttons
-    $(".pagination .prev").on("click", function () {
-        if (currentPage > 1) {
-            currentPage--;
-            renderTable(currentPage);
+        if (!rows || !rows.length) {
+            $tbody.append('<tr><td colspan="6">No data available</td></tr>');
+            return;
         }
-    });
 
-    $(".pagination .next").on("click", function () {
-        if (currentPage * rowsPerPage < allRows.length) {
-            currentPage++;
-            renderTable(currentPage);
-        }
-    });
+        rows.forEach(row => {
+            // Since your data is "wide", a single row might have multiple values.
+            // We format them into a single display string for the 'Parameter' and 'Value' columns.
+            
+            let params = [];
+            let values = [];
 
-
-    //redirect to history values page
-    $(".back").on("click", function () {
-    window.location.href = 'index.html';
-    });
-
-    $('.user').on('click', function () {
-        const token =
-            localStorage.getItem('auth_token') ||
-            sessionStorage.getItem('auth_token');
-
-            // User is NOT logged in
-            /*
-            if (!token) {
-                window.location.href = 'login.html';
-                return;
+            if (row.co2 !== null && row.co2 !== undefined) {
+                params.push("CO2");
+                values.push(`${Math.round(row.co2)} ppm`);
             }
-            */
-
-            // User IS logged in
-            const confirmLogout = confirm('Do you want to log out?');
-
-            if (confirmLogout) {
-                localStorage.removeItem('auth_token');
-                sessionStorage.removeItem('auth_token');
-
-                alert('You have been logged out.');
-                window.location.href = 'login.html';
+            if (row.temperature !== null && row.temperature !== undefined) {
+                params.push("Temp");
+                values.push(`${row.temperature.toFixed(1)}°C`);
             }
-    });
+            if (row.humidity !== null && row.humidity !== undefined) {
+                params.push("Hum");
+                values.push(`${row.humidity.toFixed(1)}%`);
+            }
+
+            const timestamp = row.created_at || row.timestamp;
+
+            $tbody.append(`
+                <tr>
+                    <td>${new Date(timestamp).toLocaleString('cs-CZ')}</td>
+                    <td>${row.device_id || 'IoT Device'}</td>
+                    <td>${params.join(' / ') || '-'}</td>
+                    <td>${values.join(' / ') || '-'}</td>
+                    <td><span class="status ok">Active</span></td>
+                    <td>Normal range</td>
+                </tr>
+            `);
+        });
+    }
 });
