@@ -78,7 +78,7 @@ $(document).ready(function () {
                 const values = {};
                 data.forEach(m => {
                     values[m.type] = Number(m.value);
-                    created_at = m.timestamp;
+                    created_at = m.created_at;
                 });
 
                 /* ============================
