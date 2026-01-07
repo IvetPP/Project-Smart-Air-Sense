@@ -8,7 +8,7 @@ const supabase = require('../db');
 
 // GET measurements
 router.get('/',
-  authMiddleware,
+  // authMiddleware,
   query('device_id').optional().isString(),
   query('limit').optional().isInt({ min: 1, max: 100 }),
   handleValidation,
@@ -55,7 +55,7 @@ router.get('/',
 );
 
 // GET latest measurements
-router.get('/latest', authMiddleware, async (req, res) => {
+router.get('/latest', /* authMiddleware, */ async (req, res) => {
   try {
     // This query gets the most recent row for every device
     const { data, error } = await supabase
