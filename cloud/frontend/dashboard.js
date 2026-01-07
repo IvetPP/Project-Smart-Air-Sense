@@ -45,41 +45,39 @@ $(document).ready(function () {
     function loadLatestMeasurements() {
         fetch(API_MEASUREMENTS, { headers: authHeaders() })
             .then(res => {
-                if (!res.ok) {
-                    throw new Error('Failed to fetch measurements');
-                }
+                if (!res.ok) throw new Error('Failed to fetch measurements');
                 return res.json();
             })
             .then(data => {
-                console.log('LATEST MEASUREMENTS RAW:', data);
+                console.log('1. Backend Data Received:', data);
 
                 if (!Array.isArray(data) || data.length === 0) {
-                    console.warn('No measurements available');
+                    console.warn('No measurements available in database');
                     return;
                 }
 
-                // FIXED: Declare variables properly to avoid ReferenceError
                 const values = {};
                 let latestTimestamp = null; 
 
                 data.forEach(m => {
-                    // Map type to value
-                    values[m.type] = Number(m.value);
+                    // Normalize type to lowercase (e.g., "CO2" -> "co2")
+                    const type = m.type ? m.type.toLowerCase() : '';
+                    values[type] = Number(m.value);
                     
-                    // Track the most recent timestamp found in the batch
-                    // Matches 'created_at' from your Supabase logs
                     if (m.created_at && (!latestTimestamp || new Date(m.created_at) > new Date(latestTimestamp))) {
                         latestTimestamp = m.created_at;
                     }
                 });
 
+                console.log('2. Processed values for UI:', values);
+
                 /* ============================
-                   UPDATE UI
+                   UPDATE UI - Hardened Selectors
                 ============================ */
 
                 // CO2
                 if (values.co2 !== undefined) {
-                    $(".co2.value").text(values.co2);
+                    $(".co2.value").text(Math.round(values.co2));
                     $(".co2.state").text(values.co2 <= 1000 ? 'Normal' : 'High');
                 }
 
@@ -101,14 +99,14 @@ $(document).ready(function () {
 
                 // Pressure
                 if (values.pressure !== undefined) {
-                    $(".bar.value").text(values.pressure);
+                    $(".bar.value").text(Math.round(values.pressure));
                     $(".bar.state").text(values.pressure >= 1013 ? 'Higher' : 'Lower');
                 }
 
                 // IoT status
                 $(".iot-status").html(`Status IoT: <span style="color:#228B22">ON</span>`);
 
-                // Timestamp UI update
+                // Timestamp
                 if (latestTimestamp) {
                     const dt = new Date(latestTimestamp);
                     $(".time").text(`Date and time value: ${dt.toLocaleString()}`);
@@ -116,7 +114,6 @@ $(document).ready(function () {
             })
             .catch(err => {
                 console.error('Fetch error:', err);
-                // alert('Failed to load measurements'); // Optional: keep or remove
             });
     }
 
