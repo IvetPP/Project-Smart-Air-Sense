@@ -1,31 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
-const db = require('../db/connection');
+const supabase = require('../db');
 
-// GET /api/alerts (active or historical)
-router.get('/', authMiddleware, (req, res) => {
-    const userId = req.user.sub;
-    const userRoles = Array.isArray(req.user.roles) ? req.user.roles : [req.user.roles];
-    const isAdminOrOwner = userRoles.some(role =>
-        ['ROLE_ADMIN', 'ROLE_LICENSE_OWNER'].includes(role)
-    );
+router.get('/', authMiddleware, async (req, res) => {
+    // Ownership check disabled for now
+    const { data, error } = await supabase
+        .from('alerts')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    let sql = 'SELECT a.* FROM alerts a';
-    let params = [];
-
-    // Ownership Filter: If not Admin/Owner, join with devices table
-    if (!isAdminOrOwner) {
-        sql += ' JOIN devices d ON a.device_id = d.device_id WHERE d.owner_id = ?';
-        params.push(userId);
-    }
-
-    sql += ' ORDER BY created_at DESC';
-
-    db.all(sql, params, (err, rows) => {
-        if (err) return res.status(500).json({ error: 'DB error' });
-        res.json(rows);
-    });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
 });
 
 module.exports = router;

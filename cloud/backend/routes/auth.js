@@ -2,75 +2,70 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const { handleValidation } = require('../middleware/validation');
-const db = require('../db/connection');
+const supabase = require('../db'); // Corrected import
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../middleware/auth');
+const { v4: uuidv4 } = require('uuid');
 
 // Register
-router.post(
-  '/register',
+router.post('/register',
   body('email').isEmail(),
   body('password').isLength({ min: 8 }),
   handleValidation,
   async (req, res) => {
     const { email, password, full_name } = req.body;
 
-    db.get('SELECT user_id FROM users WHERE email = ?', [email], (err, row) => {
-      if (err) {
-        console.error('Database error:', err);
-        return res.status(500).json({ error: err.message });
-      }
-      if (row) return res.status(409).json({ error: 'Email exists' });
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('user_id')
+      .eq('email', email)
+      .single();
 
-      const hash = bcrypt.hashSync(password, 10);
-      const roles = 'ROLE_USER';
+    if (existingUser) return res.status(409).json({ error: 'Email exists' });
 
-      db.run(
-        `INSERT INTO users(user_id, email, password_hash, full_name, roles, created_at)
-         VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-        [require('uuid').v4(), email, hash, full_name || null, roles],
-        function (err) {
-          if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ error: err.message });
-          }
-          res.status(201).json({ user_id: this.lastID, email });
-        }
-      );
-    });
+    const hash = bcrypt.hashSync(password, 10);
+    const userId = uuidv4();
+
+    const { error } = await supabase
+      .from('users')
+      .insert({
+        user_id: userId,
+        email,
+        password_hash: hash,
+        full_name: full_name || null,
+        roles: 'ROLE_USER'
+      });
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json({ user_id: userId, email });
   }
 );
 
 // Login
-router.post(
-  '/login',
+router.post('/login',
   body('email').isEmail(),
   body('password').isString(),
   handleValidation,
   async (req, res) => {
     const { email, password } = req.body;
 
-    db.get(
-      'SELECT user_id, password_hash, roles FROM users WHERE email = ?',
-      [email],
-      (err, row) => {
-        if (err) {
-          console.error('Database error:', err);
-          return res.status(500).json({ error: err.message });
-        }
-        if (!row) return res.status(401).json({ error: 'Invalid credentials' });
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('user_id, password_hash, roles')
+      .eq('email', email)
+      .single();
 
-        const ok = bcrypt.compareSync(password, row.password_hash);
-        if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+    if (error || !user) return res.status(401).json({ error: 'Invalid credentials' });
 
-        const token = jwt.sign({ sub: row.user_id, roles: row.roles }, JWT_SECRET, {
-          expiresIn: '2h',
-        });
+    const ok = bcrypt.compareSync(password, user.password_hash);
+    if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
 
-        res.json({ token, token_type: 'Bearer', expires_in: 7200 });
-      }
-    );
+    const token = jwt.sign({ sub: user.user_id, roles: user.roles }, JWT_SECRET, {
+      expiresIn: '2h',
+    });
+
+    res.json({ token, token_type: 'Bearer', expires_in: 7200 });
   }
 );
 
