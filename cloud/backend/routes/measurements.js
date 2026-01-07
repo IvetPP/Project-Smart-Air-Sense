@@ -8,36 +8,39 @@ const supabase = require('../db');
 
 // GET measurements
 router.get('/',
-  // authMiddleware,
+  //authMiddleware,
   query('device_id').optional().isString(),
   query('limit').optional().isInt({ min: 1, max: 100 }),
-  query('offset').optional().isInt({ min: 0 }), // Add validation for offset
+  query('offset').optional().isInt({ min: 0 }),
   handleValidation,
   async (req, res) => {
     try {
-      // Destructure offset from req.query
       const { device_id, limit, offset } = req.query; 
 
+      // Use { count: 'exact' } to get the total number of rows matching the query
       let queryBuilder = supabase
         .from('iot_data')
-        .select('*', { count: 'planned' }) // Optional: gets total count for better pagination
+        .select('*', { count: 'exact' }) 
         .order('created_at', { ascending: false });
 
       if (device_id) {
         queryBuilder = queryBuilder.eq('device_id', device_id);
       }
 
-      // Handle Pagination using .range(from, to)
       const parsedLimit = parseInt(limit) || 10;
       const parsedOffset = parseInt(offset) || 0;
       
-      // Supabase range is inclusive: (0, 9) returns 10 rows
       queryBuilder = queryBuilder.range(parsedOffset, parsedOffset + parsedLimit - 1);
 
-      const { data, error } = await queryBuilder;
+      const { data, error, count } = await queryBuilder;
 
       if (error) throw error;
-      res.json(data);
+
+      // Return an object containing both the rows and the total count
+      res.json({
+        measurements: data,
+        totalCount: count
+      });
 
     } catch (err) {
       console.error('Supabase Error:', err);

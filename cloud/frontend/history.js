@@ -56,8 +56,6 @@ $(document).ready(function () {
 
     function loadMeasurements() {
         const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-        
-        // Use relative path to avoid localhost errors
         const offset = (currentPage - 1) * PAGE_SIZE;
         let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
 
@@ -65,11 +63,25 @@ $(document).ready(function () {
             url: url,
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token },
-            success: function (data) {
-                renderTable(data);
+            success: function (response) {
+                // response now looks like { measurements: [...], totalCount: 100 }
+                const rows = response.measurements;
+                const total = response.totalCount;
+
+                renderTable(rows);
                 $('.page-info').text(currentPage);
-                $('.next').prop('disabled', data.length < PAGE_SIZE);
+
+                // Disable "Prev" if on the first page
                 $('.prev').prop('disabled', currentPage === 1);
+
+                // Disable "Next" if the next page would be empty
+                // Logic: (Current Page * Page Size) >= Total Count
+                const isLastPage = (currentPage * PAGE_SIZE) >= total;
+                $('.next').prop('disabled', isLastPage);
+                
+                // Optional: Update UI to show "Page X of Y"
+                const totalPages = Math.ceil(total / PAGE_SIZE);
+                $('.page-info').text(`Page ${currentPage} of ${totalPages || 1}`);
             },
             error: function (xhr) {
                 if (xhr.status === 401) {
@@ -80,7 +92,7 @@ $(document).ready(function () {
             }
         });
     }
-
+    
     function renderTable(rows) {
         const $tbody = $('.history-table tbody');
         $tbody.empty();
