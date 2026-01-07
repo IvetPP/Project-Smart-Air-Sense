@@ -18,16 +18,8 @@ $(document).ready(function () {
 
     // Update UI if logged in
     if (token) {
-        $('.user').text('Log out').css('cursor', 'pointer');
+        $('.user.pers').text('Log out').css('cursor', 'pointer');
     }
-
-    /* // Gatekeeper - Commented out as requested
-    if (!token) {
-        console.warn('NO TOKEN FOUND — redirecting to login');
-        window.location.href = 'login.html';
-        return;
-    }
-    */
 
     function authHeaders() {
         return {
@@ -56,33 +48,39 @@ $(document).ready(function () {
                     return;
                 }
 
+                // Since your logs show each row has separate columns (temperature, co2, humidity),
+                // we iterate and grab the first non-null value for each type found in the last 20 rows.
                 const values = {};
                 let latestTimestamp = null; 
 
                 data.forEach(m => {
-                    // Normalize type to lowercase (e.g., "CO2" -> "co2")
-                    const type = m.type ? m.type.toLowerCase() : '';
-                    values[type] = Number(m.value);
+                    // Update value only if we haven't found a more recent one in this batch
+                    if (m.co2 !== null && values.co2 === undefined) values.co2 = Number(m.co2);
+                    if (m.temperature !== null && values.temperature === undefined) values.temperature = Number(m.temperature);
+                    if (m.humidity !== null && values.humidity === undefined) values.humidity = Number(m.humidity);
+                    if (m.pressure !== null && values.pressure === undefined) values.pressure = Number(m.pressure);
                     
-                    if (m.created_at && (!latestTimestamp || new Date(m.created_at) > new Date(latestTimestamp))) {
-                        latestTimestamp = m.created_at;
+                    // Track the overall latest timestamp
+                    const rowDate = m.created_at || m.timestamp;
+                    if (rowDate && (!latestTimestamp || new Date(rowDate) > new Date(latestTimestamp))) {
+                        latestTimestamp = rowDate;
                     }
                 });
 
                 console.log('2. Processed values for UI:', values);
 
                 /* ============================
-                   UPDATE UI - Hardened Selectors
+                   UPDATE UI
                 ============================ */
 
                 // CO2
-                if (values.co2 !== undefined) {
+                if (values.co2 !== undefined && !isNaN(values.co2)) {
                     $(".co2.value").text(Math.round(values.co2));
                     $(".co2.state").text(values.co2 <= 1000 ? 'Normal' : 'High');
                 }
 
                 // Temperature
-                if (values.temperature !== undefined) {
+                if (values.temperature !== undefined && !isNaN(values.temperature)) {
                     $(".temp.value").text(values.temperature.toFixed(1));
                     $(".temp.state").text(
                         values.temperature >= 20 && values.temperature <= 24 ? 'Normal' : 'Out of range'
@@ -90,7 +88,7 @@ $(document).ready(function () {
                 }
 
                 // Humidity
-                if (values.humidity !== undefined) {
+                if (values.humidity !== undefined && !isNaN(values.humidity)) {
                     $(".hum.value").text(values.humidity.toFixed(1));
                     $(".hum.state").text(
                         values.humidity >= 40 && values.humidity <= 60 ? 'Normal' : 'Out of range'
@@ -98,7 +96,7 @@ $(document).ready(function () {
                 }
 
                 // Pressure
-                if (values.pressure !== undefined) {
+                if (values.pressure !== undefined && !isNaN(values.pressure)) {
                     $(".bar.value").text(Math.round(values.pressure));
                     $(".bar.state").text(values.pressure >= 1013 ? 'Higher' : 'Lower');
                 }
@@ -133,8 +131,7 @@ $(document).ready(function () {
     $(".edit").on("click", () => location.href = "editDevice.html");
     $(".man").on("click", () => location.href = "users.html");
 
-    // Fix: Make sure the selector matches your HTML for the logout button
-    $(".user").on("click", function () {
+    $(".user.pers").on("click", function () {
         if ($(this).text() === 'Log out') {
             if (confirm('Do you want to log out?')) {
                 localStorage.removeItem('auth_token');
