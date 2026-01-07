@@ -20,11 +20,13 @@ $(document).ready(function () {
         $('.user').text('Log out').css('cursor', 'pointer');
     }
 
+    /*
     if (!token) {
         console.warn('NO TOKEN FOUND — redirecting to login');
         window.location.href = 'login.html';
         return;
     }
+    */
 
     function authHeaders() {
         return {
