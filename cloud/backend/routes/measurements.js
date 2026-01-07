@@ -18,9 +18,9 @@ router.get('/',
 
       // START SUPABASE QUERY
       let queryBuilder = supabase
-        .from('measurements')
+        .from('iot_data')
         .select('*')
-        .order('timestamp', { ascending: false });
+        .order('created_at', { ascending: false });
 
       // 1. TEMPORARILY DISABLED USER FILTER
       // We are commenting this out because your data doesn't have owner_id/user_id yet
@@ -49,26 +49,30 @@ router.get('/',
 
     } catch (err) {
       console.error('Supabase Error:', err);
-      res.status(500).json({ error: 'Database error' });
+      res.status(500).json({ error: err.message || 'Database error' });
     }
   }
 );
 
 // GET latest measurements
-router.get('/latest', /* authMiddleware, */ async (req, res) => {
+router.get('/latest', async (req, res) => {
   try {
-    // This query gets the most recent row for every device
+    // Fetch the last 20 rows to ensure we get all types (co2, temp, etc.)
     const { data, error } = await supabase
-      .from('measurements')
+      .from('iot_data')
       .select('*')
-      .order('timestamp', { ascending: false });
-      // Note: In a real app, you'd use a more complex 'distinct' query, 
-      // but this will return data so you can see if it's working.
+      .order('created_at', { ascending: false })
+      .limit(20); 
 
     if (error) throw error;
+    
+    // Log for debugging - you'll see this in Render logs
+    console.log("Supabase Data fetched:", data.length, "rows");
+    
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: 'Database error' });
+    console.error('Supabase Error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
