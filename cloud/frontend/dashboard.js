@@ -16,6 +16,10 @@ $(document).ready(function () {
     const token = getToken();
     console.log('DASHBOARD TOKEN:', token);
 
+    if (token) {
+        $('.user').text('Log out').css('cursor', 'pointer');
+    }
+
     if (!token) {
         console.warn('NO TOKEN FOUND — redirecting to login');
         window.location.href = 'login.html';
