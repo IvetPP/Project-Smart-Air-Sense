@@ -45,12 +45,14 @@ $(document).ready(function () {
         fetch(API_MEASUREMENTS, { headers: authHeaders() })
             .then(res => {
                 if (!res.ok) {
+                    /*
                     if (res.status === 401) {
                         alert('Session expired — please log in again');
                         localStorage.removeItem('auth_token');
                         sessionStorage.removeItem('auth_token');
                         window.location.href = 'login.html';
                     }
+                    */
                     throw new Error('Failed to fetch measurements');
                 }
                 return res.json();
