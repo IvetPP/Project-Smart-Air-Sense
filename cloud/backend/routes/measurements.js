@@ -11,36 +11,28 @@ router.get('/',
   // authMiddleware,
   query('device_id').optional().isString(),
   query('limit').optional().isInt({ min: 1, max: 100 }),
+  query('offset').optional().isInt({ min: 0 }), // Add validation for offset
   handleValidation,
   async (req, res) => {
     try {
-      const { device_id, limit } = req.query;
+      // Destructure offset from req.query
+      const { device_id, limit, offset } = req.query; 
 
-      // START SUPABASE QUERY
       let queryBuilder = supabase
         .from('iot_data')
-        .select('*')
+        .select('*', { count: 'planned' }) // Optional: gets total count for better pagination
         .order('created_at', { ascending: false });
 
-      // 1. TEMPORARILY DISABLED USER FILTER
-      // We are commenting this out because your data doesn't have owner_id/user_id yet
-      /*
-      const userId = req.user.sub;
-      const isAdminOrOwner = req.user.roles.some(r => ['ROLE_ADMIN', 'ROLE_LICENSE_OWNER'].includes(r));
-      if (!isAdminOrOwner) {
-         queryBuilder = queryBuilder.eq('owner_id', userId); 
-      }
-      */
-
-      // 2. Filter by device if requested
       if (device_id) {
         queryBuilder = queryBuilder.eq('device_id', device_id);
       }
 
-      // 3. Set limit
-      if (limit) {
-        queryBuilder = queryBuilder.limit(parseInt(limit));
-      }
+      // Handle Pagination using .range(from, to)
+      const parsedLimit = parseInt(limit) || 10;
+      const parsedOffset = parseInt(offset) || 0;
+      
+      // Supabase range is inclusive: (0, 9) returns 10 rows
+      queryBuilder = queryBuilder.range(parsedOffset, parsedOffset + parsedLimit - 1);
 
       const { data, error } = await queryBuilder;
 
