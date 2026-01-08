@@ -92,7 +92,7 @@ $(document).ready(function () {
             }
         });
     }
-    
+
     function renderTable(rows) {
         const $tbody = $('.history-table tbody');
         $tbody.empty();
@@ -121,8 +121,64 @@ $(document).ready(function () {
                 params.push("Hum");
                 values.push(`${row.humidity.toFixed(1)}%`);
             }
+            if (row.pressure !== null && row.pressure !== undefined) {
+                params.push("Press");
+                values.push(`${row.pressure.toFixed(1)}%`);
+            }
 
             const timestamp = row.created_at || row.timestamp;
+
+
+            let sensorsHtml = '';
+
+            /* CO2 */
+            if (values.co2 !== undefined && !isNaN(values.co2)) {
+                sensorsHtml += `
+                    <div class="co2">
+                        <span class="value">${Math.round(values.co2)} ppm</span>
+                        <span class="state">${values.co2 <= 1000 ? 'Normal' : 'High'}</span>
+                    </div>
+                `;
+            }
+
+            /* Temperature */
+            if (values.temperature !== undefined && !isNaN(values.temperature)) {
+                sensorsHtml += `
+                    <div class="temp">
+                        <span class="value">${values.temperature.toFixed(1)} °C</span>
+                        <span class="state">
+                            ${values.temperature >= 20 && values.temperature <= 24 ? 'Normal' : 'Out of range'}
+                        </span>
+                    </div>
+                `;
+            }
+
+            /* Humidity */
+            if (values.humidity !== undefined && !isNaN(values.humidity)) {
+                sensorsHtml += `
+                    <div class="hum">
+                        <span class="value">${values.humidity.toFixed(1)} %</span>
+                        <span class="state">
+                            ${values.humidity >= 40 && values.humidity <= 60 ? 'Normal' : 'Out of range'}
+                        </span>
+                    </div>
+                `;
+            }
+
+            /* Pressure */
+            if (values.pressure !== undefined && !isNaN(values.pressure)) {
+                sensorsHtml += `
+                    <div class="bar">
+                        <span class="value">${Math.round(values.pressure)} hPa</span>
+                        <span class="state">${values.pressure >= 1013 ? 'Higher' : 'Lower'}</span>
+                    </div>
+                `;
+            }
+
+            /* Fallback */
+            if (!sensorsHtml) {
+                sensorsHtml = '-';
+            }
 
             $tbody.append(`
                 <tr>
@@ -131,7 +187,7 @@ $(document).ready(function () {
                     <td>${params.join(' / ') || '-'}</td>
                     <td>${values.join(' / ') || '-'}</td>
                     <td><span class="status ok">Active</span></td>
-                    <td>Normal range</td>
+                    <td>${sensorsHtml}</td>
                 </tr>
             `);
         });
