@@ -3,6 +3,7 @@ $(document).ready(function () {
     const PAGE_SIZE = 10;
     let currentPage = 1;
 
+    // Initial Load
     setupUserDisplay();
     loadDeviceList();
     loadMeasurements();
@@ -26,10 +27,14 @@ $(document).ready(function () {
             headers: { 'Authorization': 'Bearer ' + token },
             success: function (data) {
                 const deviceSelect = $('#filter-device');
+                // Keep the first "Select Device" option
                 deviceSelect.find('option:not(:first)').remove();
                 data.forEach(dev => {
                     deviceSelect.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
                 });
+            },
+            error: function(err) {
+                console.error("Failed to load devices list", err);
             }
         });
     }
@@ -37,36 +42,51 @@ $(document).ready(function () {
     function loadMeasurements() {
         const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
         const offset = (currentPage - 1) * PAGE_SIZE;
-        const filters = {
-            device_id: $('#filter-device').val(),
-            parameter: $('#filter-parameter').val(),
-            from: $('#filter-from').val(),
-            to: $('#filter-to').val()
-        };
+        
+        // Grab current values from the DOM
+        const deviceId = $('#filter-device').val();
+        const fromDate = $('#filter-from').val();
+        const toDate = $('#filter-to').val();
 
+        console.log(`Fetching history: Device=${deviceId}, Page=${currentPage}`);
+
+        // Construct URL with pagination
         let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
-        if (filters.device_id) url += `&device_id=${encodeURIComponent(filters.device_id)}`;
-        if (filters.from) url += `&from=${encodeURIComponent(filters.from)}`;
-        if (filters.to) url += `&to=${encodeURIComponent(filters.to)}`;
+        
+        // Only append filters if they have a value
+        if (deviceId && deviceId !== "") {
+            url += `&device_id=${encodeURIComponent(deviceId)}`;
+        }
+        if (fromDate) {
+            url += `&from=${encodeURIComponent(fromDate)}`;
+        }
+        if (toDate) {
+            url += `&to=${encodeURIComponent(toDate)}`;
+        }
 
         $.ajax({
             url: url,
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token },
             success: function (response) {
-                // Ensure we have an object with the measurements array
-                const rows = response.measurements || [];
-                const total = response.totalCount || 0;
+                console.log("History Response:", response);
+                
+                // Handle both array response or object response {measurements, totalCount}
+                const rows = response.measurements || (Array.isArray(response) ? response : []);
+                const total = response.totalCount || rows.length;
+                
                 renderTable(rows);
                 
+                // Update Pagination UI
                 $('.prev').prop('disabled', currentPage === 1);
                 $('.next').prop('disabled', (currentPage * PAGE_SIZE) >= total);
-                const totalPages = Math.ceil(total / PAGE_SIZE);
-                $('.page-info').text(`Page ${currentPage} of ${totalPages || 1}`);
+                
+                const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+                $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
             },
             error: function(xhr) {
-                console.error("History fetch failed:", xhr.responseJSON);
-                $('.history-table tbody').html(`<tr><td colspan="6" style="color:red">Error loading data: ${xhr.responseJSON?.error || 'Server Error'}</td></tr>`);
+                console.error("History fetch failed:", xhr.responseText);
+                $('.history-table tbody').html(`<tr><td colspan="6" style="color:red; text-align:center;">Error loading data: ${xhr.responseJSON?.error || 'Server Error'}</td></tr>`);
             }
         });
     }
@@ -75,8 +95,8 @@ $(document).ready(function () {
         const $tbody = $('.history-table tbody');
         $tbody.empty();
 
-        if (!rows.length) {
-            $tbody.append('<tr><td colspan="6">No data found for the selected filters.</td></tr>');
+        if (!rows || rows.length === 0) {
+            $tbody.append('<tr><td colspan="6" style="text-align:center;">No data found for the selected filters.</td></tr>');
             return;
         }
 
@@ -86,7 +106,8 @@ $(document).ready(function () {
             let statusHtml = '';
 
             const checkAndAdd = (val, label, unit, typeClass, min, max) => {
-                if (val !== null && val !== undefined && !isNaN(val)) {
+                // Check if val is a number and not null/undefined
+                if (val !== null && val !== undefined && val !== "" && !isNaN(val)) {
                     params.push(label);
                     values.push(`${Number(val).toFixed(1)}${unit}`);
                     const isOutOfRange = (val < min || val > max);
@@ -101,11 +122,13 @@ $(document).ready(function () {
             checkAndAdd(row.humidity, "Hum", " %", "hum", 40, 60);
             checkAndAdd(row.pressure, "Press", " hPa", "bar", 1013, 1100);
 
-            const timestamp = row.created_at || row.timestamp;
+            const timestamp = row.created_at || row.timestamp || new Date();
+            const deviceName = row.device_name || row.device_id || 'Unknown';
+
             $tbody.append(`
                 <tr>
                     <td>${new Date(timestamp).toLocaleString()}</td>
-                    <td>${row.device_name}</td>
+                    <td><strong>${deviceName}</strong></td>
                     <td>${params.join('<br>')}</td>
                     <td>${values.join('<br>')}</td>
                     <td><span class="status ok">Active</span></td>
@@ -116,23 +139,38 @@ $(document).ready(function () {
     }
 
     /* Event Handlers */
+    
+    // UI Panel Toggles
     $('.filter-btn.device').on('click', () => $('.device-panel').slideToggle(200));
     $('.filter-btn.time').on('click', () => $('.time-panel').slideToggle(200));
     $('.filter-btn.par').on('click', () => $('.param-panel').slideToggle(200));
 
-    $('#filter-device, #filter-parameter, #filter-from, #filter-to').on('change', () => {
-        currentPage = 1;
+    // Listen for changes on ALL filter inputs
+    $('#filter-device, #filter-parameter, #filter-from, #filter-to').on('change', function() {
+        currentPage = 1; // Reset to first page when filtering
         loadMeasurements();
     });
 
-    $('#clear-filters').on('click', () => {
+    // Clear Filters
+    $('#clear-filters').on('click', function() {
         $('#filter-device, #filter-parameter, #filter-from, #filter-to').val('');
         currentPage = 1;
         loadMeasurements();
     });
 
-    $('.next').on('click', () => { currentPage++; loadMeasurements(); });
-    $('.prev').on('click', () => { if (currentPage > 1) { currentPage--; loadMeasurements(); } });
+    // Pagination
+    $('.next').on('click', function() { 
+        currentPage++; 
+        loadMeasurements(); 
+    });
+    
+    $('.prev').on('click', function() { 
+        if (currentPage > 1) { 
+            currentPage--; 
+            loadMeasurements(); 
+        } 
+    });
+
     $(".back").on("click", () => window.location.href = 'index.html');
 
     $('.user').on('click', function() {

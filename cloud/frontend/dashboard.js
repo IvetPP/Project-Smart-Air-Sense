@@ -30,30 +30,41 @@ $(document).ready(function () {
     }
 
     function loadLatestMeasurements(deviceId = null) {
-        let url = `${API_URL}/measurements/latest`;
-        if (deviceId) url += `?device_id=${encodeURIComponent(deviceId)}`;
-
-        fetch(url, { headers: authHeaders })
-            .then(res => res.json())
-            .then(data => {
-                if (!data || data.length === 0) {
-                    clearUI();
-                    return;
-                }
-                const m = data[0];
-                if (m.co2) {
-                    $(".co2.value").text(Math.round(m.co2));
-                    $(".co2.state").text(m.co2 <= 1000 ? 'Normal' : 'High');
-                }
-                if (m.temperature) $(".temp.value").text(Number(m.temperature).toFixed(1));
-                if (m.humidity) $(".hum.value").text(Number(m.humidity).toFixed(1));
-                if (m.pressure) $(".bar.value").text(Math.round(m.pressure));
-
-                const dt = new Date(m.created_at || m.timestamp);
-                $(".time").text(`Date and time value: ${dt.toLocaleString()}`);
-            })
-            .catch(() => clearUI());
+    // 1. Construct URL correctly
+    let url = `${API_URL}/measurements/latest`;
+    if (deviceId && deviceId !== "") {
+        url += `?device_id=${encodeURIComponent(deviceId)}`;
     }
+
+    fetch(url, { headers: authHeaders })
+        .then(res => res.json())
+        .then(data => {
+            // 2. Data Check: Dashboard expects data[0]
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                console.warn("No measurements found for device:", deviceId);
+                clearUI();
+                return;
+            }
+
+            const m = data[0]; 
+            
+            // 3. UI Update - Using strict ID selectors
+            if (m.co2 !== undefined) {
+                $(".co2.value").text(Math.round(m.co2));
+                $(".co2.state").text(m.co2 <= 1000 ? 'Normal' : 'High');
+            }
+            if (m.temperature) $(".temp.value").text(Number(m.temperature).toFixed(1));
+            if (m.humidity) $(".hum.value").text(Number(m.humidity).toFixed(1));
+            if (m.pressure) $(".bar.value").text(Math.round(m.pressure));
+
+            const dt = new Date(m.created_at || m.timestamp);
+            $(".time").text(`Date and time value: ${dt.toLocaleString()}`);
+        })
+        .catch(err => {
+            console.error("Dashboard fetch error:", err);
+            clearUI();
+        });
+}
 
     $('#device-select').on('change', function() {
         const id = $(this).val();
