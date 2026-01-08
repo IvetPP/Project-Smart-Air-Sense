@@ -1,11 +1,13 @@
-/* Existing styles */
-.user { font-size: x-small; }
-h2 { color: #9400d3; text-align: center; }
+.user {
+    font-size: x-small;
+}
 
-/* Layout Improvements */
+h2 {
+    color: #9400d3;
+    margin-top: 20px;
+}
+
 .form-container {
-    max-width: 400px;
-    margin: 40px auto;
     padding: 20px;
 }
 
@@ -13,7 +15,6 @@ h2 { color: #9400d3; text-align: center; }
     border: 0.5px solid #9400d3;
     border-radius: 5px;
     margin-bottom: 15px;
-    padding: 5px;
 }
 
 .form-group input {
@@ -21,13 +22,11 @@ h2 { color: #9400d3; text-align: center; }
     border: none;
     padding: 10px;
     outline: none;
-    font-family: inherit;
+    background: transparent;
 }
 
 .checkbox-group {
     border: none;
-    font-size: 0.9rem;
-    color: #666;
 }
 
 .checkbox-group input[type="checkbox"] {
@@ -37,12 +36,11 @@ h2 { color: #9400d3; text-align: center; }
 .form-buttons {
     display: flex;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
 button {
-    flex: 1;
-    padding: 12px;
+    padding: 10px 20px;
     border-radius: 5px;
     border: none;
     cursor: pointer;
@@ -59,17 +57,6 @@ button {
     color: #d32828;
 }
 
-/* Toggle Logic Classes */
-.hidden {
-    display: none;
-}
-
-.toggle-link {
-    display: block;
-    text-align: center;
-    margin-top: 15px;
-    color: #9400d3;
-    text-decoration: underline;
-    cursor: pointer;
-    font-size: 0.85rem;
+.cancel-btn:hover {
+    background-color: #eb9797;
 }
