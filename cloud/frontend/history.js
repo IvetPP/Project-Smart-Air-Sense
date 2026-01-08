@@ -111,14 +111,23 @@ $(document).ready(function () {
         rows.forEach(row => {
             let params = [];
             let values = [];
-            let sensorsHtml = '';
+            let statusHtml = ''; // This will now only contain the text status
 
+            // Helper to build column displays
             const checkAndAdd = (val, label, unit, typeClass, min, max) => {
                 if (val !== null && val !== undefined && !isNaN(val)) {
                     params.push(label);
                     values.push(`${val}${unit}`);
-                    const status = (min !== undefined && (val < min || val > max)) ? 'Out of range' : 'Normal';
-                    sensorsHtml += `<div class="${typeClass}"><span class="value">${val} ${unit}</span> <span class="state">${status}</span></div>`;
+                    
+                    // Determine the status text
+                    const isOutOfRange = (min !== undefined && (val < min || val > max));
+                    const statusText = isOutOfRange ? 'Out of range' : 'Normal';
+                    const statusClass = isOutOfRange ? 'warning' : 'normal-text';
+
+                    // Just add the text labels to the last column
+                    statusHtml += `<div class="${typeClass}">
+                        <span class="${statusClass}">${statusText}</span>
+                    </div>`;
                 }
             };
 
@@ -136,7 +145,7 @@ $(document).ready(function () {
                     <td>${params.join(' / ') || '-'}</td>
                     <td>${values.join(' / ') || '-'}</td>
                     <td><span class="status ok">Active</span></td>
-                    <td>${sensorsHtml || '-'}</td>
+                    <td>${statusHtml || '-'}</td>
                 </tr>
             `);
         });
