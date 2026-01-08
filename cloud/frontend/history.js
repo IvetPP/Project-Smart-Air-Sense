@@ -13,21 +13,14 @@ $(document).ready(function () {
     ============================ */
     function setupUserDisplay() {
         const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = 'login.html';
-            return;
-        }
+        if (!token) return;
         try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const payload = JSON.parse(window.atob(base64));
-            
-            // Get username and handle display
-            const name = payload.user_name || payload.username || "USER";
-            // Show first 5 letters of username centered in the circle
-            $('.user.pers').text(name.substring(0, 5).toUpperCase());
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const userName = payload.user_name || "ADMIN";
+            // Update the text and make it look clean
+            $('.user').text(userName.substring(0, 5).toUpperCase());
         } catch (e) {
-            $('.user.pers').text("USER");
+            $('.user').text("LOGOUT");
         }
     }
 

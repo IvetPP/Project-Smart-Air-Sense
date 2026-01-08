@@ -26,3 +26,28 @@
     font-size: 12px;
     pointer-events: none; 
 }
+
+/* Update the .user class in both CSS files */
+.user {
+    background-color: #dcdcdc;
+    border: 1px solid #9400D3;
+    border-radius: 50%; 
+    width: 50px; 
+    height: 50px; 
+    display: flex;             /* Use flexbox */
+    align-items: center;       /* Center vertically */
+    justify-content: center;    /* Center horizontally */
+    text-align: center;
+    cursor: pointer;
+    font-size: 10px;           /* Slightly smaller font for longer names */
+    font-weight: bold;
+    overflow: hidden;          /* Keep text inside circle */
+    word-wrap: break-word;
+    line-height: 1.1;          /* Tighter line height for name stacking */
+    padding: 2px;              /* Small padding to keep text off edges */
+}
+
+/* Specific fix for dashboard alignment */
+.row .user {
+    margin-left: 15px;
+}
