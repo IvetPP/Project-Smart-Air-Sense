@@ -5,29 +5,41 @@ const supabase = require('../db');
 
 // GET /api/users
 router.get('/', authMiddleware, async (req, res) => {
-    try {
-        // Fetch users. Note: if you don't have an 'assigned_device' column, 
-        // this will just return null for that field, which is fine.
-        const { data, error } = await supabase
-            .from('users')
-            .select('user_id, email, full_name, created_at');
+  try {
+    // We fetch users AND the related records from device_users
+    const { data, error } = await supabase
+      .from('users')
+      .select(`
+        user_id, 
+        email, 
+        full_name, 
+        created_at,
+        device_users ( device_id )
+      `);
 
-        if (error) throw error;
+    if (error) throw error;
 
-        const formattedUsers = (data || []).map(u => ({
-            id: u.user_id, 
-            full_name: u.full_name || 'Anonymous User',
-            email: u.email,
+    const formattedUsers = (data || []).map(u => {
+        // device_users will be an array because it's a relationship
+        // We take the first assigned device_id if it exists
+        const assigned = u.device_users && u.device_users.length > 0 
+            ? u.device_users[0].device_id 
+            : 'None';
+
+        return {
+            id: u.user_id,
+            full_name: u.full_name || 'No Name',
+            email: u.email || 'No Email',
             created_at: u.created_at,
-            // Fallback for the frontend table
-            assigned_device: 'No device linked' 
-        }));
+            assigned_device: assigned // This now fills the "Device" column
+        };
+    });
 
-        res.json(formattedUsers);
-    } catch (err) {
-        console.error('Backend Error GET /api/users:', err.message);
-        res.status(500).json({ error: err.message });
-    }
+    res.json(formattedUsers);
+  } catch (err) {
+    console.error('Backend Error GET /api/users:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // GET /api/users/profile
