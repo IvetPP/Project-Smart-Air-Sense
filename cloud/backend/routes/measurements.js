@@ -17,7 +17,8 @@ router.get('/latest', authMiddleware, async (req, res) => {
             .order('created_at', { ascending: false })
             .limit(1);
 
-        if (device_id) {
+        // Only filter if a valid ID is provided
+        if (device_id && device_id.trim() !== "" && device_id !== "null") {
             query = query.eq('device_id', device_id);
         }
 
@@ -33,12 +34,13 @@ router.get('/latest', authMiddleware, async (req, res) => {
 
 /* ============================================================
    GET /api/measurements/
-   Used by History.js (Matches the URL: /api/measurements?limit=10...)
+   Used by History.js
    ============================================================ */
 router.get('/', authMiddleware, async (req, res) => {
     try {
         const { limit = 10, offset = 0, device_id, from, to } = req.query;
 
+        // Start base query with relationship join
         let query = supabase
             .from('measurements')
             .select(`
@@ -46,20 +48,35 @@ router.get('/', authMiddleware, async (req, res) => {
                 devices ( device_name )
             `, { count: 'exact' });
 
-        if (device_id) query = query.eq('device_id', device_id);
-        if (from) query = query.gte('created_at', from);
-        if (to) query = query.lte('created_at', to);
+        // FIX: Guard against empty strings from the frontend dropdown
+        if (device_id && device_id.trim() !== "" && device_id !== "null") {
+            query = query.eq('device_id', device_id);
+        }
+
+        // Apply Date Filters
+        if (from) {
+            query = query.gte('created_at', from);
+        }
+        if (to) {
+            query = query.lte('created_at', to);
+        }
+
+        // Apply Pagination and Sorting
+        const start = parseInt(offset);
+        const end = start + parseInt(limit) - 1;
 
         query = query
             .order('created_at', { ascending: false })
-            .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+            .range(start, end);
 
         const { data, error, count } = await query;
 
         if (error) throw error;
 
+        // Format for frontend
         const formatted = (data || []).map(m => ({
             ...m,
+            // Fallback chain: Device Name -> Device ID -> 'Unknown'
             device_name: m.devices?.device_name || m.device_id || 'Unknown'
         }));
 
