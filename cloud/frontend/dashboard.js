@@ -15,17 +15,23 @@ $(document).ready(function () {
         $(".time").text("Date and time value: No records found");
     }
 
-    function loadDeviceList() {
-        fetch(`${API_URL}/devices`, { headers: authHeaders })
-            .then(res => res.json())
-            .then(devices => {
-                const $select = $('#device-select');
-                $select.find('option:not(:first)').remove();
-                devices.forEach(dev => {
-                    $select.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
-                });
+    // Inside dashboard.js
+function loadDeviceList() {
+    fetch(`${API_URL}/devices`, { headers: authHeaders })
+        .then(res => res.json())
+        .then(devices => {
+            if (!Array.isArray(devices)) {
+                console.error("Expected array but got:", devices);
+                return;
+            }
+            const $select = $('#device-select');
+            $select.find('option:not(:first)').remove();
+            devices.forEach(dev => {
+                $select.append(`<option value="${dev.device_id}">${dev.device_name}</option>`);
             });
-    }
+        })
+        .catch(err => console.error("Fetch error:", err));
+}
 
     function loadLatestMeasurements(deviceId = null) {
         let url = `${API_URL}/measurements/latest`;
