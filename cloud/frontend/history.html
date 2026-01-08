@@ -30,6 +30,34 @@
                     <button class="filter-btn time">Time</button>
                     <button class="filter-btn par">Parameter</button>
                 </div>
+
+                <button id="clear-filters" style="width: 100%; margin-top: 10px; padding: 8px; cursor: pointer; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px;">
+                    Clear All Filters
+                </button>
+
+                <div class="device-panel" style="display: none; margin-top: 10px;">
+                    <select id="filter-device" style="width: 100%; padding: 5px;">
+                        <option value="">All Devices</option>
+                        <option value="co2-monitor:0">Office 1</option>
+                    </select>
+                </div>
+
+                <div class="time-panel" style="display: none; margin-top: 10px;">
+                    <label>From:</label>
+                    <input type="date" id="filter-from" style="width: 100%; margin-bottom: 5px;">
+                    <label>To:</label>
+                    <input type="date" id="filter-to" style="width: 100%;">
+                </div>
+
+                <div class="param-panel" style="display: none; margin-top: 10px;">
+                    <select id="filter-parameter" style="width: 100%; padding: 5px;">
+                        <option value="">All Parameters</option>
+                        <option value="co2">CO2 Only</option>
+                        <option value="temperature">Temperature Only</option>
+                        <option value="humidity">Humidity Only</option>
+                        <option value="pressure">Pressure Only</option>
+                    </select>
+                </div>
             </div>
         </div>
 
