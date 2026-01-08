@@ -30,35 +30,59 @@ $(document).ready(function () {
     }
 
     function loadLatestMeasurements(deviceId = null) {
-    // 1. Construct URL correctly
-    let url = `${API_URL}/measurements/latest`;
+    // 1. Ask for more rows (limit=20) so we can find all sensor types
+    let url = `${API_URL}/measurements?limit=20`; 
     if (deviceId && deviceId !== "") {
-        url += `?device_id=${encodeURIComponent(deviceId)}`;
+        url += `&device_id=${encodeURIComponent(deviceId)}`;
     }
 
     fetch(url, { headers: authHeaders })
         .then(res => res.json())
-        .then(data => {
-            // 2. Data Check: Dashboard expects data[0]
-            if (!data || !Array.isArray(data) || data.length === 0) {
+        .then(response => {
+            // Handle the response structure from our fixed measurements.js
+            const rows = response.measurements || [];
+
+            if (rows.length === 0) {
                 console.warn("No measurements found for device:", deviceId);
                 clearUI();
                 return;
             }
 
-            const m = data[0]; 
-            
-            // 3. UI Update - Using strict ID selectors
-            if (m.co2 !== undefined) {
-                $(".co2.value").text(Math.round(m.co2));
-                $(".co2.state").text(m.co2 <= 1000 ? 'Normal' : 'High');
-            }
-            if (m.temperature) $(".temp.value").text(Number(m.temperature).toFixed(1));
-            if (m.humidity) $(".hum.value").text(Number(m.humidity).toFixed(1));
-            if (m.pressure) $(".bar.value").text(Math.round(m.pressure));
+            // We will "collect" the latest non-null values
+            let latestData = {
+                co2: null,
+                temp: null,
+                hum: null,
+                press: null,
+                time: rows[0].created_at // Use the time from the absolute newest row
+            };
 
-            const dt = new Date(m.created_at || m.timestamp);
-            $(".time").text(`Date and time value: ${dt.toLocaleString()}`);
+            // Loop through the 20 rows to fill our latestData object
+            for (const row of rows) {
+                if (latestData.co2 === null && row.co2 !== null) latestData.co2 = row.co2;
+                if (latestData.temp === null && row.temperature !== null) latestData.temp = row.temperature;
+                if (latestData.hum === null && row.humidity !== null) latestData.hum = row.humidity;
+                if (latestData.press === null && row.pressure !== null) latestData.press = row.pressure;
+                
+                // If we found everything, stop looking
+                if (latestData.co2 && latestData.temp && latestData.hum && latestData.press) break;
+            }
+
+            // 3. UI Update
+            if (latestData.co2 !== null) {
+                $(".co2.value").text(Math.round(latestData.co2));
+                $(".co2.state").text(latestData.co2 <= 1000 ? 'Normal' : 'High');
+            }
+            if (latestData.temp !== null) $(".temp.value").text(Number(latestData.temp).toFixed(1));
+            if (latestData.hum !== null) $(".hum.value").text(Number(latestData.hum).toFixed(1));
+            if (latestData.press !== null) {
+                // Convert Pa to hPa if your sensor sends raw Pascals (97800 -> 978)
+                const p = latestData.press > 5000 ? Math.round(latestData.press / 100) : Math.round(latestData.press);
+                $(".bar.value").text(p);
+            }
+
+            const dt = new Date(latestData.time);
+            $(".time").text(`Last Update: ${dt.toLocaleString()}`);
         })
         .catch(err => {
             console.error("Dashboard fetch error:", err);
