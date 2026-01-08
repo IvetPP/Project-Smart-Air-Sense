@@ -41,7 +41,7 @@
 .left-column {
     display: flex;
     flex-direction: column;
-    min-width: 220px; /* Increased slightly for better input fit */
+    min-width: 220px;
 }
 
 .filter {
@@ -76,7 +76,6 @@
     border-color: #9400D3;
 }
 
-/* Filter Panels (Hidden by default) */
 .device-panel, .time-panel, .param-panel {
     background-color: #f9f9f9;
     padding: 12px;
@@ -92,7 +91,7 @@
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    font-family: Arial, sans-serif; /* Clean font for data input */
+    font-family: Arial, sans-serif;
     box-sizing: border-box;
 }
 
@@ -103,7 +102,6 @@
     color: #666;
 }
 
-/* Clear Filters Button */
 #clear-filters {
     margin-top: 10px;
     padding: 10px;
@@ -153,27 +151,37 @@
     font-weight: normal;
 }
 
-/* Status & Sensor Styling within cells */
+/* Status Column Formatting */
 .status.ok {
     color: #28a745;
     font-weight: bold;
 }
 
+/* Sensor Rows for Alignment */
 .co2, .temp, .hum, .bar {
     font-size: 0.85rem;
-    margin-bottom: 4px;
+    height: 24px; /* Matches line height of parameter values */
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-bottom: 1px solid #eee;
-    padding-bottom: 2px;
 }
 
 .co2:last-child, .temp:last-child, .hum:last-child, .bar:last-child {
     border-bottom: none;
 }
 
-.state {
-    font-size: 0.75rem;
-    color: #666;
-    margin-left: 5px;
+/* Limit Normal Values Column Text */
+.normal-text {
+    color: #28a745;
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+.warning {
+    color: #d8000c;
+    font-weight: bold;
+    font-size: 0.85rem;
 }
 
 /* ============================
