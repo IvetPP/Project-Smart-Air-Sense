@@ -7,7 +7,7 @@ const supabase = require('../db');
 
 // GET measurements
 router.get('/',
-  // authMiddleware, // Uncomment if you want to enforce login
+  authMiddleware,
   query('device_id').optional().isString(),
   query('limit').optional().isInt({ min: 1, max: 100 }),
   query('offset').optional().isInt({ min: 0 }),
