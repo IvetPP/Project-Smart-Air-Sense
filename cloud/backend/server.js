@@ -20,7 +20,7 @@ app.use(express.json());
    API ROUTES
 ======================= */
 app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/devices', devicesRoutes);
 app.use('/api/measurements', measurementsRoutes);
 app.use('/api/thresholds', thresholdsRoutes);

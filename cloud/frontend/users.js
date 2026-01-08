@@ -8,38 +8,43 @@ $(document).ready(function () {
     }
 
     function loadUsers() {
-        $.ajax({
-            url: '/api/users', 
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
-            success: function (users) {
-                const tbody = $(".history-table tbody");
-                tbody.empty();
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    
+    $.ajax({
+        url: '/api/users', // This now matches app.use('/api/users', ...)
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function (users) {
+            const tbody = $(".history-table tbody");
+            tbody.empty();
 
-                users.forEach(user => {
-                    const regDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
-                    const row = `
-                        <tr>
-                            <td>${user.full_name || 'No Name Set'}</td>
-                            <td>${user.user_name || user.email}</td>
-                            <td>${regDate}</td>
-                            <td>${user.assigned_device || 'None'}</td>
-                            <td>
-                                <button class="edit-btn" data-id="${user.id}">
-                                    🖊️ EDIT
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                    tbody.append(row);
-                });
-            },
-            error: function (xhr) {
-                console.error("Failed to load users", xhr);
-                $(".history-table tbody").html('<tr><td colspan="5">Error loading users from database.</td></tr>');
+            if (!Array.isArray(users)) {
+                console.error("Expected array, got:", users);
+                return;
             }
-        });
-    }
+
+            users.forEach(user => {
+                const regDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
+                const row = `
+                    <tr>
+                        <td>${user.full_name}</td>
+                        <td>${user.email}</td>
+                        <td>${regDate}</td>
+                        <td>${user.assigned_device || 'None'}</td>
+                        <td>
+                            <button class="edit-btn" data-id="${user.id}">🖊️ EDIT</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        },
+        error: function (xhr) {
+            console.error("Failed to load users", xhr.responseJSON);
+            $(".history-table tbody").html(`<tr><td colspan="5">Error: ${xhr.responseJSON?.error || 'Endpoint not found'}</td></tr>`);
+        }
+    });
+}
 
     // Edit button click - use the real database ID
     $(document).on("click", ".edit-btn", function () {
