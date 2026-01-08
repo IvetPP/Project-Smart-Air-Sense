@@ -1,56 +1,80 @@
 $(document).ready(function () {
+    const AUTH_API = '/api/auth';
 
-    const API_URL = '/api/auth';
+    // Start with Signup hidden
+    $('#signup-form').addClass('hidden');
 
-    console.log('LOGIN JS LOADED');
+    // Add toggle links dynamically
+    $('#login-form').append('<span class="toggle-link" id="show-signup">Don\'t have an account? Sign up</span>');
+    $('#signup-form').append('<span class="toggle-link" id="show-login">Already have an account? Log in</span>');
 
+    /* ============================
+       TOGGLE LOGIC
+    ============================ */
+    $(document).on('click', '#show-signup', function() {
+        $('#login-form').addClass('hidden');
+        $('#signup-form').removeClass('hidden');
+    });
+
+    $(document).on('click', '#show-login, .cancel-btn', function() {
+        $('#signup-form').addClass('hidden');
+        $('#login-form').removeClass('hidden');
+    });
+
+    /* ============================
+       LOGIN LOGIC
+    ============================ */
     $('#login-form').on('submit', function (e) {
         e.preventDefault();
-
-        const email = $('#login-username').val().trim();
+        const user_name = $('#login-username').val().trim();
         const password = $('#login-password').val();
         const remember = $('#remember').is(':checked');
 
-        if (!email || !password) {
-            alert('Email and password are required');
+        $.ajax({
+            url: `${AUTH_API}/login`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ user_name, password }),
+            success: function (res) {
+                localStorage.setItem('auth_token', res.token);
+                if (!remember) sessionStorage.setItem('auth_token', res.token);
+                window.location.href = 'index.html';
+            },
+            error: function (xhr) {
+                alert(xhr.responseJSON?.error || 'Login failed');
+            }
+        });
+    });
+
+    /* ============================
+       REGISTRATION LOGIC
+    ============================ */
+    $('#signup-form').on('submit', function (e) {
+        e.preventDefault();
+        const user_name = $('#signup-username').val().trim();
+        const password = $('#signup-password').val();
+        const confirmPw = $('#signup-password-confirm').val();
+
+        if (password !== confirmPw) {
+            alert("Passwords do not match!");
             return;
         }
 
         $.ajax({
-            url: API_URL + '/login',
+            url: `${AUTH_API}/register`,
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ email, password }),
+            data: JSON.stringify({ user_name, password }),
             success: function (res) {
-                console.log('LOGIN RESPONSE:', res);
-
-                if (!res.token) {
-                    alert('NO TOKEN FROM SERVER');
-                    return;
-                }
-
-                // Always use localStorage to persist across page reloads
-                localStorage.setItem('auth_token', res.token);
-                if (!remember) {
-                    // Also keep in sessionStorage if not remembering
-                    sessionStorage.setItem('auth_token', res.token);
-                }
-
-                console.log('TOKEN SAVED:');
-                console.log('localStorage:', localStorage.getItem('auth_token'));
-                console.log('sessionStorage:', sessionStorage.getItem('auth_token'));
-
-                // Redirect after token is saved
-                window.location.href = 'index.html';
+                alert('Registration successful! You can now log in.');
+                $('#show-login').click(); // Switch back to login form
+                $('#login-username').val(user_name);
             },
             error: function (xhr) {
-                console.error('LOGIN ERROR:', xhr.responseText);
-                if (xhr.status === 401) {
-                    alert('Invalid email or password');
-                } else {
-                    alert('Login failed');
-                }
+                alert(xhr.responseJSON?.error || 'Registration failed');
             }
         });
     });
+
+    $('.back').on('click', () => window.location.href = 'index.html');
 });

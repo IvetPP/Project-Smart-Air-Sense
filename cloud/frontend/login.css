@@ -1,28 +1,75 @@
-.user{
-    font-size: x-small;
+/* Existing styles */
+.user { font-size: x-small; }
+h2 { color: #9400d3; text-align: center; }
+
+/* Layout Improvements */
+.form-container {
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 20px;
 }
 
-h2 {
-    color: #9400d3;
-}
-
-.form-group{
+.form-group {
     border: 0.5px solid #9400d3;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    padding: 5px;
 }
 
-.checkbox-group{
+.form-group input {
+    width: 100%;
     border: none;
+    padding: 10px;
+    outline: none;
+    font-family: inherit;
+}
+
+.checkbox-group {
+    border: none;
+    font-size: 0.9rem;
+    color: #666;
 }
 
 .checkbox-group input[type="checkbox"] {
     accent-color: #9400d3;
 }
 
-.cancel-btn {
-  background-color: #FFCFCF;
-  color: #d32828;
+.form-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
 }
 
-.cancel-btn:hover{
-    background-color: #eb9797;
+button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-family: 'ADLaM Display', sans-serif;
+}
+
+.save-btn {
+    background-color: #9400d3;
+    color: white;
+}
+
+.cancel-btn {
+    background-color: #FFCFCF;
+    color: #d32828;
+}
+
+/* Toggle Logic Classes */
+.hidden {
+    display: none;
+}
+
+.toggle-link {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    color: #9400d3;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.85rem;
 }
