@@ -3,27 +3,53 @@ const router = express.Router();
 const supabase = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
+/* ============================================================
+   GET /api/measurements/latest
+   Used by Dashboard.js
+   ============================================================ */
+router.get('/latest', authMiddleware, async (req, res) => {
+    try {
+        const { device_id } = req.query;
+
+        let query = supabase
+            .from('measurements')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (device_id) {
+            query = query.eq('device_id', device_id);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        res.json(data || []);
+    } catch (err) {
+        console.error('Error fetching latest:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/* ============================================================
+   GET /api/measurements/
+   Used by History.js (Matches the URL: /api/measurements?limit=10...)
+   ============================================================ */
 router.get('/', authMiddleware, async (req, res) => {
     try {
-        const { limit = 10, offset = 0, device_id, parameter, from, to } = req.query;
+        const { limit = 10, offset = 0, device_id, from, to } = req.query;
 
-        // 1. Build the base query for measurements
         let query = supabase
             .from('measurements')
             .select(`
                 *,
                 devices ( device_name )
-            `, { count: 'exact' }); // { count: 'exact' } is vital for pagination
+            `, { count: 'exact' });
 
-        // 2. Apply Filters
         if (device_id) query = query.eq('device_id', device_id);
         if (from) query = query.gte('created_at', from);
         if (to) query = query.lte('created_at', to);
-        
-        // Note: 'parameter' filtering is usually handled in frontend render logic
-        // as measurements usually contain all params in one row.
 
-        // 3. Apply Pagination & Sorting
         query = query
             .order('created_at', { ascending: false })
             .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
@@ -32,20 +58,17 @@ router.get('/', authMiddleware, async (req, res) => {
 
         if (error) throw error;
 
-        // 4. Format the data to match history.js expectations
-        const formattedMeasurements = (data || []).map(m => ({
+        const formatted = (data || []).map(m => ({
             ...m,
-            device_name: m.devices?.device_name || m.device_id || 'Unknown Device'
+            device_name: m.devices?.device_name || m.device_id || 'Unknown'
         }));
 
-        // RETURN THE OBJECT FORMAT history.js EXPECTS
         res.json({
-            measurements: formattedMeasurements,
+            measurements: formatted,
             totalCount: count || 0
         });
-
     } catch (err) {
-        console.error('History API Error:', err.message);
+        console.error('Error fetching history:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
