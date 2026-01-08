@@ -6,20 +6,14 @@ const { v4: uuidv4 } = require('uuid');
 
 router.get('/', authMiddleware, async (req, res) => {
     try {
-        // We select only 'device_id' and 'name' first to ensure the basic list works
+        // We select the correct column 'device_name' as per your error logs
         const { data, error } = await supabase
             .from('devices')
-            .select('device_id, name, location');
+            .select('device_id, device_name, location');
         
         if (error) throw error;
 
-        // Map 'name' to 'device_name' so Dashboard.js doesn't break
-        const formattedData = (data || []).map(d => ({
-            ...d,
-            device_name: d.name || d.device_id
-        }));
-
-        res.json(formattedData);
+        res.json(data || []);
     } catch (err) {
         console.error('Backend Error GET /devices:', err.message);
         res.status(500).json({ error: err.message });
@@ -33,7 +27,7 @@ router.put('/:device_id', authMiddleware, async (req, res) => {
         const { error } = await supabase
             .from('devices')
             .update({ 
-                name: device_name, 
+                device_name: device_name, // Updated to match DB column
                 location: location
             })
             .eq('device_id', req.params.device_id);
