@@ -3,22 +3,16 @@ $(document).ready(function () {
     const PAGE_SIZE = 10;
     let currentPage = 1;
 
-    // Initialization
     setupUserDisplay();
     loadDeviceList();
     loadMeasurements();
 
-    /* ============================
-       CORE FUNCTIONS
-    ============================ */
     function setupUserDisplay() {
         const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
         if (!token) return;
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            const userName = payload.user_name || "ADMIN";
-            // Update the text and make it look clean
-            $('.user').text(userName.substring(0, 5).toUpperCase());
+            $('.user').text((payload.user_name || "ADMIN").substring(0, 5).toUpperCase());
         } catch (e) {
             $('.user').text("LOGOUT");
         }
@@ -27,22 +21,15 @@ $(document).ready(function () {
     function loadDeviceList() {
         const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
         $.ajax({
-            url: `${API_BASE_URL}/devices`, // Changed to /devices for cleaner list
+            url: `${API_BASE_URL}/devices`,
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token },
             success: function (data) {
                 const deviceSelect = $('#filter-device');
                 deviceSelect.find('option:not(:first)').remove();
-                
                 data.forEach(dev => {
-                    const id = dev.device_id;
-                    const name = dev.device_name || id;
-                    deviceSelect.append(`<option value="${id}">${name}</option>`);
+                    deviceSelect.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
                 });
-            },
-            error: function() {
-                // Fallback to manual if devices route fails
-                console.warn("Using fallback device list");
             }
         });
     }
@@ -59,7 +46,6 @@ $(document).ready(function () {
 
         let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
         if (filters.device_id) url += `&device_id=${encodeURIComponent(filters.device_id)}`;
-        if (filters.parameter) url += `&parameter=${encodeURIComponent(filters.parameter)}`;
         if (filters.from) url += `&from=${encodeURIComponent(filters.from)}`;
         if (filters.to) url += `&to=${encodeURIComponent(filters.to)}`;
 
@@ -68,6 +54,7 @@ $(document).ready(function () {
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token },
             success: function (response) {
+                // Ensure we have an object with the measurements array
                 const rows = response.measurements || [];
                 const total = response.totalCount || 0;
                 renderTable(rows);
@@ -76,6 +63,10 @@ $(document).ready(function () {
                 $('.next').prop('disabled', (currentPage * PAGE_SIZE) >= total);
                 const totalPages = Math.ceil(total / PAGE_SIZE);
                 $('.page-info').text(`Page ${currentPage} of ${totalPages || 1}`);
+            },
+            error: function(xhr) {
+                console.error("History fetch failed:", xhr.responseJSON);
+                $('.history-table tbody').html(`<tr><td colspan="6" style="color:red">Error loading data: ${xhr.responseJSON?.error || 'Server Error'}</td></tr>`);
             }
         });
     }
@@ -85,7 +76,7 @@ $(document).ready(function () {
         $tbody.empty();
 
         if (!rows.length) {
-            $tbody.append('<tr><td colspan="6">No data found.</td></tr>');
+            $tbody.append('<tr><td colspan="6">No data found for the selected filters.</td></tr>');
             return;
         }
 
@@ -111,12 +102,10 @@ $(document).ready(function () {
             checkAndAdd(row.pressure, "Press", " hPa", "bar", 1013, 1100);
 
             const timestamp = row.created_at || row.timestamp;
-            const deviceName = row.device_name || row.device_id || 'Unknown';
-
             $tbody.append(`
                 <tr>
                     <td>${new Date(timestamp).toLocaleString()}</td>
-                    <td>${deviceName}</td>
+                    <td>${row.device_name}</td>
                     <td>${params.join('<br>')}</td>
                     <td>${values.join('<br>')}</td>
                     <td><span class="status ok">Active</span></td>
@@ -126,9 +115,7 @@ $(document).ready(function () {
         });
     }
 
-    /* ============================
-       EVENT HANDLERS
-    ============================ */
+    /* Event Handlers */
     $('.filter-btn.device').on('click', () => $('.device-panel').slideToggle(200));
     $('.filter-btn.time').on('click', () => $('.time-panel').slideToggle(200));
     $('.filter-btn.par').on('click', () => $('.param-panel').slideToggle(200));
@@ -140,6 +127,7 @@ $(document).ready(function () {
 
     $('#clear-filters').on('click', () => {
         $('#filter-device, #filter-parameter, #filter-from, #filter-to').val('');
+        currentPage = 1;
         loadMeasurements();
     });
 
