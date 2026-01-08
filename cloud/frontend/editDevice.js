@@ -25,21 +25,32 @@ $(document).ready(function () {
     });
 
     // 2. Handle Update
-    $('#edit-device-form').on('submit', function (e) {
+    $('#edit-device-form').off('submit').on('submit', function (e) {
         e.preventDefault();
+    
+        // Use encodeURIComponent to handle the ":" in the ID safely
+        const safeId = encodeURIComponent($('#device-id').val().trim());
+
         const payload = {
             device_name: $('#device-name').val().trim(),
-            location: $('#device-location').val().trim()
+            location: $('#device-location').val().trim(),
+            device_type: $('#device-type').val().trim()
         };
 
         $.ajax({
-            url: `${API_URL}/devices/${deviceId}`,
+            url: `/api/devices/${safeId}`,
             method: 'PUT',
             headers: { Authorization: 'Bearer ' + token },
             contentType: 'application/json',
             data: JSON.stringify(payload),
-            success: () => alert('Device updated!'),
-            error: () => alert('Update failed')
+            success: function () {
+                alert('Device updated successfully!');
+                window.location.href = 'index.html';
+            },
+            error: function (xhr) {
+                console.error(xhr);
+                alert('Error: ' + (xhr.responseJSON?.error || 'Server error'));
+            }
         });
     });
 

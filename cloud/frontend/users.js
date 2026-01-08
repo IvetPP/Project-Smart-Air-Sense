@@ -1,146 +1,62 @@
 $(document).ready(function () {
-    const usersCount = 5;
-
-    const firstNames = ["Klara", "Petra", "Jana", "Michaela", "Sarka", "Monika", "Sara", "Zuzana", "Lucie"];
-    const lastNames = ["Novakova", "Kadlecova", "Dvorákova", "Smiskova", "Valentova", "Bila", "Novotna"];
-    const devices = [
-        "Device 1",
-        "Device 2",
-        "Device 3",
-        "Device 4",
-        "Device 5"
-    ];
-
-    function randomItem(arr) {
-        return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    function randomDate(startYear = 2023, endYear = 2025) {
-        const start = new Date(startYear, 0, 1);
-        const end = new Date(endYear, 11, 31);
-        const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-        return date.toISOString().split("T")[0];
-    }
-
-    function createDeviceSelect() {
-        let html = `
-        <div class="device-dropdown">
-            <div class="device-dropdown-header">Device List ▾</div>
-            <div class="device-dropdown-list" style="display:none;">
-        `;
-
-        devices.forEach(device => {
-            html += `<div class="device-item" style="pointer-events: none;">${device}</div>`;
-        });
-
-        html += `
-            </div>
-        </div>
-        `;
-
-        return html;
-    }
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     
-    function generateUser() {
-        const firstName = randomItem(firstNames);
-        const lastName = randomItem(lastNames);
-
-        return {
-            name: `${firstName} ${lastName}`,
-            email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
-            date: randomDate(),
-            device: randomItem(devices)
-        };
+    // Dynamic Username Display
+    if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        $('.user').text((payload.user_name || "USER").substring(0, 5).toUpperCase());
     }
 
-    function renderUsers() {
-        const tbody = $(".history-table tbody");
-        tbody.empty();
+    function loadUsers() {
+        $.ajax({
+            url: '/api/users', 
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token },
+            success: function (users) {
+                const tbody = $(".history-table tbody");
+                tbody.empty();
 
-        for (let i = 0; i < usersCount; i++) {
-            const user = generateUser();
-
-            const row = `
-                <tr>
-                    <td>${user.name}</td>
-                    <td>${user.email}</td>
-                    <td>${user.date}</td>
-                    <td>
-                        ${createDeviceSelect(user.device)}
-                    </td>
-                    <td>
-                        <button class="edit" data-email="${user.email}">
-                            🖊️ EDIT
-                        </button>
-                    </td>
-                </tr>
-            `;
-
-            tbody.append(row);
-        }
+                users.forEach(user => {
+                    const regDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
+                    const row = `
+                        <tr>
+                            <td>${user.full_name || 'No Name Set'}</td>
+                            <td>${user.user_name || user.email}</td>
+                            <td>${regDate}</td>
+                            <td>${user.assigned_device || 'None'}</td>
+                            <td>
+                                <button class="edit-btn" data-id="${user.id}">
+                                    🖊️ EDIT
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            },
+            error: function (xhr) {
+                console.error("Failed to load users", xhr);
+                $(".history-table tbody").html('<tr><td colspan="5">Error loading users from database.</td></tr>');
+            }
+        });
     }
 
-    // Edit button click
+    // Edit button click - use the real database ID
     $(document).on("click", ".edit-btn", function () {
-        const email = $(this).data("email");
-        window.location.href = `editUser.html?email=${email}`;
+        const userId = $(this).data("id");
+        window.location.href = `editUser.html?id=${userId}`;
     });
 
-    renderUsers();
-
-    // Pagination buttons
-    $(".pagination .prev").on("click", function () {
-        if (currentPage > 1) {
-            currentPage--;
-            renderTable(currentPage);
-        }
-    });
-
-    $(".pagination .next").on("click", function () {
-        if (currentPage * rowsPerPage < allRows.length) {
-            currentPage++;
-            renderTable(currentPage);
-        }
-    });
-
-    //redirect to dashboard
-    $(".back").on("click", function () {
-        window.history.back();
-    });
-
-    $(".home").on("click", function () {
-        window.location.href = "index.html";
-    });
-
-    //redirect to edit user
-    $(".edit").on("click", function () {
-        window.location.href = "editUser.html";
-    });
-
-    $(document).on("click", ".device-dropdown-header", function() {
-        $(this).siblings(".device-dropdown-list").slideToggle();
-    });
+    // Navigation
+    $(".back, .home").on("click", () => window.location.href = "index.html");
 
     $('.user').on('click', function () {
-        const token =
-            localStorage.getItem('auth_token') ||
-            sessionStorage.getItem('auth_token');
+        if (confirm('Do you want to log out?')) {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+    });
 
-            // User is NOT logged in
-            if (!token) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            // User IS logged in
-            const confirmLogout = confirm('Do you want to log out?');
-
-            if (confirmLogout) {
-                localStorage.removeItem('auth_token');
-                sessionStorage.removeItem('auth_token');
-
-                alert('You have been logged out.');
-                window.location.href = 'login.html';
-            }
-    });    
+    loadUsers();
 });
