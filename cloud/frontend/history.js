@@ -1,8 +1,14 @@
 $(document).ready(function () {
+    /* ============================
+       CONFIG & STATE
+    ============================ */
     const API_BASE_URL = window.location.origin + '/api';
     const PAGE_SIZE = 10;
     let currentPage = 1;
 
+    // Initialization
+    setupUserDisplay();
+    loadDeviceList();
     loadMeasurements();
 
     /* ============================
@@ -49,9 +55,57 @@ $(document).ready(function () {
 
     $(".back").on("click", () => window.location.href = 'index.html');
 
+    // Logout Functionality
+    $('.user').on('click', function() {
+        if(confirm("Do you want to log out?")) {
+            localStorage.removeItem('auth_token');
+            sessionStorage.removeItem('auth_token');
+            window.location.href = 'login.html';
+        }
+    });
+
     /* ============================
        CORE FUNCTIONS
     ============================ */
+
+    function setupUserDisplay() {
+        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = 'login.html';
+            return;
+        }
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const payload = JSON.parse(window.atob(base64));
+            const displayLabel = payload.username || payload.email || "USER";
+            $('.user').text(displayLabel.substring(0, 4).toUpperCase());
+        } catch (e) {
+            window.location.href = 'login.html';
+        }
+    }
+
+    function loadDeviceList() {
+        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        $.ajax({
+            url: `${API_BASE_URL}/measurements/latest`, 
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token },
+            success: function (data) {
+                const deviceSelect = $('#filter-device');
+                const uniqueDevices = [...new Set(data.map(item => item.device_id))];
+                
+                deviceSelect.find('option:not(:first)').remove();
+                uniqueDevices.forEach(devId => {
+                    if (devId) {
+                        // Optional mapping: if devId is 'co2-monitor:0', display 'Office 1'
+                        const displayName = (devId === 'co2-monitor:0') ? 'Office 1' : devId;
+                        deviceSelect.append(`<option value="${devId}">${displayName}</option>`);
+                    }
+                });
+            }
+        });
+    }
 
     function getFilterData() {
         return {
@@ -68,7 +122,6 @@ $(document).ready(function () {
         const filters = getFilterData();
 
         let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
-        
         if (filters.device_id) url += `&device_id=${encodeURIComponent(filters.device_id)}`;
         if (filters.parameter) url += `&parameter=${encodeURIComponent(filters.parameter)}`;
         if (filters.from) url += `&from=${encodeURIComponent(filters.from)}`;
@@ -81,20 +134,15 @@ $(document).ready(function () {
             success: function (response) {
                 const rows = response.measurements || [];
                 const total = response.totalCount || 0;
-
                 renderTable(rows);
                 
-                // Pagination Logic
                 $('.prev').prop('disabled', currentPage === 1);
-                const isLastPage = (currentPage * PAGE_SIZE) >= total;
-                $('.next').prop('disabled', isLastPage);
-                
+                $('.next').prop('disabled', (currentPage * PAGE_SIZE) >= total);
                 const totalPages = Math.ceil(total / PAGE_SIZE);
                 $('.page-info').text(`Page ${currentPage} of ${totalPages || 1}`);
             },
             error: function (xhr) {
                 if (xhr.status === 401) window.location.href = 'login.html';
-                else console.error("Fetch error:", xhr);
             }
         });
     }
@@ -111,23 +159,16 @@ $(document).ready(function () {
         rows.forEach(row => {
             let params = [];
             let values = [];
-            let statusHtml = ''; // This will now only contain the text status
+            let statusHtml = '';
 
-            // Helper to build column displays
             const checkAndAdd = (val, label, unit, typeClass, min, max) => {
                 if (val !== null && val !== undefined && !isNaN(val)) {
                     params.push(label);
                     values.push(`${val}${unit}`);
-                    
-                    // Determine the status text
                     const isOutOfRange = (min !== undefined && (val < min || val > max));
                     const statusText = isOutOfRange ? 'Out of range' : 'Normal';
                     const statusClass = isOutOfRange ? 'warning' : 'normal-text';
-
-                    // Just add the text labels to the last column
-                    statusHtml += `<div class="${typeClass}">
-                        <span class="${statusClass}">${statusText}</span>
-                    </div>`;
+                    statusHtml += `<div class="${typeClass}"><span class="${statusClass}">${statusText}</span></div>`;
                 }
             };
 
@@ -137,11 +178,12 @@ $(document).ready(function () {
             checkAndAdd(row.pressure, "Press", " hPa", "bar", 1013, 1100);
 
             const timestamp = row.created_at || row.timestamp;
+            const deviceName = (row.device_id === 'co2-monitor:0') ? 'Office 1' : (row.device_id || 'IoT Device');
 
             $tbody.append(`
                 <tr>
                     <td>${new Date(timestamp).toLocaleString('cs-CZ')}</td>
-                    <td>${row.device_id || 'IoT Device'}</td>
+                    <td>${deviceName}</td>
                     <td>${params.join(' / ') || '-'}</td>
                     <td>${values.join(' / ') || '-'}</td>
                     <td><span class="status ok">Active</span></td>

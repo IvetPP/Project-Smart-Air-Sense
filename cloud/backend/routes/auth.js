@@ -2,70 +2,101 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const { handleValidation } = require('../middleware/validation');
-const supabase = require('../db'); // Corrected import
-const bcrypt = require('bcryptjs');
+const supabase = require('../db'); 
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../middleware/auth');
-const { v4: uuidv4 } = require('uuid');
 
-// Register
+/**
+ * Register a new user
+ * Expects: user_name, password
+ */
 router.post('/register',
-  body('email').isEmail(),
-  body('password').isLength({ min: 8 }),
+  body('user_name').isString().notEmpty(),
+  body('password').isLength({ min: 6 }), // Adjusted for development ease
   handleValidation,
   async (req, res) => {
-    const { email, password, full_name } = req.body;
+    const { user_name, password } = req.body;
 
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('user_id')
-      .eq('email', email)
-      .single();
+    try {
+      // 1. Check if user already exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('user_id')
+        .eq('user_name', user_name)
+        .single();
 
-    if (existingUser) return res.status(409).json({ error: 'Email exists' });
+      if (existingUser) {
+        return res.status(409).json({ error: 'Username already exists' });
+      }
 
-    const hash = bcrypt.hashSync(password, 10);
-    const userId = uuidv4();
+      // 2. Insert into Supabase (user_id will auto-increment from 1)
+      const { data: newUser, error } = await supabase
+        .from('users')
+        .insert({
+          user_name: user_name,
+          password: password // Plain text as requested
+        })
+        .select()
+        .single();
 
-    const { error } = await supabase
-      .from('users')
-      .insert({
-        user_id: userId,
-        email,
-        password_hash: hash,
-        full_name: full_name || null,
-        roles: 'ROLE_USER'
+      if (error) throw error;
+
+      res.status(201).json({ 
+        message: 'User registered successfully', 
+        user_id: newUser.user_id, 
+        user_name: newUser.user_name 
       });
 
-    if (error) return res.status(500).json({ error: error.message });
-    res.status(201).json({ user_id: userId, email });
+    } catch (error) {
+      console.error('Registration Error:', error.message);
+      res.status(500).json({ error: 'Database insertion failed' });
+    }
   }
 );
 
-// Login
+/**
+ * Login User
+ * Expects: user_name, password
+ */
 router.post('/login',
-  body('email').isEmail(),
+  body('user_name').isString().notEmpty(),
   body('password').isString(),
   handleValidation,
   async (req, res) => {
-    const { email, password } = req.body;
+    const { user_name, password } = req.body;
 
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('user_id, password_hash, roles')
-      .eq('email', email)
-      .single();
+    try {
+      // 1. Fetch user by user_name
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('user_id, user_name, password')
+        .eq('user_name', user_name)
+        .single();
 
-    if (error || !user) return res.status(401).json({ error: 'Invalid credentials' });
+      // 2. Check if user exists and password matches
+      if (error || !user || user.password !== password) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
 
-    const ok = bcrypt.compareSync(password, user.password_hash);
-    if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+      // 3. Generate JWT Token
+      // 'sub' is set to the integer user_id
+      const token = jwt.sign(
+        { sub: user.user_id, username: user.user_name }, 
+        JWT_SECRET, 
+        { expiresIn: '2h' }
+      );
 
-    const token = jwt.sign({ sub: user.user_id, roles: user.roles }, JWT_SECRET, {
-      expiresIn: '2h',
-    });
+      res.json({ 
+        token, 
+        token_type: 'Bearer', 
+        expires_in: 7200,
+        username: user.user_name 
+      });
 
-    res.json({ token, token_type: 'Bearer', expires_in: 7200 });
+    } catch (error) {
+      console.error('Login Error:', error.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
   }
 );
 
