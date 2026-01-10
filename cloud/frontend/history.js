@@ -9,44 +9,64 @@ $(document).ready(function () {
 
     function loadDeviceList() {
         const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+
         $.ajax({
             url: `${API_BASE_URL}/devices`,
             method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
+            headers: { Authorization: 'Bearer ' + token },
             success: function (data) {
                 const deviceSelect = $('#filter-device');
                 deviceSelect.find('option:not(:first)').remove();
+
                 data.forEach(dev => {
-                    deviceSelect.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
+                    deviceSelect.append(
+                        `<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`
+                    );
                 });
-            }
+            },
+            error: err => console.error('Device list error', err)
         });
     }
 
     function loadMeasurements() {
         const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
         const offset = (currentPage - 1) * PAGE_SIZE;
+
         const deviceId = $('#filter-device').val();
         const fromDate = $('#filter-from').val();
         const toDate = $('#filter-to').val();
+        const parameter = $('#filter-parameter').val();
 
         let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
+
         if (deviceId) url += `&device_id=${encodeURIComponent(deviceId)}`;
         if (fromDate) url += `&from=${encodeURIComponent(fromDate)}`;
         if (toDate) url += `&to=${encodeURIComponent(toDate)}`;
+        if (parameter) url += `&parameter=${encodeURIComponent(parameter)}`;
 
         $.ajax({
-            url: url,
+            url,
             method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
+            headers: { Authorization: 'Bearer ' + token },
             success: function (response) {
                 const rows = response.measurements || [];
-                const total = response.totalCount || 0;
+                const total = response.totalCount || rows.length;
+
                 renderTable(rows);
-                
+
                 $('.prev').prop('disabled', currentPage === 1);
-                $('.next').prop('disabled', (currentPage * PAGE_SIZE) >= total);
-                $('.page-info').text(`Page ${currentPage} of ${Math.ceil(total / PAGE_SIZE) || 1}`);
+                $('.next').prop('disabled', currentPage * PAGE_SIZE >= total);
+
+                const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+                $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
+            },
+            error: function (xhr) {
+                console.error('Measurement error', xhr);
+                $('.history-table tbody').html(
+                    `<tr><td colspan="6" style="text-align:center;color:red;">
+                        Failed to load data
+                    </td></tr>`
+                );
             }
         });
     }
@@ -56,47 +76,36 @@ $(document).ready(function () {
         $tbody.empty();
 
         if (!rows.length) {
-            $tbody.append('<tr><td colspan="6" style="text-align:center;">No data found.</td></tr>');
+            $tbody.append(
+                '<tr><td colspan="6" style="text-align:center;">No data found.</td></tr>'
+            );
             return;
         }
 
         rows.forEach(row => {
-            let params = [], values = [], statusHtml = [], limits = [];
+            let params = [];
+            let values = [];
+            let statuses = [];
+            let limits = [];
 
-            const check = (val, fullLabel, unit, type) => {
+            const add = (val, label, unit, min, max, limitText) => {
                 if (val !== null && val !== undefined && !isNaN(val)) {
-                    params.push(fullLabel);
+                    const out = val < min || val > max;
+                    params.push(label);
                     values.push(`${Number(val).toFixed(1)}${unit}`);
-                    
-                    let statText = "Normal", isNorm = true, limText = "";
-
-                    if (type === 'co2') {
-                        isNorm = val >= 400 && val <= 1000;
-                        statText = isNorm ? 'Normal' : (val < 400 ? 'Low' : 'High');
-                        limText = "400 - 1000 ppm";
-                    } else if (type === 'temp') {
-                        isNorm = val >= 20 && val <= 24;
-                        statText = isNorm ? 'Normal' : 'Out of range';
-                        limText = "20 - 24 °C";
-                    } else if (type === 'hum') {
-                        isNorm = val >= 40 && val <= 60;
-                        statText = isNorm ? 'Normal' : (val < 40 ? 'Low' : 'High');
-                        limText = "40 - 60 %";
-                    } else if (type === 'press') {
-                        const p = val > 5000 ? val / 100 : val;
-                        statText = p >= 1013 ? 'Higher' : 'Lower';
-                        limText = "1013 hPa";
-                    }
-
-                    statusHtml.push(`<span class="${isNorm ? 'normal-text' : 'warning'}">${statText}</span>`);
-                    limits.push(limText);
+                    statuses.push(
+                        `<span class="${out ? 'warning' : 'normal-text'}">
+                            ${out ? 'Out of range' : 'Normal'}
+                        </span>`
+                    );
+                    limits.push(limitText);
                 }
             };
 
-            check(row.co2, "CO2 Concentration", " ppm", 'co2');
-            check(row.temperature, "Temperature", " °C", 'temp');
-            check(row.humidity, "Humidity", " %", 'hum');
-            check(row.pressure, "Barometric Pressure", " hPa", 'press');
+            add(row.co2, 'CO₂', ' ppm', 400, 1000, '400–1000 ppm');
+            add(row.temperature, 'Temp', ' °C', 20, 24, '20–24 °C');
+            add(row.humidity, 'Hum', ' %', 40, 60, '40–60 %');
+            add(row.pressure, 'Press', ' hPa', 980, 1050, '≈1013 hPa');
 
             $tbody.append(`
                 <tr>
@@ -104,30 +113,39 @@ $(document).ready(function () {
                     <td><strong>${row.device_name || row.device_id}</strong></td>
                     <td>${params.join('<br>')}</td>
                     <td>${values.join('<br>')}</td>
-                    <td>${statusHtml.join('<br>')}</td>
-                    <td class="limit-cell">${limits.join('<br>')}</td>
+                    <td>${statuses.join('<br>')}</td>
+                    <td>${limits.join('<br>')}</td>
                 </tr>
             `);
         });
     }
 
-    /* Events */
+    /* FILTER EVENTS */
+
     $('.filter-btn.device').on('click', () => $('.device-panel').slideToggle(200));
     $('.filter-btn.time').on('click', () => $('.time-panel').slideToggle(200));
     $('.filter-btn.par').on('click', () => $('.param-panel').slideToggle(200));
-    
+
     $('#filter-device, #filter-from, #filter-to, #filter-parameter').on('change', () => {
-        currentPage = 1; loadMeasurements();
+        currentPage = 1;
+        loadMeasurements();
     });
 
-    $('#update-values').on('click', () => location.reload());
-    $('.cur-values').on('click', () => window.location.href = 'index.html');
-    $('.back').on('click', () => window.location.href = 'index.html');
-
-    $('.user').on('click', () => {
-        if(confirm("Log out?")) { localStorage.clear(); window.location.href = 'login.html'; }
+    $('#clear-filters').on('click', () => {
+        $('#filter-device, #filter-from, #filter-to, #filter-parameter').val('');
+        currentPage = 1;
+        loadMeasurements();
     });
 
-    $('.next').on('click', () => { currentPage++; loadMeasurements(); });
-    $('.prev').on('click', () => { if(currentPage > 1) { currentPage--; loadMeasurements(); }});
+    $('.next').on('click', () => {
+        currentPage++;
+        loadMeasurements();
+    });
+
+    $('.prev').on('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            loadMeasurements();
+        }
+    });
 });
