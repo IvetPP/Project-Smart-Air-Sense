@@ -9,7 +9,6 @@ $(document).ready(function () {
 
     function loadDeviceList() {
         const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-
         $.ajax({
             url: `${API_BASE_URL}/devices`,
             method: 'GET',
@@ -17,11 +16,8 @@ $(document).ready(function () {
             success: function (data) {
                 const deviceSelect = $('#filter-device');
                 deviceSelect.find('option:not(:first)').remove();
-
                 data.forEach(dev => {
-                    deviceSelect.append(
-                        `<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`
-                    );
+                    deviceSelect.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
                 });
             },
             error: err => console.error('Device list error', err)
@@ -42,6 +38,7 @@ $(document).ready(function () {
         if (deviceId) url += `&device_id=${encodeURIComponent(deviceId)}`;
         if (fromDate) url += `&from=${encodeURIComponent(fromDate)}`;
         if (toDate) url += `&to=${encodeURIComponent(toDate)}`;
+        // Fix: Ensure parameter filter is sent to API
         if (parameter) url += `&parameter=${encodeURIComponent(parameter)}`;
 
         $.ajax({
@@ -51,22 +48,15 @@ $(document).ready(function () {
             success: function (response) {
                 const rows = response.measurements || [];
                 const total = response.totalCount || rows.length;
-
                 renderTable(rows);
 
                 $('.prev').prop('disabled', currentPage === 1);
                 $('.next').prop('disabled', currentPage * PAGE_SIZE >= total);
-
                 const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
                 $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
             },
             error: function (xhr) {
-                console.error('Measurement error', xhr);
-                $('.history-table tbody').html(
-                    `<tr><td colspan="6" style="text-align:center;color:red;">
-                        Failed to load data
-                    </td></tr>`
-                );
+                $('.history-table tbody').html('<tr><td colspan="6" style="text-align:center;color:red;">Failed to load data</td></tr>');
             }
         });
     }
@@ -81,22 +71,18 @@ $(document).ready(function () {
         }
 
         rows.forEach(row => {
-            let params = [];
-            let values = [];
-            let statuses = [];
-            let limits = [];
+            let params = [], values = [], statuses = [], limits = [];
 
-            // Helper to handle status text and coloring
             const getStatusHtml = (statusText) => {
                 const isNormal = statusText === 'Normal';
-                return `<span class="${isNormal ? 'normal-text' : 'warning'}">${statusText}</span>`;
+                return `<span class="${isNormal ? 'normal-text' : 'warning'}" style="${!isNormal ? 'color:red;' : ''}">${statusText}</span>`;
             };
 
             // CO2 Logic
             if (row.co2 !== null && row.co2 !== undefined) {
                 const v = Math.round(row.co2);
                 const status = (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal');
-                params.push('Carbon Dioxide');
+                params.push('CO₂ concentration');
                 values.push(`${v} ppm`);
                 statuses.push(getStatusHtml(status));
                 limits.push('400–1000 ppm');
@@ -127,7 +113,7 @@ $(document).ready(function () {
                 const p = row.pressure > 5000 ? Math.round(row.pressure / 100) : Math.round(row.pressure);
                 const isStandard = (p === 1013);
                 const status = isStandard ? 'Normal' : (p >= 1013 ? 'Higher' : 'Lower');
-                params.push('Pressure');
+                params.push('Barometric pressure');
                 values.push(`${p} hPa`);
                 statuses.push(getStatusHtml(status));
                 limits.push('≈1013 hPa');
@@ -146,6 +132,24 @@ $(document).ready(function () {
         });
     }
 
+    /* NAVIGATION & BUTTON LOGIC */
+
+    // Back Arrow / History of Values button
+    $('.back-btn, .nav-btn:contains("History of values")').on('click', function() {
+        window.location.href = 'history.html'; // Adjust this to your history filename
+    });
+
+    // Current Value Button
+    $('.nav-btn:contains("Current value")').on('click', function() {
+        window.location.href = 'dashboard.html'; // Adjust to your main dashboard filename
+    });
+
+    // Update Values Button
+    $('.nav-btn:contains("Update values")').on('click', function() {
+        currentPage = 1;
+        loadMeasurements();
+    });
+
     /* FILTER EVENTS */
     $('.filter-btn.device').on('click', () => $('.device-panel').slideToggle(200));
     $('.filter-btn.time').on('click', () => $('.time-panel').slideToggle(200));
@@ -162,15 +166,6 @@ $(document).ready(function () {
         loadMeasurements();
     });
 
-    $('.next').on('click', () => {
-        currentPage++;
-        loadMeasurements();
-    });
-
-    $('.prev').on('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            loadMeasurements();
-        }
-    });
+    $('.next').on('click', () => { currentPage++; loadMeasurements(); });
+    $('.prev').on('click', () => { if (currentPage > 1) { currentPage--; loadMeasurements(); } });
 });
