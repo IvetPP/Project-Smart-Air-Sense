@@ -18,26 +18,13 @@ $(document).ready(function () {
      */
     function clearUI() {
         $(".co2.value, .temp.value, .hum.value, .bar.value").text("--").css("color", "black");
-        
-        // Reset state text and remove warning borders
-        $(".co2.state, .temp.state, .hum.state, .bar.state")
-            .text("No Data")
-            .css({
-                "color": "black",
-                "border": "none",
-                "padding": "0"
-            });
-
+        $(".co2.state, .temp.state, .hum.state, .bar.state").text("No Data").css("color", "black");
         $(".box").css("border-color", "#9400D3");
-        $(".time").css({ "border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px" })
-            .html('Date and time value: <span style="color: black;">No records found</span>');
-        $(".iot-status").css({ "border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px" })
-            .html('Status IoT: <span style="color: black;">OFF</span>');
-
-        // Only disable if no device is actually selected in the dropdown
-        if (!$('#device-select').val()) {
-            $(".edit").prop('disabled', true).css("opacity", "0.5");
-        }
+        $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
+                  .html('Date and time value: <span style="color: black;">No records found</span>');
+        $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
+                  .html('Status IoT: <span style="color: black;">OFF</span>');
+        $(".edit").prop('disabled', true).css("opacity", "0.5");
     }
 
     /**
@@ -58,26 +45,18 @@ $(document).ready(function () {
 
     /**
      * Main UI Update Logic
+     * Handles color-coding and fragmented data
      */
     function loadLatestMeasurements(deviceId = null) {
-        if (!deviceId) {
-            clearUI();
-            return;
-        }
-
-        // Enable Edit button immediately because a device is selected
+        if (!deviceId) { clearUI(); return; }
+        
         $(".edit").prop('disabled', false).css("opacity", "1");
 
         fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
             .then(res => res.json())
             .then(response => {
                 const rows = response.measurements || [];
-
-                // If device has no data, we clear the values but KEEP the edit button active
-                if (rows.length === 0) {
-                    clearUI();
-                    return;
-                }
+                if (rows.length === 0) { clearUI(); return; }
 
                 let latest = { co2: null, temp: null, hum: null, press: null, time: rows[0].created_at };
                 for (const r of rows) {
@@ -87,9 +66,9 @@ $(document).ready(function () {
                     if (latest.press === null) latest.press = r.pressure;
                 }
 
-                // Status IoT & Time 
-                $(".iot-status").css({ "border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px" })
-                    .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
+                // Status IoT & Time (Grey borders, split colors)
+                $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
+                               .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
 
                 const dt = new Date(latest.time);
                 $(".time").css({ "border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px" })
@@ -98,39 +77,25 @@ $(document).ready(function () {
                 /**
                  * Helper to update UI boxes
                  */
-                /**
-                * Helper to update UI boxes
-                */
-                const updateBox = (selector, val, isNorm, stateText) => {
-                    // If state is "Normal", use black text and purple border. 
-                    // Otherwise, use red text and red border.
-                    const isActuallyNormal = (stateText === "Normal");
+                const updateBox = (selector, val, isNorm, stateText, isFirstSquare = false) => {
+                    const stateColor = isNorm ? "black" : "red";
+                    const borderColor = isNorm ? "#9400D3" : "red";
                     
-                    const stateColor = isActuallyNormal ? "black" : "red";
-                    const borderColor = isActuallyNormal ? "#9400D3" : "red";
+                    // CO2 (First Square) value text always stays black.
+                    const valueTextColor = isFirstSquare ? "black" : (isNorm ? "black" : "red");
 
-                    // Value (numbers) remain ALWAYS black as per your previous requirement
-                    $(`.${selector}.value`).text(val).css("color", "black");
-
-                    // State Text update with conditional red border
-                    $(`.${selector}.state`).text(stateText).css({
-                        "color": stateColor,
-                        "border": isNorm ? "none" : "1px solid red",
-                        "padding": isNorm ? "0" : "2px 6px",
-                        "border-radius": "4px",
-                        "display": "inline-block", // Ensures border wraps text correctly
-                        "margin-top": "5px"
-                    });
-
-                    // Main box border
+                    // 1. Set text colors
+                    $(`.${selector}.value`).text(val).css("color", valueTextColor);
+                    $(`.${selector}.state`).text(stateText).css("color", stateColor);
+                    
+                    // 2. Set border color of the parent box
                     $(`.${selector}`).closest('.box').css("border-color", borderColor);
                 };
 
-                
                 // CO2 Logic
                 if (latest.co2 !== null) {
                     const v = Math.round(latest.co2);
-                    updateBox('co2', v, (v >= 400 && v <= 1000), (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal'));
+                    updateBox('co2', v, (v >= 400 && v <= 1000), (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal'), true);
                 }
 
                 // Temp Logic
@@ -149,8 +114,8 @@ $(document).ready(function () {
                 if (latest.press !== null) {
                     const p = latest.press > 5000 ? Math.round(latest.press / 100) : Math.round(latest.press);
                     const isStandard = (p === 1013);
-                    const pressText = p >= 1013 ? (isStandard ? 'Normal' : 'Higher') : 'Lower';
-                    updateBox('bar', p, isStandard, pressText);
+                    const pressText = p >= 1013 ? 'Higher' : 'Lower';
+                    updateBox('bar', p, isStandard, (isStandard ? 'Normal' : pressText));
                 }
             })
             .catch(err => console.error("Error loading measurements:", err));
@@ -167,13 +132,13 @@ $(document).ready(function () {
     // Navigation
     $(".his-values").on("click", () => location.href = "history.html");
     $(".add-device").on("click", () => location.href = "addDevice.html");
+    
+    // FIX: Targets the USERS button by finding any button containing that text
     $(".man").on("click", () => location.href = "users.html");
 
-    $(".edit").on("click", function () {
+    $(".edit").on("click", () => {
         const id = $('#device-select').val();
-        if (id) {
-            location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
-        }
+        if(id) location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
     });
 
     $(".user.pers").on("click", () => {
