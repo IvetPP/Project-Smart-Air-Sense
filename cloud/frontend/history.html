@@ -29,8 +29,8 @@
 
         <div class="main-content">
             <div class="left-column">
-                <div class="filter-box">
-                    <p class="filter-label">Filter by:</p>
+                <div class="filter">
+                    Filter by:
                     <div class="filter-buttons">
                         <button class="filter-btn device">Device</button>
                         <button class="filter-btn time">Time</button>
@@ -39,20 +39,20 @@
 
                     <button id="clear-filters">Clear All Filters</button>
 
-                    <div class="device-panel filter-panel" style="display: none;">
+                    <div class="device-panel" style="display: none;">
                         <select id="filter-device">
                             <option value="">All Devices</option>
                         </select>
                     </div>
 
-                    <div class="time-panel filter-panel" style="display: none;">
+                    <div class="time-panel" style="display: none;">
                         <label>From:</label>
                         <input type="date" id="filter-from">
                         <label>To:</label>
                         <input type="date" id="filter-to">
                     </div>
 
-                    <div class="param-panel filter-panel" style="display: none;">
+                    <div class="param-panel" style="display: none;">
                         <select id="filter-parameter">
                             <option value="">All Parameters</option>
                             <option value="co2">CO2 Only</option>

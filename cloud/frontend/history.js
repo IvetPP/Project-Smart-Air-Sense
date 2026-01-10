@@ -3,7 +3,7 @@ $(document).ready(function () {
     const PAGE_SIZE = 10;
     let currentPage = 1;
 
-    // Load initial data
+    // Initial Load
     loadDeviceList();
     loadMeasurements();
 
@@ -52,53 +52,51 @@ $(document).ready(function () {
     }
 
     function renderTable(rows) {
-        const $tbody = $('.history-table tbody').empty();
+        const $tbody = $('.history-table tbody');
+        $tbody.empty();
 
-        if (rows.length === 0) {
-            $tbody.append('<tr><td colspan="6" style="text-align:center;">No data records found.</td></tr>');
+        if (!rows.length) {
+            $tbody.append('<tr><td colspan="6" style="text-align:center;">No data found.</td></tr>');
             return;
         }
 
         rows.forEach(row => {
             let params = [], values = [], statusHtml = [], limits = [];
 
-            const processParam = (val, fullName, unit, type) => {
+            const check = (val, fullLabel, unit, type) => {
                 if (val !== null && val !== undefined && !isNaN(val)) {
-                    params.push(fullName);
+                    params.push(fullLabel);
+                    values.push(`${Number(val).toFixed(1)}${unit}`);
                     
-                    let statusText = "Normal", isNormal = true, limitText = "";
+                    let statText = "Normal", isNorm = true, limText = "";
 
                     if (type === 'co2') {
-                        isNormal = val >= 400 && val <= 1000;
-                        statusText = isNormal ? 'Normal' : (val < 400 ? 'Low' : 'High');
-                        limitText = "400 - 1000 ppm";
+                        isNorm = val >= 400 && val <= 1000;
+                        statText = isNorm ? 'Normal' : (val < 400 ? 'Low' : 'High');
+                        limText = "400 - 1000 ppm";
                     } else if (type === 'temp') {
-                        isNormal = val >= 20 && val <= 24;
-                        statusText = isNormal ? 'Normal' : 'Out of range';
-                        limitText = "20 - 24 °C";
+                        isNorm = val >= 20 && val <= 24;
+                        statText = isNorm ? 'Normal' : 'Out of range';
+                        limText = "20 - 24 °C";
                     } else if (type === 'hum') {
-                        isNormal = val >= 40 && val <= 60;
-                        statusText = isNormal ? 'Normal' : (val < 40 ? 'Low' : 'High');
-                        limitText = "40 - 60 %";
+                        isNorm = val >= 40 && val <= 60;
+                        statText = isNorm ? 'Normal' : (val < 40 ? 'Low' : 'High');
+                        limText = "40 - 60 %";
                     } else if (type === 'press') {
                         const p = val > 5000 ? val / 100 : val;
-                        const isStandard = (Math.round(p) === 1013);
-                        statusText = p >= 1013 ? 'Higher' : 'Lower';
-                        isNormal = isStandard; // This forces Higher/Lower to be Red
-                        limitText = "1013 hPa";
+                        statText = p >= 1013 ? 'Higher' : 'Lower';
+                        limText = "1013 hPa";
                     }
 
-                    const alertStyle = isNormal ? "" : "color: red; font-weight: bold;";
-                    values.push(`<span style="${alertStyle}">${Number(val).toFixed(1)}${unit}</span>`);
-                    statusHtml.push(`<span style="${alertStyle}">${statusText}</span>`);
-                    limits.push(limitText);
+                    statusHtml.push(`<span class="${isNorm ? 'normal-text' : 'warning'}">${statText}</span>`);
+                    limits.push(limText);
                 }
             };
 
-            processParam(row.co2, "CO2 Concentration", " ppm", 'co2');
-            processParam(row.temperature, "Temperature", " °C", 'temp');
-            processParam(row.humidity, "Humidity", " %", 'hum');
-            processParam(row.pressure, "Barometric Pressure", " hPa", 'press');
+            check(row.co2, "CO2 Concentration", " ppm", 'co2');
+            check(row.temperature, "Temperature", " °C", 'temp');
+            check(row.humidity, "Humidity", " %", 'hum');
+            check(row.pressure, "Barometric Pressure", " hPa", 'press');
 
             $tbody.append(`
                 <tr>
@@ -107,30 +105,27 @@ $(document).ready(function () {
                     <td>${params.join('<br>')}</td>
                     <td>${values.join('<br>')}</td>
                     <td>${statusHtml.join('<br>')}</td>
-                    <td style="color: #6E6D6D; font-size: 0.85rem;">${limits.join('<br>')}</td>
+                    <td class="limit-cell">${limits.join('<br>')}</td>
                 </tr>
             `);
         });
     }
 
-    // Event Handlers
+    /* Events */
     $('.filter-btn.device').on('click', () => $('.device-panel').slideToggle(200));
     $('.filter-btn.time').on('click', () => $('.time-panel').slideToggle(200));
     $('.filter-btn.par').on('click', () => $('.param-panel').slideToggle(200));
     
-    $('#update-values').on('click', () => location.reload());
-    $('.cur-values, .back').on('click', () => window.location.href = 'index.html');
-    
     $('#filter-device, #filter-from, #filter-to, #filter-parameter').on('change', () => {
-        currentPage = 1;
-        loadMeasurements();
+        currentPage = 1; loadMeasurements();
     });
 
+    $('#update-values').on('click', () => location.reload());
+    $('.cur-values').on('click', () => window.location.href = 'index.html');
+    $('.back').on('click', () => window.location.href = 'index.html');
+
     $('.user').on('click', () => {
-        if(confirm("Do you want to log out?")) {
-            localStorage.clear();
-            window.location.href = 'login.html';
-        }
+        if(confirm("Log out?")) { localStorage.clear(); window.location.href = 'login.html'; }
     });
 
     $('.next').on('click', () => { currentPage++; loadMeasurements(); });
