@@ -12,13 +12,8 @@ $(document).ready(function () {
         return; 
     }
 
-    // 2. Set Profile Name in Circle
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        $('.user').text((payload.user_name || "USER").substring(0, 5).toUpperCase());
-    } catch (e) { 
-        console.error("Token parsing error"); 
-    }
+    // 2. Set Circle Text to Log Out (Requested Change)
+    $('.user').text("LOG OUT");
 
     /**
      * Fetch users from API
@@ -29,7 +24,6 @@ $(document).ready(function () {
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token },
             success: function (data) {
-                // Ensure we have an array
                 allUsers = Array.isArray(data) ? data : [];
                 filteredUsers = [...allUsers];
                 renderTable();
@@ -58,7 +52,7 @@ $(document).ready(function () {
             pageItems.forEach(user => {
                 const regDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
                 
-                // FIX: prioritize user_id for Supabase, fallback to id
+                // Ensuring we capture user_id from Supabase
                 const userId = user.user_id || user.id; 
                 const device = user.assigned_device || 'None';
 
@@ -69,7 +63,7 @@ $(document).ready(function () {
                         <td>${regDate}</td>
                         <td><code style="background:#f0f0f0; padding:2px 5px; border-radius:3px; border: 1px solid #ddd;">${device}</code></td>
                         <td>
-                            <button class="edit-btn" data-id="${userId}" style="cursor:pointer; background:white; border:1px solid #9400D3; border-radius:4px; padding:4px 12px; font-family:inherit;">🖊️ EDIT</button>
+                            <button type="button" class="edit-btn" data-id="${userId}" style="cursor:pointer; background:white; border:1px solid #9400D3; border-radius:4px; padding:4px 12px; font-family:inherit;">🖊️ EDIT</button>
                         </td>
                     </tr>
                 `);
@@ -80,68 +74,63 @@ $(document).ready(function () {
     }
 
     /**
-     * Update Pagination Text and Button States
+     * Update Pagination UI
      */
     function updatePaginationUI() {
         const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE) || 1;
-        
-        // Match wireframe requirement: "Page X of Y"
         $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
-        
         $('.prev').prop('disabled', currentPage === 1);
         $('.next').prop('disabled', currentPage >= totalPages);
     }
 
     /* --- Event Handlers --- */
 
-    // Search: by email or device name
+    // Search logic
     $('#user-search').on('keyup', function() {
         const term = $(this).val().toLowerCase().trim();
-        
         filteredUsers = allUsers.filter(u => {
             const email = (u.email || "").toLowerCase();
             const device = (u.assigned_device || "").toLowerCase();
             return email.includes(term) || device.includes(term);
         });
-
         currentPage = 1; 
         renderTable();
     });
 
-    // FIX: Redirect to editUser.html using the captured ID
+    /**
+     * FIXED: Edit Button Redirect logic
+     */
     $(document).on("click", ".edit-btn", function (e) {
         e.preventDefault();
+        e.stopPropagation(); 
+
         const id = $(this).attr("data-id");
+        console.log("Edit requested for ID:", id);
         
         if (id && id !== "undefined" && id !== "null") {
             window.location.href = `editUser.html?id=${encodeURIComponent(id)}`;
         } else {
-            alert("Error: Missing User ID. Check if 'user_id' is returned from the database.");
+            console.error("Missing User ID in button data-id attribute");
+            alert("Error: User ID not found. Ensure 'user_id' is returned by your API.");
         }
     });
 
-    // Navigation Redirects
+    // Navigation
     $(".back, .home, .cur-values").on("click", function() {
         window.location.href = "index.html";
     });
 
-    // Pagination Controls
+    // Pagination
     $('.next').on('click', function() { 
         const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
-        if (currentPage < totalPages) {
-            currentPage++; 
-            renderTable(); 
-        }
+        if (currentPage < totalPages) { currentPage++; renderTable(); }
     });
 
     $('.prev').on('click', function() { 
-        if (currentPage > 1) { 
-            currentPage--; 
-            renderTable(); 
-        }
+        if (currentPage > 1) { currentPage--; renderTable(); }
     });
 
-    // Logout
+    // Logout via the "Log out" circle
     $('.user').on('click', function() {
         if(confirm('Do you want to log out?')) {
             localStorage.clear();
@@ -150,6 +139,6 @@ $(document).ready(function () {
         }
     });
 
-    // Run on Load
+    // Init
     loadUsers();
 });
