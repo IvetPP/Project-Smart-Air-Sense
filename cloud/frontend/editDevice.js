@@ -27,18 +27,20 @@ $(document).ready(function () {
     // 2. Handle Update
     $('#edit-device-form').off('submit').on('submit', function (e) {
         e.preventDefault();
-    
-        // Use encodeURIComponent to handle the ":" in the ID safely
-        const safeId = encodeURIComponent($('#device-id').val().trim());
+
+        // Use the 'deviceId' constant defined at the top of your script
+        // This ensures the ID matches the one you successfully fetched
+        const safeId = encodeURIComponent(deviceId); 
 
         const payload = {
             device_name: $('#device-name').val().trim(),
             location: $('#device-location').val().trim(),
             device_type: $('#device-type').val().trim()
+            // Do NOT include device_id in the payload if it's the primary key
         };
 
         $.ajax({
-            url: `/api/devices/${safeId}`,
+            url: `${API_URL}/devices/${safeId}`,
             method: 'PUT',
             headers: { Authorization: 'Bearer ' + token },
             contentType: 'application/json',
@@ -48,7 +50,6 @@ $(document).ready(function () {
                 window.location.href = 'index.html';
             },
             error: function (xhr) {
-                console.error(xhr);
                 alert('Error: ' + (xhr.responseJSON?.error || 'Server error'));
             }
         });
