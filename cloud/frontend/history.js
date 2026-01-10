@@ -76,9 +76,7 @@ $(document).ready(function () {
         $tbody.empty();
 
         if (!rows.length) {
-            $tbody.append(
-                '<tr><td colspan="6" style="text-align:center;">No data found.</td></tr>'
-            );
+            $tbody.append('<tr><td colspan="6" style="text-align:center;">No data found.</td></tr>');
             return;
         }
 
@@ -88,24 +86,52 @@ $(document).ready(function () {
             let statuses = [];
             let limits = [];
 
-            const add = (val, label, unit, min, max, limitText) => {
-                if (val !== null && val !== undefined && !isNaN(val)) {
-                    const out = val < min || val > max;
-                    params.push(label);
-                    values.push(`${Number(val).toFixed(1)}${unit}`);
-                    statuses.push(
-                        `<span class="${out ? 'warning' : 'normal-text'}">
-                            ${out ? 'Out of range' : 'Normal'}
-                        </span>`
-                    );
-                    limits.push(limitText);
-                }
+            // Helper to handle status text and coloring
+            const getStatusHtml = (statusText) => {
+                const isNormal = statusText === 'Normal';
+                return `<span class="${isNormal ? 'normal-text' : 'warning'}">${statusText}</span>`;
             };
 
-            add(row.co2, 'CO₂', ' ppm', 400, 1000, '400–1000 ppm');
-            add(row.temperature, 'Temp', ' °C', 20, 24, '20–24 °C');
-            add(row.humidity, 'Hum', ' %', 40, 60, '40–60 %');
-            add(row.pressure, 'Press', ' hPa', 980, 1050, '≈1013 hPa');
+            // CO2 Logic
+            if (row.co2 !== null && row.co2 !== undefined) {
+                const v = Math.round(row.co2);
+                const status = (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal');
+                params.push('Carbon Dioxide');
+                values.push(`${v} ppm`);
+                statuses.push(getStatusHtml(status));
+                limits.push('400–1000 ppm');
+            }
+
+            // Temp Logic
+            if (row.temperature !== null && row.temperature !== undefined) {
+                const v = Number(row.temperature).toFixed(1);
+                const status = (v >= 20 && v <= 24 ? 'Normal' : 'Out of range');
+                params.push('Temperature');
+                values.push(`${v} °C`);
+                statuses.push(getStatusHtml(status));
+                limits.push('20–24 °C');
+            }
+
+            // Humidity Logic
+            if (row.humidity !== null && row.humidity !== undefined) {
+                const v = Number(row.humidity).toFixed(1);
+                const status = (v < 40 ? 'Low' : v > 60 ? 'High' : 'Normal');
+                params.push('Humidity');
+                values.push(`${v} %`);
+                statuses.push(getStatusHtml(status));
+                limits.push('40–60 %');
+            }
+
+            // Pressure Logic
+            if (row.pressure !== null && row.pressure !== undefined) {
+                const p = row.pressure > 5000 ? Math.round(row.pressure / 100) : Math.round(row.pressure);
+                const isStandard = (p === 1013);
+                const status = isStandard ? 'Normal' : (p >= 1013 ? 'Higher' : 'Lower');
+                params.push('Pressure');
+                values.push(`${p} hPa`);
+                statuses.push(getStatusHtml(status));
+                limits.push('≈1013 hPa');
+            }
 
             $tbody.append(`
                 <tr>
@@ -121,7 +147,6 @@ $(document).ready(function () {
     }
 
     /* FILTER EVENTS */
-
     $('.filter-btn.device').on('click', () => $('.device-panel').slideToggle(200));
     $('.filter-btn.time').on('click', () => $('.time-panel').slideToggle(200));
     $('.filter-btn.par').on('click', () => $('.param-panel').slideToggle(200));
