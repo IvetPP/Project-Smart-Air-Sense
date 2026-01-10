@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="./logo.jpg" />
@@ -9,44 +9,71 @@
     <link rel="stylesheet" href="users.css">
     <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  </head>
-  <body>
+    <style>
+        /* Specific hover color requested */
+        .history-table tbody tr:hover {
+            background-color: #e2b8f2 !important;
+            cursor: pointer;
+        }
+        .search-container {
+            margin-bottom: 15px;
+        }
+        #user-search {
+            width: 400px;
+            padding: 10px;
+            border: 1px solid #9400D3;
+            border-radius: 5px;
+            font-family: 'ADLaM+Display', sans-serif;
+        }
+    </style>
+</head>
+<body>
 
     <div class="container">
         <div class="header-row">
             <img src="./logo.jpg" class="logo">
             <div class="header-nav">
-            <button class="back">&lt;</button>
-            <h1 class="history-title">User management</h1>
-            <div class="user">USER</div>
+                <button class="back">&lt;</button>
+                <h1 class="history-title">User management</h1>
+                <div class="user">USER</div>
             </div>
         </div>
 
-    <div class="main-content">
-
-        <div class="left-column">
-            <button class="home">HOME/ <br> Current values</button>
-            <div class="search-container" style="margin-top: 20px;">
-                <input type="text" id="user-search" placeholder="Search users..." style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #9400D3;">
-            </div>
-        </div>
-
-        <div class="right-column">
-            <div class="nav-buttons-row">
-                <button class="cur-values">Current values</button> <h2 style="margin: 0; color: #9400D3;">User List</h2>
+        <div class="main-content">
+            <div class="left-column">
+                <button class="home">HOME/ <br> Current values</button>
             </div>
 
-            <div class="history-table-container">
-                <div class="pagination">
-                    <button class="prev">&lt;- Previous</button>
-                    <span class="page-info">Page 1 of 1</span> 
-                    <button class="next">Next -></button>
+            <div class="right-column">
+                <div class="search-container">
+                    <input type="text" id="user-search" placeholder="search by user email or device name">
+                </div>
+
+                <div class="history-table-container">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>LAST AND FIRST NAME</th>
+                                <th>USER NAME/EMAIL</th>
+                                <th>REGISTRATION DATE</th>
+                                <th>ASSIGNED DEVICE</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+
+                    <div class="pagination">
+                        <button class="prev">&lt;- Previous</button>
+                        <span class="page-info">Page 1 of 1</span>
+                        <button class="next">Next -></button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-</div>
     <script type="module" src="users.js"></script>
-  </body>
+</body>
 </html>

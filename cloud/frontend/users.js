@@ -3,141 +3,102 @@ $(document).ready(function () {
     const API_URL = '/api';
     const PAGE_SIZE = 10;
     let currentPage = 1;
-    let allUsers = []; // Store users for local search/filtering
+    let allUsers = []; // All data from server
+    let filteredUsers = []; // Data after search is applied
 
-    // Redirect if not logged in
-    if (!token) {
-        window.location.href = 'login.html';
-        return;
-    }
+    if (!token) { window.location.href = 'login.html'; return; }
 
-    // Dynamic Username Display
+    // Set Profile Name
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         $('.user').text((payload.user_name || "USER").substring(0, 5).toUpperCase());
-    } catch (e) {
-        console.error("Token parsing error:", e);
-    }
+    } catch (e) { console.error("Token error"); }
 
-    /**
-     * Loads users from the API and handles rendering
-     */
     function loadUsers() {
         $.ajax({
-            url: `${API_URL}/users`, 
+            url: `${API_URL}/users`,
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token },
-            success: function (users) {
-                allUsers = users; // Save data for search filtering
-                renderUserTable(allUsers);
+            success: function (data) {
+                allUsers = Array.isArray(data) ? data : [];
+                filteredUsers = [...allUsers];
+                renderTable();
             },
             error: function (xhr) {
-                console.error("Failed to load users", xhr.responseJSON);
-                const errorMsg = xhr.responseJSON?.error || 'Server Error';
-                $(".history-table tbody").html(`<tr><td colspan="5" style="color: red;">Error: ${errorMsg}</td></tr>`);
+                $(".history-table tbody").html('<tr><td colspan="5" style="color:red">Error loading users</td></tr>');
             }
         });
     }
 
-    /**
-     * Renders the table and updates pagination text
-     */
-    function renderUserTable(data) {
+    function renderTable() {
         const tbody = $(".history-table tbody");
         tbody.empty();
 
-        if (!Array.isArray(data) || data.length === 0) {
-            tbody.append('<tr><td colspan="5">No users found.</td></tr>');
-            updatePagination(0);
-            return;
-        }
-
-        // Apply Pagination slicing
+        // Calculate pagination for the CURRENT filtered set
         const start = (currentPage - 1) * PAGE_SIZE;
         const end = start + PAGE_SIZE;
-        const paginatedItems = data.slice(start, end);
+        const pageItems = filteredUsers.slice(start, end);
 
-        paginatedItems.forEach(user => {
-            const regDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
-            const userId = user.user_id || user.id || 'N/A';
-            
-            const deviceDisplay = (user.assigned_device && user.assigned_device !== 'None') 
-                ? `<code style="background: #f4f4f4; padding: 2px 5px; border-radius: 4px; border: 1px solid #ddd;">${user.assigned_device}</code>`
-                : `<span style="color: #888; font-style: italic;">None</span>`;
+        if (pageItems.length === 0) {
+            tbody.append('<tr><td colspan="5">No matching users found.</td></tr>');
+        } else {
+            pageItems.forEach(user => {
+                const regDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
+                const userId = user.id || user.user_id;
+                const device = user.assigned_device || 'None';
 
-            const row = `
-                <tr>
-                    <td>${user.full_name || 'No Name'}</td>
-                    <td>${user.email || 'No Email'}</td>
-                    <td>${regDate}</td>
-                    <td>${deviceDisplay}</td>
-                    <td>
-                        <button class="edit-btn" data-id="${userId}" style="cursor: pointer; background: none; border: 1px solid #9400D3; border-radius: 4px; padding: 2px 10px;">🖊️ EDIT</button>
-                    </td>
-                </tr>
-            `;
-            tbody.append(row);
-        });
+                tbody.append(`
+                    <tr>
+                        <td>${user.full_name || 'No Name'}</td>
+                        <td>${user.email || 'No Email'}</td>
+                        <td>${regDate}</td>
+                        <td><code style="background:#f0f0f0; padding:2px 5px; border-radius:3px;">${device}</code></td>
+                        <td>
+                            <button class="edit-btn" data-id="${userId}" style="cursor:pointer; background:white; border:1px solid #9400D3; border-radius:4px; padding:2px 10px;">🖊️ EDIT</button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
 
-        updatePagination(data.length);
+        updatePagination();
     }
 
-    /**
-     * Updates pagination buttons and "Page X of Y" text
-     */
-    function updatePagination(totalItems) {
-        const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
+    function updatePagination() {
+        const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE) || 1;
         $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
-        
         $('.prev').prop('disabled', currentPage === 1);
         $('.next').prop('disabled', currentPage >= totalPages);
     }
 
-    /* --- Event Handlers --- */
+    // --- Events ---
 
-    // Search Bar Filter
-    $(document).on('keyup', '#user-search', function() {
-        const searchTerm = $(this).val().toLowerCase();
-        const filteredUsers = allUsers.filter(user => {
-            return (user.full_name?.toLowerCase().includes(searchTerm) || 
-                    user.email?.toLowerCase().includes(searchTerm));
-        });
-        currentPage = 1; // Reset to page 1 on search
-        renderUserTable(filteredUsers);
+    // Search Logic: Email or Device Name
+    $('#user-search').on('keyup', function() {
+        const term = $(this).val().toLowerCase();
+        filteredUsers = allUsers.filter(u => 
+            (u.email?.toLowerCase().includes(term)) || 
+            (u.assigned_device?.toLowerCase().includes(term))
+        );
+        currentPage = 1; 
+        renderTable();
     });
 
-    // Edit User - Fixed Redirect
+    // Edit User Redirect (Corrected)
     $(document).on("click", ".edit-btn", function () {
-        const userId = $(this).data("id");
-        if (userId && userId !== 'N/A') {
-            window.location.href = `editUser.html?id=${encodeURIComponent(userId)}`;
-        } else {
-            alert("Cannot edit user: ID is missing.");
-        }
+        const id = $(this).data("id");
+        if (id) window.location.href = `editUser.html?id=${id}`;
     });
 
-    // Navigation redirects
+    // Navigation
     $(".back, .home, .cur-values").on("click", () => window.location.href = "index.html");
+    
+    $('.next').on('click', () => { currentPage++; renderTable(); });
+    $('.prev').on('click', () => { currentPage--; renderTable(); });
 
-    // Pagination Click Events
-    $('.next').on('click', () => { 
-        const totalPages = Math.ceil(allUsers.length / PAGE_SIZE);
-        if (currentPage < totalPages) { currentPage++; renderUserTable(allUsers); }
+    $('.user').on('click', () => {
+        if(confirm('Log out?')) { localStorage.clear(); window.location.href = 'login.html'; }
     });
 
-    $('.prev').on('click', () => { 
-        if (currentPage > 1) { currentPage--; renderUserTable(allUsers); }
-    });
-
-    // Logout handler
-    $('.user').on('click', function () {
-        if (confirm('Do you want to log out?')) {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = 'login.html';
-        }
-    });
-
-    // Initial load
     loadUsers();
 });
