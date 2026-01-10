@@ -9,11 +9,10 @@ $(document).ready(function () {
     $('.user.pers').text(payload.user_name?.substring(0,5).toUpperCase() || 'LOGOUT');
 
     function clearUI() {
-        $(".co2.value, .temp.value, .hum.value, .bar.value").text("--");
-        $(".co2.state, .temp.state, .hum.state, .bar.state").text("No Data");
-        $(".time").text("Date and time value: No records found");
-        // Reset border colors to neutral
+        $(".co2.value, .temp.value, .hum.value, .bar.value").text("--").css("color", "black");
+        $(".co2.state, .temp.state, .hum.state, .bar.state").text("No Data").css("color", "black");
         $(".box").css("border-color", "#9400D3");
+        $(".time").html('Date and time value: <span style="color: black;">No records found</span>');
         $(".edit").prop('disabled', true).css("opacity", "0.5");
     }
 
@@ -27,93 +26,74 @@ $(document).ready(function () {
                 devices.forEach(dev => {
                     $select.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
                 });
-            })
-            .catch(err => console.error("Fetch error:", err));
+            });
     }
 
-    function loadLatestMeasurements(deviceId) {
-        if (!deviceId) {
-            clearUI();
-            $('#current-device-name').hide(); // Hide the label below if no device
-            return;
-        }
-
-        $('#current-device-name').show();
+    function loadLatestMeasurements(deviceId = null) {
+        if (!deviceId) { clearUI(); return; }
+        
         $(".edit").prop('disabled', false).css("opacity", "1");
-
+        
         fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
             .then(res => res.json())
             .then(response => {
                 const rows = response.measurements || [];
                 if (rows.length === 0) { clearUI(); return; }
 
-                let latestData = { co2: null, temp: null, hum: null, press: null, time: rows[0].created_at };
-
-                for (const row of rows) {
-                    if (latestData.co2 === null && row.co2 !== null) latestData.co2 = row.co2;
-                    if (latestData.temp === null && row.temperature !== null) latestData.temp = row.temperature;
-                    if (latestData.hum === null && row.humidity !== null) latestData.hum = row.humidity;
-                    if (latestData.press === null && row.pressure !== null) latestData.press = row.pressure;
+                let latest = { co2: null, temp: null, hum: null, press: null, time: rows[0].created_at };
+                for (const r of rows) {
+                    if (latest.co2 === null) latest.co2 = r.co2;
+                    if (latest.temp === null) latest.temp = r.temperature;
+                    if (latest.hum === null) latest.hum = r.humidity;
+                    if (latest.press === null) latest.press = r.pressure;
                 }
 
-                // Update CO2 & Border Color
-                if (latestData.co2 !== null) {
-                    const val = Math.round(latestData.co2);
-                    $(".co2.value").text(val);
-                    const isNormal = val <= 1000 && val >= 400;
-                    $(".co2.state").text(isNormal ? 'Normal' : (val < 400 ? 'Low' : 'High'));
-                    $(".co2").closest('.column').find('.box').css("border-color", isNormal ? "#9400D3" : "red");
-                }
+                // Status & Time Split Colors
+                $(".iot-status").html('Status IoT: <span style="color: #228B22;">ON</span>');
+                const dt = new Date(latest.time);
+                $(".time").html(`Date and time value: <span style="color: black;">${dt.toLocaleString()}</span>`);
 
-                // Update Temp & Border Color
-                if (latestData.temp !== null) {
-                    const val = Number(latestData.temp);
-                    $(".temp.value").text(val.toFixed(1));
-                    const isNormal = val >= 20 && val <= 24;
-                    $(".temp.state").text(isNormal ? 'Normal' : 'Out of range');
-                    $(".temp").closest('.column').find('.box').css("border-color", isNormal ? "#9400D3" : "red");
-                }
+                // Update Sensors with Red Logic
+                const updateBox = (selector, val, isNorm, stateText) => {
+                    const color = isNorm ? "black" : "red";
+                    const border = isNorm ? "#9400D3" : "red";
+                    $(`.${selector}.value`).text(val).css("color", color);
+                    $(`.${selector}.state`).text(stateText).css("color", color);
+                    $(`.${selector}`).closest('.column').find('.box').css("border-color", border);
+                };
 
-                // Update Humidity & Border Color
-                if (latestData.hum !== null) {
-                    const val = Number(latestData.hum);
-                    $(".hum.value").text(val.toFixed(1));
-                    const isNormal = val >= 40 && val <= 60;
-                    $(".hum.state").text(isNormal ? 'Normal' : (val < 40 ? 'Low' : 'High'));
-                    $(".hum").closest('.column').find('.box').css("border-color", isNormal ? "#9400D3" : "red");
+                if (latest.co2 !== null) {
+                    const v = Math.round(latest.co2);
+                    updateBox('co2', v, (v >= 400 && v <= 1000), (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal'));
                 }
-
-                // Update Pressure
-                if (latestData.press !== null) {
-                    const p = latestData.press > 5000 ? Math.round(latestData.press / 100) : Math.round(latestData.press);
+                if (latest.temp !== null) {
+                    const v = Number(latest.temp).toFixed(1);
+                    updateBox('temp', v, (v >= 20 && v <= 24), (v >= 20 && v <= 24 ? 'Normal' : 'Out of range'));
+                }
+                if (latest.hum !== null) {
+                    const v = Number(latest.hum).toFixed(1);
+                    updateBox('hum', v, (v >= 40 && v <= 60), (v < 40 ? 'Low' : v > 60 ? 'High' : 'Normal'));
+                }
+                if (latest.press !== null) {
+                    const p = latest.press > 5000 ? Math.round(latest.press / 100) : Math.round(latest.press);
                     $(".bar.value").text(p);
                     $(".bar.state").text(p >= 1013 ? 'Higher' : 'Lower');
                 }
-
-                const dt = new Date(latestData.time);
-                $(".time").text(`Last Update: ${dt.toLocaleString()}`).css("color", "black");
             });
     }
 
     $('#device-select').on('change', function() {
         const id = $(this).val();
-        const name = $(this).find('option:selected').text();
-        if (id) {
-            $('#current-device-name').text(name);
-            loadLatestMeasurements(id);
-        } else {
-            clearUI();
-            $('#current-device-name').text("Select a device");
-        }
+        $('#current-device-name').text(id ? $(this).find('option:selected').text() : "Select a device");
+        loadLatestMeasurements(id);
     });
 
-    // Initial State
-    clearUI();
     loadDeviceList();
+    clearUI();
 
     $(".his-values").on("click", () => location.href = "history.html");
     $(".add-device").on("click", () => location.href = "addDevice.html");
-    $(".edit").on("click", function() {
+    $(".edit").on("click", () => {
         const id = $('#device-select').val();
         if(id) location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
     });
