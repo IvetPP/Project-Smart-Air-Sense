@@ -98,11 +98,18 @@ $(document).ready(function () {
                 /**
                  * Helper to update UI boxes
                  */
+                /**
+                * Helper to update UI boxes
+                */
                 const updateBox = (selector, val, isNorm, stateText) => {
-                    const stateColor = isNorm ? "black" : "red";
-                    const borderColor = isNorm ? "#9400D3" : "red";
+                    // If state is "Normal", use black text and purple border. 
+                    // Otherwise, use red text and red border.
+                    const isActuallyNormal = (stateText === "Normal");
+                    
+                    const stateColor = isActuallyNormal ? "black" : "red";
+                    const borderColor = isActuallyNormal ? "#9400D3" : "red";
 
-                    // Value (numbers) are ALWAYS black
+                    // Value (numbers) remain ALWAYS black as per your previous requirement
                     $(`.${selector}.value`).text(val).css("color", "black");
 
                     // State Text update with conditional red border
@@ -119,6 +126,7 @@ $(document).ready(function () {
                     $(`.${selector}`).closest('.box').css("border-color", borderColor);
                 };
 
+                
                 // CO2 Logic
                 if (latest.co2 !== null) {
                     const v = Math.round(latest.co2);

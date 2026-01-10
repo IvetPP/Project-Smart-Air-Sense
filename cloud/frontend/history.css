@@ -40,3 +40,24 @@
     width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
     text-align: center; cursor: pointer; font-size: 10px; font-weight: bold; padding: 5px;
 }
+
+.device-tag {
+    background: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.warning { color: #dc3545; font-weight: bold; }
+.normal-text { color: #28a745; }
+
+.status-pill {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+.status-active { background: #d4edda; color: #155724; }
+
+.history-table td { vertical-align: top; padding: 12px 8px; }
