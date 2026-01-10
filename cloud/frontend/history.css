@@ -61,3 +61,15 @@
 .status-active { background: #d4edda; color: #155724; }
 
 .history-table td { vertical-align: top; padding: 12px 8px; }
+
+.filter-btn.active {
+    background-color: #9400D3; /* Purple to match your theme */
+    color: white;
+    border-color: #9400D3;
+}
+
+/* Ensure the panels don't cause jumps */
+.device-panel, .time-panel, .param-panel {
+    overflow: hidden; 
+    margin-bottom: 10px;
+}

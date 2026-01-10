@@ -19,13 +19,21 @@ $(document).ready(function () {
     function clearUI() {
         $(".co2.value, .temp.value, .hum.value, .bar.value").text("--").css("color", "black");
         $(".co2.state, .temp.state, .hum.state, .bar.state").text("No Data").css("color", "black");
-        $(".box").css("border-color", "#9400D3");
+        
+        // Ensure boxes maintain a constant height and style even when empty
+        $(".box").css({
+            "border-color": "#9400D3",
+            "min-height": "150px", 
+            "display": "flex",
+            "flex-direction": "column",
+            "justify-content": "center"
+        });
+
         $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
                   .html('Date and time value: <span style="color: black;">No records found</span>');
         $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
                   .html('Status IoT: <span style="color: black;">OFF</span>');
         
-        // Only disable if no device is actually selected in the dropdown
         if (!$('#device-select').val()) {
             $(".edit").prop('disabled', true).css("opacity", "0.5");
         }
@@ -51,24 +59,15 @@ $(document).ready(function () {
      * Main UI Update Logic
      */
     function loadLatestMeasurements(deviceId = null) {
-        if (!deviceId) { 
-            clearUI(); 
-            return; 
-        }
+        if (!deviceId) { clearUI(); return; }
         
-        // FIX: Enable Edit button immediately because a device is selected, regardless of data
         $(".edit").prop('disabled', false).css("opacity", "1");
         
         fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
             .then(res => res.json())
             .then(response => {
                 const rows = response.measurements || [];
-                
-                // If device has no data, we clear the values but KEEP the edit button active
-                if (rows.length === 0) { 
-                    clearUI(); 
-                    return; 
-                }
+                if (rows.length === 0) { clearUI(); return; }
 
                 let latest = { co2: null, temp: null, hum: null, press: null, time: rows[0].created_at };
                 for (const r of rows) {
@@ -78,7 +77,6 @@ $(document).ready(function () {
                     if (latest.press === null) latest.press = r.pressure;
                 }
 
-                // Status IoT & Time 
                 $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
                                .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
 
@@ -86,46 +84,36 @@ $(document).ready(function () {
                 $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
                           .html(`Date and time value: <span style="color: black;">${dt.toLocaleString()}</span>`);
 
-                /**
-                 * Helper to update UI boxes
-                 */
-                /**
-                * Helper to update UI boxes
-                */
                 const updateBox = (selector, val, isNorm, stateText) => {
-                    // If state is "Normal", use black text and purple border. 
-                    // Otherwise, use red text and red border.
                     const isActuallyNormal = (stateText === "Normal");
-                    
                     const stateColor = isActuallyNormal ? "black" : "red";
                     const borderColor = isActuallyNormal ? "#9400D3" : "red";
 
-                    // Value (numbers) remain ALWAYS black as per your previous requirement
                     $(`.${selector}.value`).text(val).css("color", "black");
                     $(`.${selector}.state`).text(stateText).css("color", stateColor);
-                    $(`.${selector}`).closest('.box').css("border-color", borderColor);
+                    
+                    // Maintain fixed dimensions to prevent jumping
+                    $(`.${selector}`).closest('.box').css({
+                        "border-color": borderColor,
+                        "min-height": "150px",
+                        "display": "flex",
+                        "flex-direction": "column",
+                        "justify-content": "center"
+                    });
                 };
 
-                
-                // CO2 Logic
                 if (latest.co2 !== null) {
                     const v = Math.round(latest.co2);
                     updateBox('co2', v, (v >= 400 && v <= 1000), (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal'));
                 }
-
-                // Temp Logic
                 if (latest.temp !== null) {
                     const v = Number(latest.temp).toFixed(1);
                     updateBox('temp', v, (v >= 20 && v <= 24), (v >= 20 && v <= 24 ? 'Normal' : 'Out of range'));
                 }
-
-                // Humidity Logic
                 if (latest.hum !== null) {
                     const v = Number(latest.hum).toFixed(1);
                     updateBox('hum', v, (v >= 40 && v <= 60), (v < 40 ? 'Low' : v > 60 ? 'High' : 'Normal'));
                 }
-
-                // Pressure Logic
                 if (latest.press !== null) {
                     const p = latest.press > 5000 ? Math.round(latest.press / 100) : Math.round(latest.press);
                     const isStandard = (p === 1013);
@@ -136,35 +124,27 @@ $(document).ready(function () {
             .catch(err => console.error("Error loading measurements:", err));
     }
 
-    // --- Event Listeners ---
-
     $('#device-select').on('change', function() {
         const id = $(this).val();
         $('#current-device-name').text(id ? $(this).find('option:selected').text() : "Select a device");
         loadLatestMeasurements(id);
     });
 
-    // Navigation
     $(".his-values").on("click", () => location.href = "history.html");
     $(".add-device").on("click", () => location.href = "addDevice.html");
     $(".man").on("click", () => location.href = "users.html");
-
     $(".edit").on("click", function() {
         const id = $('#device-select').val();
-        if(id) {
-            location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
-        }
+        if(id) location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
     });
 
     $(".user.pers").on("click", () => {
         if(confirm('Do you want to log out?')) {
-            localStorage.clear();
-            sessionStorage.clear();
+            localStorage.clear(); sessionStorage.clear();
             location.href = 'login.html';
         }
     });
 
-    // Initial Run
     loadDeviceList();
     clearUI();
 });

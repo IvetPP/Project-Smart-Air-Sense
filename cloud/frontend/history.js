@@ -3,85 +3,73 @@ $(document).ready(function () {
     const PAGE_SIZE = 10;
     let currentPage = 1;
 
-    // Initial Load
-    loadDeviceList();
+    // Initial load
     loadMeasurements();
 
     /* ============================
-       EVENT HANDLERS
+        FILTER PANEL LOGIC
     ============================ */
 
-    // Panel Toggles with Active State
+    // Hide panels on startup
+    $('.device-panel, .time-panel, .param-panel').hide();
+
+    function togglePanel(panelSelector, btn) {
+        // Optional: Close other panels when opening one
+        // $('.device-panel, .time-panel, .param-panel').not(panelSelector).slideUp(200);
+        // $('.filter-btn').not(btn).removeClass('active');
+
+        $(panelSelector).slideToggle(200);
+        $(btn).toggleClass('active');
+    }
+
     $('.filter-btn.device').on('click', function () { togglePanel('.device-panel', this); });
     $('.filter-btn.time').on('click', function () { togglePanel('.time-panel', this); });
     $('.filter-btn.par').on('click', function () { togglePanel('.param-panel', this); });
 
-    function togglePanel(panelSelector, btn) {
-        const isVisible = $(panelSelector).is(':visible');
-        $('.device-panel, .time-panel, .param-panel').slideUp(200); // Close others
-        $('.filter-btn').removeClass('active');
-        
-        if (!isVisible) {
-            $(panelSelector).slideDown(200);
-            $(btn).addClass('active');
-        }
-    }
-
-    // Trigger reload on filter change
+    // Trigger reload automatically on any input change
     $('#filter-device, #filter-parameter, #filter-from, #filter-to').on('change', function () {
         currentPage = 1; 
         loadMeasurements();
     });
 
-    // Clear Filters
+    // Clear Filters Button
     $('#clear-filters').on('click', function() {
         $('#filter-device, #filter-parameter, #filter-from, #filter-to').val('');
-        $('.filter-btn').removeClass('active');
+        
+        // Visual Reset: Slide everything up and remove active states
         $('.device-panel, .time-panel, .param-panel').slideUp(200);
+        $('.filter-btn').removeClass('active');
+        
         currentPage = 1;
         loadMeasurements();
     });
 
-    // Pagination
-    $('.next').on('click', () => { currentPage++; loadMeasurements(); });
-    $('.prev').on('click', () => { if (currentPage > 1) { currentPage--; loadMeasurements(); }});
-
     /* ============================
-       CORE FUNCTIONS
+        CORE DATA FUNCTIONS
     ============================ */
 
-    function loadDeviceList() {
-        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-        $.ajax({
-            url: `${API_BASE_URL}/devices`,
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
-            success: function (data) {
-                const $select = $('#filter-device');
-                $select.find('option:not(:first)').remove();
-                data.forEach(dev => {
-                    $select.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
-                });
-            }
-        });
+    function getFilterData() {
+        return {
+            device_id: $('#filter-device').val() || '',
+            parameter: $('#filter-parameter').val() || '',
+            from: $('#filter-from').val() || '',
+            to: $('#filter-to').val() || ''
+        };
     }
 
     function loadMeasurements() {
         const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
         const offset = (currentPage - 1) * PAGE_SIZE;
-        
-        // Build URL parameters
-        const params = new URLSearchParams({
-            limit: PAGE_SIZE,
-            offset: offset,
-            device_id: $('#filter-device').val() || '',
-            parameter: $('#filter-parameter').val() || '',
-            from: $('#filter-from').val() || '',
-            to: $('#filter-to').val() || ''
-        });
+        const filters = getFilterData();
+
+        let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
+        if (filters.device_id) url += `&device_id=${encodeURIComponent(filters.device_id)}`;
+        if (filters.parameter) url += `&parameter=${encodeURIComponent(filters.parameter)}`;
+        if (filters.from) url += `&from=${encodeURIComponent(filters.from)}`;
+        if (filters.to) url += `&to=${encodeURIComponent(filters.to)}`;
 
         $.ajax({
-            url: `${API_BASE_URL}/measurements?${params.toString()}`,
+            url: url,
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token },
             success: function (response) {
@@ -89,20 +77,20 @@ $(document).ready(function () {
                 const total = response.totalCount || 0;
 
                 renderTable(rows);
-                updatePagination(total);
+                
+                // Pagination Logic
+                $('.prev').prop('disabled', currentPage === 1);
+                const isLastPage = (currentPage * PAGE_SIZE) >= total;
+                $('.next').prop('disabled', isLastPage);
+                
+                const totalPages = Math.ceil(total / PAGE_SIZE);
+                $('.page-info').text(`Page ${currentPage} of ${totalPages || 1}`);
             },
             error: function (xhr) {
                 if (xhr.status === 401) window.location.href = 'login.html';
-                console.error("Fetch error:", xhr);
+                else console.error("Fetch error:", xhr);
             }
         });
-    }
-
-    function updatePagination(total) {
-        const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
-        $('.prev').prop('disabled', currentPage === 1);
-        $('.next').prop('disabled', currentPage >= totalPages);
-        $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
     }
 
     function renderTable(rows) {
@@ -110,52 +98,52 @@ $(document).ready(function () {
         $tbody.empty();
 
         if (!rows.length) {
-            $tbody.append('<tr><td colspan="6" class="no-data">No data matching filters found.</td></tr>');
+            $tbody.append('<tr><td colspan="6" style="text-align:center; padding: 20px;">No data matching filters found.</td></tr>');
             return;
         }
 
         rows.forEach(row => {
-            let details = [];
+            let params = [];
+            let values = [];
+            let statusHtml = '';
 
-            const check = (val, label, unit, min, max) => {
-                if (val === null || val === undefined) return;
-                const isWarning = (min !== undefined && (val < min || val > max));
-                details.push({
-                    label: label,
-                    value: `${Number(val).toFixed(1)} ${unit}`,
-                    status: isWarning ? 'Out of range' : 'Normal',
-                    class: isWarning ? 'warning' : 'normal-text'
-                });
+            const checkAndAdd = (val, label, unit, typeClass, min, max) => {
+                if (val !== null && val !== undefined && !isNaN(val)) {
+                    params.push(label);
+                    values.push(`${val}${unit}`);
+                    
+                    const isOutOfRange = (min !== undefined && (val < min || val > max));
+                    const statusText = isOutOfRange ? 'Out of range' : 'Normal';
+                    const statusClass = isOutOfRange ? 'warning' : 'normal-text';
+
+                    statusHtml += `<div class="${typeClass}">
+                        <span class="${statusClass}">${statusText}</span>
+                    </div>`;
+                }
             };
 
-            check(row.co2, "CO2", "ppm", 400, 1000);
-            check(row.temperature, "Temp", "°C", 20, 24);
-            check(row.humidity, "Hum", "%", 40, 60);
-            check(row.pressure, "Press", "hPa", 1012, 1014); // Example tight range
+            checkAndAdd(row.co2, "CO2", " ppm", "co2", 400, 1000);
+            checkAndAdd(row.temperature, "Temp", " °C", "temp", 20, 24);
+            checkAndAdd(row.humidity, "Hum", " %", "hum", 40, 60);
+            checkAndAdd(row.pressure, "Press", " hPa", "bar", 1013, 1100);
 
-            const timestamp = new Date(row.created_at || row.timestamp).toLocaleString('cs-CZ');
-            
-            // Build multi-line content for columns
-            const labelsHtml = details.map(d => `<div>${d.label}</div>`).join('');
-            const valuesHtml = details.map(d => `<div><strong>${d.value}</strong></div>`).join('');
-            const statusHtml = details.map(d => `<div class="${d.class}">${d.status}</div>`).join('');
+            const timestamp = row.created_at || row.timestamp;
 
             $tbody.append(`
                 <tr>
-                    <td>${timestamp}</td>
-                    <td><span class="device-tag">${row.device_name || row.device_id}</span></td>
-                    <td>${labelsHtml}</td>
-                    <td>${valuesHtml}</td>
-                    <td>${statusHtml}</td>
-                    <td><span class="status-pill status-active">Active</span></td>
+                    <td>${new Date(timestamp).toLocaleString('cs-CZ')}</td>
+                    <td>${row.device_id || 'IoT Device'}</td>
+                    <td>${params.join(' / ') || '-'}</td>
+                    <td>${values.join(' / ') || '-'}</td>
+                    <td><span class="status ok">Active</span></td>
+                    <td>${statusHtml || '-'}</td>
                 </tr>
             `);
         });
     }
 
-    // Basic Navigation
-    $(".back, .cur-values").on("click", () => window.location.href = 'index.html');
-    $('.user').on('click', () => {
-        if(confirm("Log out?")) { localStorage.clear(); window.location.href = 'login.html'; }
-    });
+    // Navigation
+    $('.next').on('click', () => { currentPage++; loadMeasurements(); });
+    $('.prev').on('click', () => { if (currentPage > 1) { currentPage--; loadMeasurements(); } });
+    $(".back").on("click", () => window.location.href = 'index.html');
 });
