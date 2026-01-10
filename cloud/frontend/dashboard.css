@@ -105,13 +105,6 @@
   align-items: center;
 }
 
-.iot-status, .time {
-    border: 1px solid #6E6D6D;
-    border-radius: 5px;
-    padding: 5px;
-    color: #6E6D6D;
-}
-
 .edit:hover {
     background-color: #b365d4;
 }
@@ -144,4 +137,31 @@
 /* Specific fix for dashboard alignment */
 .row .user {
     margin-left: 15px;
+}
+
+/* Fix IoT Status Color to Green */
+.iot-status {
+    border: 1px solid #228B22; /* Forest Green */
+    border-radius: 5px;
+    padding: 5px;
+    color: #228B22; /* Green text */
+    font-weight: bold;
+}
+
+/* Fix Date Time text to Black */
+.time {
+    border: 1px solid #6E6D6D;
+    border-radius: 5px;
+    padding: 5px;
+    color: black; /* Changed from grey to black */
+}
+
+/* Inactive button style */
+.edit:disabled {
+    cursor: not-allowed;
+}
+
+/* Ensure boxes have a default transition for border colors */
+.box {
+    transition: border-color 0.3s ease;
 }

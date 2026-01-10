@@ -10,8 +10,11 @@ $(document).ready(function () {
 
     function clearUI() {
         $(".co2.value, .temp.value, .hum.value, .bar.value").text("--");
-        $(".co2.state").text("No Data");
+        $(".co2.state, .temp.state, .hum.state, .bar.state").text("No Data");
         $(".time").text("Date and time value: No records found");
+        // Reset border colors to neutral
+        $(".box").css("border-color", "#9400D3");
+        $(".edit").prop('disabled', true).css("opacity", "0.5");
     }
 
     function loadDeviceList() {
@@ -22,90 +25,97 @@ $(document).ready(function () {
                 const $select = $('#device-select');
                 $select.find('option:not(:first)').remove();
                 devices.forEach(dev => {
-                    // Using 'device_name' which now comes from our fixed backend
                     $select.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
                 });
             })
             .catch(err => console.error("Fetch error:", err));
     }
 
-    function loadLatestMeasurements(deviceId = null) {
-    // 1. Ask for more rows (limit=20) so we can find all sensor types
-    let url = `${API_URL}/measurements?limit=20`; 
-    if (deviceId && deviceId !== "") {
-        url += `&device_id=${encodeURIComponent(deviceId)}`;
-    }
-
-    fetch(url, { headers: authHeaders })
-        .then(res => res.json())
-        .then(response => {
-            // Handle the response structure from our fixed measurements.js
-            const rows = response.measurements || [];
-
-            if (rows.length === 0) {
-                console.warn("No measurements found for device:", deviceId);
-                clearUI();
-                return;
-            }
-
-            // We will "collect" the latest non-null values
-            let latestData = {
-                co2: null,
-                temp: null,
-                hum: null,
-                press: null,
-                time: rows[0].created_at // Use the time from the absolute newest row
-            };
-
-            // Loop through the 20 rows to fill our latestData object
-            for (const row of rows) {
-                if (latestData.co2 === null && row.co2 !== null) latestData.co2 = row.co2;
-                if (latestData.temp === null && row.temperature !== null) latestData.temp = row.temperature;
-                if (latestData.hum === null && row.humidity !== null) latestData.hum = row.humidity;
-                if (latestData.press === null && row.pressure !== null) latestData.press = row.pressure;
-                
-                // If we found everything, stop looking
-                if (latestData.co2 && latestData.temp && latestData.hum && latestData.press) break;
-            }
-
-            // 3. UI Update
-            if (latestData.co2 !== null) {
-                $(".co2.value").text(Math.round(latestData.co2));
-                $(".co2.state").text(latestData.co2 <= 1000 ? 'Normal' : 'High');
-            }
-            if (latestData.temp !== null) $(".temp.value").text(Number(latestData.temp).toFixed(1));
-            if (latestData.hum !== null) $(".hum.value").text(Number(latestData.hum).toFixed(1));
-            if (latestData.press !== null) {
-                // Convert Pa to hPa if your sensor sends raw Pascals (97800 -> 978)
-                const p = latestData.press > 5000 ? Math.round(latestData.press / 100) : Math.round(latestData.press);
-                $(".bar.value").text(p);
-            }
-
-            const dt = new Date(latestData.time);
-            $(".time").text(`Last Update: ${dt.toLocaleString()}`);
-        })
-        .catch(err => {
-            console.error("Dashboard fetch error:", err);
+    function loadLatestMeasurements(deviceId) {
+        if (!deviceId) {
             clearUI();
-        });
-}
+            $('#current-device-name').hide(); // Hide the label below if no device
+            return;
+        }
+
+        $('#current-device-name').show();
+        $(".edit").prop('disabled', false).css("opacity", "1");
+
+        fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
+            .then(res => res.json())
+            .then(response => {
+                const rows = response.measurements || [];
+                if (rows.length === 0) { clearUI(); return; }
+
+                let latestData = { co2: null, temp: null, hum: null, press: null, time: rows[0].created_at };
+
+                for (const row of rows) {
+                    if (latestData.co2 === null && row.co2 !== null) latestData.co2 = row.co2;
+                    if (latestData.temp === null && row.temperature !== null) latestData.temp = row.temperature;
+                    if (latestData.hum === null && row.humidity !== null) latestData.hum = row.humidity;
+                    if (latestData.press === null && row.pressure !== null) latestData.press = row.pressure;
+                }
+
+                // Update CO2 & Border Color
+                if (latestData.co2 !== null) {
+                    const val = Math.round(latestData.co2);
+                    $(".co2.value").text(val);
+                    const isNormal = val <= 1000 && val >= 400;
+                    $(".co2.state").text(isNormal ? 'Normal' : (val < 400 ? 'Low' : 'High'));
+                    $(".co2").closest('.column').find('.box').css("border-color", isNormal ? "#9400D3" : "red");
+                }
+
+                // Update Temp & Border Color
+                if (latestData.temp !== null) {
+                    const val = Number(latestData.temp);
+                    $(".temp.value").text(val.toFixed(1));
+                    const isNormal = val >= 20 && val <= 24;
+                    $(".temp.state").text(isNormal ? 'Normal' : 'Out of range');
+                    $(".temp").closest('.column').find('.box').css("border-color", isNormal ? "#9400D3" : "red");
+                }
+
+                // Update Humidity & Border Color
+                if (latestData.hum !== null) {
+                    const val = Number(latestData.hum);
+                    $(".hum.value").text(val.toFixed(1));
+                    const isNormal = val >= 40 && val <= 60;
+                    $(".hum.state").text(isNormal ? 'Normal' : (val < 40 ? 'Low' : 'High'));
+                    $(".hum").closest('.column').find('.box').css("border-color", isNormal ? "#9400D3" : "red");
+                }
+
+                // Update Pressure
+                if (latestData.press !== null) {
+                    const p = latestData.press > 5000 ? Math.round(latestData.press / 100) : Math.round(latestData.press);
+                    $(".bar.value").text(p);
+                    $(".bar.state").text(p >= 1013 ? 'Higher' : 'Lower');
+                }
+
+                const dt = new Date(latestData.time);
+                $(".time").text(`Last Update: ${dt.toLocaleString()}`).css("color", "black");
+            });
+    }
 
     $('#device-select').on('change', function() {
         const id = $(this).val();
-        $('#current-device-name').text($(this).find('option:selected').text());
-        if (id) loadLatestMeasurements(id); else loadLatestMeasurements();
+        const name = $(this).find('option:selected').text();
+        if (id) {
+            $('#current-device-name').text(name);
+            loadLatestMeasurements(id);
+        } else {
+            clearUI();
+            $('#current-device-name').text("Select a device");
+        }
     });
 
+    // Initial State
+    clearUI();
     loadDeviceList();
-    loadLatestMeasurements();
 
     $(".his-values").on("click", () => location.href = "history.html");
     $(".add-device").on("click", () => location.href = "addDevice.html");
-    $(".edit").on("click", () => {
+    $(".edit").on("click", function() {
         const id = $('#device-select').val();
-        if(!id) return alert("Please select a device first");
-        location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
+        if(id) location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
     });
-    $(".man").on("click", () => location.href = "users.html");
-    $(".user.pers").on("click", () => { if(confirm('Logout?')) { localStorage.clear(); sessionStorage.clear(); location.href='login.html'; }});
+    $(".user.pers").on("click", () => { if(confirm('Logout?')) { localStorage.clear(); location.href='login.html'; }});
 });
