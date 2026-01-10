@@ -106,3 +106,24 @@
 .row .user {
     margin-left: 15px;
 }
+
+/* Update the table hover color */
+.history-table tbody tr:hover {
+    background-color: #e2b8f2 !important;
+    cursor: pointer;
+}
+
+/* Ensure the search bar looks consistent */
+.search-container {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+#user-search {
+    width: 350px;
+    padding: 10px;
+    border: 1px solid #9400D3;
+    border-radius: 5px;
+    font-family: 'ADLaM Display', sans-serif;
+}
