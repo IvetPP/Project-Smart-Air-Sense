@@ -126,6 +126,7 @@ $(document).ready(function () {
 
     // Navigation
     $(".his-values").on("click", () => location.href = "history.html");
+    $(".user-btn").on("click", () => location.href = "users.html");
     $(".add-device").on("click", () => location.href = "addDevice.html");
     $(".edit").on("click", () => {
         const id = $('#device-select').val();

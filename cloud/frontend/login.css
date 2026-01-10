@@ -60,3 +60,16 @@ button {
 .cancel-btn:hover {
     background-color: #eb9797;
 }
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Forces text to stay close to checkbox */
+    margin-top: 10px;
+    justify-content: flex-start;
+}
+
+.remember-me input {
+    margin: 0;
+    width: auto; /* Prevents checkbox from stretching */
+}
