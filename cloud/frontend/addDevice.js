@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    const API_URL = '/api';
+    const API_URL = window.location.origin + '/api';
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
 
     if (!token) { window.location.href = 'login.html'; return; }

@@ -67,7 +67,7 @@ $(document).ready(function () {
                 if (val !== null && val !== undefined && !isNaN(val)) {
                     params.push(fullLabel);
                     values.push(`${Number(val).toFixed(1)}${unit}`);
-                    
+                
                     let statText = "Normal", isNorm = true, limText = "";
 
                     if (type === 'co2') {
@@ -79,15 +79,18 @@ $(document).ready(function () {
                         statText = isNorm ? 'Normal' : 'Out of range';
                         limText = "20 - 24 °C";
                     } else if (type === 'hum') {
-                        isNorm = val >= 40 && val <= 60;
+                        isNorm = val >= 40 && val <= 60;            
                         statText = isNorm ? 'Normal' : (val < 40 ? 'Low' : 'High');
                         limText = "40 - 60 %";
                     } else if (type === 'press') {
                         const p = val > 5000 ? val / 100 : val;
-                        statText = p >= 1013 ? 'Higher' : 'Lower';
+                        // Define what is "Normal" for pressure to trigger red/black text
+                        isNorm = Math.round(p) === 1013; 
+                        statText = p >= 1013 ? (isNorm ? 'Normal' : 'Higher') : 'Lower';
                         limText = "1013 hPa";
                     }
 
+                    // Now isNorm correctly applies to the 'warning' class logic
                     statusHtml.push(`<span class="${isNorm ? 'normal-text' : 'warning'}">${statText}</span>`);
                     limits.push(limText);
                 }
