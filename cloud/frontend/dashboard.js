@@ -8,7 +8,7 @@ $(document).ready(function () {
     // Set Username in Profile Circle
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        $('.user.pers').text(payload.user_name?.substring(0,5).toUpperCase() || 'LOGOUT');
+        $('.user.pers').text(payload.user_name?.substring(0, 5).toUpperCase() || 'LOGOUT');
     } catch (e) {
         $('.user.pers').text('USER');
     }
@@ -18,13 +18,22 @@ $(document).ready(function () {
      */
     function clearUI() {
         $(".co2.value, .temp.value, .hum.value, .bar.value").text("--").css("color", "black");
-        $(".co2.state, .temp.state, .hum.state, .bar.state").text("No Data").css("color", "black");
-        $(".box").css("border-color", "#9400D3");
-        $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
-                  .html('Date and time value: <span style="color: black;">No records found</span>');
-        $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
-                  .html('Status IoT: <span style="color: black;">OFF</span>');
         
+        // Reset state text and remove warning borders
+        $(".co2.state, .temp.state, .hum.state, .bar.state")
+            .text("No Data")
+            .css({
+                "color": "black",
+                "border": "none",
+                "padding": "0"
+            });
+
+        $(".box").css("border-color", "#9400D3");
+        $(".time").css({ "border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px" })
+            .html('Date and time value: <span style="color: black;">No records found</span>');
+        $(".iot-status").css({ "border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px" })
+            .html('Status IoT: <span style="color: black;">OFF</span>');
+
         // Only disable if no device is actually selected in the dropdown
         if (!$('#device-select').val()) {
             $(".edit").prop('disabled', true).css("opacity", "0.5");
@@ -51,23 +60,23 @@ $(document).ready(function () {
      * Main UI Update Logic
      */
     function loadLatestMeasurements(deviceId = null) {
-        if (!deviceId) { 
-            clearUI(); 
-            return; 
+        if (!deviceId) {
+            clearUI();
+            return;
         }
-        
-        // FIX: Enable Edit button immediately because a device is selected, regardless of data
+
+        // Enable Edit button immediately because a device is selected
         $(".edit").prop('disabled', false).css("opacity", "1");
-        
+
         fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
             .then(res => res.json())
             .then(response => {
                 const rows = response.measurements || [];
-                
+
                 // If device has no data, we clear the values but KEEP the edit button active
-                if (rows.length === 0) { 
-                    clearUI(); 
-                    return; 
+                if (rows.length === 0) {
+                    clearUI();
+                    return;
                 }
 
                 let latest = { co2: null, temp: null, hum: null, press: null, time: rows[0].created_at };
@@ -79,12 +88,12 @@ $(document).ready(function () {
                 }
 
                 // Status IoT & Time 
-                $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
-                               .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
+                $(".iot-status").css({ "border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px" })
+                    .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
 
                 const dt = new Date(latest.time);
-                $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
-                          .html(`Date and time value: <span style="color: black;">${dt.toLocaleString()}</span>`);
+                $(".time").css({ "border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px" })
+                    .html(`Date and time value: <span style="color: black;">${dt.toLocaleString()}</span>`);
 
                 /**
                  * Helper to update UI boxes
@@ -102,7 +111,18 @@ $(document).ready(function () {
 
                     // Value (numbers) remain ALWAYS black as per your previous requirement
                     $(`.${selector}.value`).text(val).css("color", "black");
-                    $(`.${selector}.state`).text(stateText).css("color", stateColor);
+
+                    // State Text update with conditional red border
+                    $(`.${selector}.state`).text(stateText).css({
+                        "color": stateColor,
+                        "border": isNorm ? "none" : "1px solid red",
+                        "padding": isNorm ? "0" : "2px 6px",
+                        "border-radius": "4px",
+                        "display": "inline-block", // Ensures border wraps text correctly
+                        "margin-top": "5px"
+                    });
+
+                    // Main box border
                     $(`.${selector}`).closest('.box').css("border-color", borderColor);
                 };
 
@@ -138,7 +158,7 @@ $(document).ready(function () {
 
     // --- Event Listeners ---
 
-    $('#device-select').on('change', function() {
+    $('#device-select').on('change', function () {
         const id = $(this).val();
         $('#current-device-name').text(id ? $(this).find('option:selected').text() : "Select a device");
         loadLatestMeasurements(id);
@@ -149,15 +169,15 @@ $(document).ready(function () {
     $(".add-device").on("click", () => location.href = "addDevice.html");
     $(".man").on("click", () => location.href = "users.html");
 
-    $(".edit").on("click", function() {
+    $(".edit").on("click", function () {
         const id = $('#device-select').val();
-        if(id) {
+        if (id) {
             location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
         }
     });
 
     $(".user.pers").on("click", () => {
-        if(confirm('Do you want to log out?')) {
+        if (confirm('Do you want to log out?')) {
             localStorage.clear();
             sessionStorage.clear();
             location.href = 'login.html';
