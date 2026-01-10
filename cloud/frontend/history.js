@@ -82,7 +82,9 @@ $(document).ready(function () {
                         limitText = "40 - 60 %";
                     } else if (type === 'press') {
                         const p = val > 5000 ? val / 100 : val;
+                        const isStandard = (Math.round(p) === 1013);
                         statusText = p >= 1013 ? 'Higher' : 'Lower';
+                        isNormal = isStandard; // This forces Higher/Lower to be Red
                         limitText = "1013 hPa";
                     }
 

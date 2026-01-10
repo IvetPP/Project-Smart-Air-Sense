@@ -17,33 +17,38 @@
 
 .header-nav {
     display: flex;
-    align-items: center;
-    gap: 15px;
+    flex-direction: column; /* Stack title and buttons */
+    align-items: flex-start;
+    gap: 10px;
     flex-grow: 1;
 }
 
-.history-title { flex-grow: 1; margin: 0; }
+.history-title {
+    margin: 0;
+}
 
 /* Navigation Buttons - Sync with Dashboard */
 .nav-buttons-row {
     display: flex;
-    gap: 15px;
+    gap: 10px; /* Dashboard margin */
+    margin-top: 5px; 
     margin-bottom: 25px;
 }
 
 .cur-values, .his-values {
-    padding: 15px 25px;
+    padding: 10px 20px; /* Dashboard size */
     color: #9400D3;
     border: 1px solid #9400D3;
-    border-radius: 8px;
+    border-radius: 5px; /* Dashboard curvature */
     font-family: 'ADLaM Display';
     cursor: pointer;
     background-color: white;
-    font-size: 1rem;
+    font-size: 14px;
+    transition: all 0.2s;
 }
 
 .his-values {
-    background-color: #dcdcdc; /* Gray for active tab */
+    background-color: #dcdcdc; /* Gray for active */
 }
 
 #update-values {
@@ -71,6 +76,16 @@
     cursor: pointer;
     font-size: 10px;
     font-weight: bold;
+}
+
+/* Status IoT and Date containers on Dashboard/History */
+.iot-status, .time {
+    border: 1px solid #6e6d6d !important;
+    border-radius: 5px;
+    padding: 5px 10px;
+    display: inline-block;
+    font-family: Arial, sans-serif;
+    font-size: 0.9rem;
 }
 
 /* Main Content Split */
