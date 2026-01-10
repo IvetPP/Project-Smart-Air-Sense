@@ -134,9 +134,7 @@ $(document).ready(function () {
     $(".add-device").on("click", () => location.href = "addDevice.html");
     
     // FIX: Targets the USERS button by finding any button containing that text
-    $(".user-btn, button:contains('USERS')").on("click", () => {
-        location.href = "users.html";
-    });
+    $(".man").on("click", () => location.href = "users.html");
 
     $(".edit").on("click", () => {
         const id = $('#device-select').val();
