@@ -89,11 +89,18 @@ $(document).ready(function () {
                 /**
                  * Helper to update UI boxes
                  */
+                /**
+                * Helper to update UI boxes
+                */
                 const updateBox = (selector, val, isNorm, stateText) => {
-                    const stateColor = isNorm ? "black" : "red";
-                    const borderColor = isNorm ? "#9400D3" : "red";
+                    // If state is "Normal", use black text and purple border. 
+                    // Otherwise, use red text and red border.
+                    const isActuallyNormal = (stateText === "Normal");
                     
-                    // FIX: Value (numbers) are now ALWAYS black
+                    const stateColor = isActuallyNormal ? "black" : "red";
+                    const borderColor = isActuallyNormal ? "#9400D3" : "red";
+
+                    // Value (numbers) remain ALWAYS black as per your previous requirement
                     $(`.${selector}.value`).text(val).css("color", "black");
                     $(`.${selector}.state`).text(stateText).css("color", stateColor);
                     $(`.${selector}`).closest('.box').css("border-color", borderColor);
