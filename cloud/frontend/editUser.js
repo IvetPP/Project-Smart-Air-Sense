@@ -1,11 +1,16 @@
 $(document).ready(function () {
+    console.log("Edit User Page Loaded");
+    
     const API_URL = '/api';
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     const params = new URLSearchParams(window.location.search);
     const userId = params.get('id');
 
-    // 1. Auth Check
+    console.log("Target User ID:", userId);
+
+    // 1. Critical Auth Check - If this fails, it might be redirecting you
     if (!token) {
+        console.log("No token found, redirecting to login");
         window.location.href = 'login.html';
         return;
     }
@@ -17,23 +22,28 @@ $(document).ready(function () {
             method: 'GET',
             headers: { Authorization: 'Bearer ' + token },
             success: function(user) {
-                // Ensure these IDs match your Supabase column names
-                $('#name').val(user.full_name || user.user_name);
+                console.log("User data received:", user);
+                // Supabase fix: check for full_name OR user_name
+                $('#name').val(user.full_name || user.user_name || '');
                 $('#email').val(user.email || '');
                 if (user.created_at) {
                     $('#registration-date').val(user.created_at.split('T')[0]);
                 }
             },
-            error: function() {
-                alert("Error loading user data.");
+            error: function(xhr) {
+                console.error("Failed to fetch user:", xhr.status);
+                if(xhr.status === 404) {
+                    alert("User not found in database.");
+                }
             }
         });
+    } else {
+        console.error("No User ID provided in URL!");
     }
 
-    // 3. Load Devices for Dropdown
+    // 3. Load Devices Dropdown
     $.ajax({
         url: `${API_URL}/devices`,
-        method: 'GET',
         headers: { Authorization: 'Bearer ' + token },
         success: function(devices) {
             const $select = $('#add-device');
@@ -44,14 +54,14 @@ $(document).ready(function () {
         }
     });
 
-    // 4. Handle Save (Prevent the "weird link" refresh)
+    // 4. Form Submission (Save)
     $('#edit-device-form').on('submit', function(e) {
-        e.preventDefault(); // This stops the page reload/redirect!
+        e.preventDefault(); 
+        console.log("Saving changes...");
 
         const updatedData = {
             full_name: $('#name').val(),
-            email: $('#email').val(),
-            // add other fields as needed for your API
+            email: $('#email').val()
         };
 
         $.ajax({
@@ -65,37 +75,35 @@ $(document).ready(function () {
                 window.location.href = 'users.html';
             },
             error: function() {
-                alert('Failed to update user.');
+                alert('Update failed.');
             }
         });
     });
 
-    // 5. Delete User
-    $('.delete-btn').on('click', function() {
-        if(confirm('Are you sure you want to delete this user?')) {
+    // 5. Delete Logic
+    $('.delete-btn').on('click', function(e) {
+        e.preventDefault();
+        if(confirm('Delete this user?')) {
             $.ajax({
                 url: `${API_URL}/users/${userId}`,
                 method: 'DELETE',
                 headers: { Authorization: 'Bearer ' + token },
-                success: () => {
-                    window.location.href = 'users.html';
-                },
-                error: () => alert("Error deleting user.")
+                success: () => window.location.href = 'users.html'
             });
         }
     });
 
-    // 6. Log out functionality
+    // 6. Logout Logic
     $('.user').on('click', function() {
-        if(confirm('Do you want to log out?')) {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = 'login.html';
-        }
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = 'login.html';
     });
 
-    // 7. Navigation
-    $('.back, .cancel-btn').on('click', function() {
+    // 7. Manual Navigation - Ensure this doesn't point to index.html accidentally
+    $('.back, .cancel-btn').on('click', function(e) {
+        e.preventDefault();
+        console.log("Back/Cancel clicked - heading to users.html");
         window.location.href = 'users.html';
     });
 });
