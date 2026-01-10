@@ -26,33 +26,24 @@
 
         <div class="left-column">
             <button class="home">HOME/ <br> Current values</button>
+            <div class="search-container" style="margin-top: 20px;">
+                <input type="text" id="user-search" placeholder="Search users..." style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #9400D3;">
+            </div>
         </div>
 
         <div class="right-column">
-            <div class="history-table-container">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>LAST AND FIRST NAME</th>
-                            <th>USER NAME/EMAIL</th>
-                            <th>REGISTRATION DATE</th>
-                            <th>ASSIGNED DEVICE</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- js -->
-                    </tbody>
-                </table>
+            <div class="nav-buttons-row">
+                <button class="cur-values">Current values</button> <h2 style="margin: 0; color: #9400D3;">User List</h2>
+            </div>
 
+            <div class="history-table-container">
                 <div class="pagination">
                     <button class="prev">&lt;- Previous</button>
-                    <span class="page-info">1</span>
+                    <span class="page-info">Page 1 of 1</span> 
                     <button class="next">Next -></button>
                 </div>
             </div>
         </div>
-
     </div>
 
 </div>
