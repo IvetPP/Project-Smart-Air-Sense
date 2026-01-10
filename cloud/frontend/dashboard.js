@@ -106,6 +106,7 @@ $(document).ready(function () {
                     $(`.${selector}`).closest('.box').css("border-color", borderColor);
                 };
 
+                
                 // CO2 Logic
                 if (latest.co2 !== null) {
                     const v = Math.round(latest.co2);
