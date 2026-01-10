@@ -1,146 +1,139 @@
+/**
+ * editUser.js
+ */
+
+// 1. IMMEDIATE REDIRECT PROTECTION
+// This runs before anything else to try and "catch" the page before other scripts bounce you
+(function() {
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    if (!token) {
+        window.location.replace('login.html');
+    }
+})();
+
 $(document).ready(function () {
-    console.log("Edit User Script Loaded");
+    console.log("Edit User Script Active");
 
     const API_URL = '/api';
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-    
-    // Extract ID from URL
     const params = new URLSearchParams(window.location.search);
     const userId = params.get('id');
 
-    // 1. Initial Auth Check
-    if (!token) { 
-        console.warn("No token found, redirecting to login...");
-        window.location.href = 'login.html'; 
-        return; 
-    }
+    // If a different script (like index.js) is trying to redirect, 
+    // we try to cancel global click listeners that might be misfiring.
+    $(document).off('click', '.back'); 
+    $(document).off('click', '.home');
 
     if (!userId) {
-        console.error("No User ID found in URL parameters.");
-        alert("Error: No user specified.");
+        alert("No user selected.");
         window.location.href = 'users.html';
         return;
     }
 
     /**
-     * Fetch the specific user's data
+     * Load User Details
      */
-    function loadUserData() {
+    function loadUser() {
         $.ajax({
             url: `${API_URL}/users/${userId}`,
             method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
+            headers: { 'Authorization': `Bearer ${token}` },
             success: function (user) {
-                console.log("User data fetched:", user);
-                // Map fields based on your Supabase table columns
+                console.log("Successfully loaded user:", user);
+                // Supabase uses user_id, but check what the API returns
                 $('#name').val(user.full_name || user.user_name || '');
                 $('#email').val(user.email || '');
                 
-                // Handle date formatting (YYYY-MM-DD for input type="date")
                 if (user.created_at) {
-                    const datePart = user.created_at.split('T')[0];
-                    $('#registration-date').val(datePart);
+                    $('#registration-date').val(user.created_at.split('T')[0]);
                 }
             },
             error: function (xhr) {
-                console.error("Error fetching user details:", xhr);
-                alert("Could not find this user in the database.");
+                console.error("User Load Error:", xhr);
+                if (xhr.status === 401) {
+                    window.location.href = 'login.html';
+                }
             }
         });
     }
 
     /**
-     * Load list of available devices for the dropdown
+     * Load All Devices for assignment dropdown
      */
     function loadDevices() {
         $.ajax({
             url: `${API_URL}/devices`,
             method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
+            headers: { 'Authorization': `Bearer ${token}` },
             success: function (devices) {
                 const $select = $('#add-device');
                 $select.empty().append('<option value="">Add device to assigned</option>');
-                
-                if (Array.isArray(devices)) {
-                    devices.forEach(d => {
-                        $select.append(`<option value="${d.device_id}">${d.device_name || d.device_id}</option>`);
-                    });
-                }
-            },
-            error: function (xhr) {
-                console.error("Error loading devices list:", xhr);
+                devices.forEach(d => {
+                    $select.append(`<option value="${d.device_id}">${d.device_name || d.device_id}</option>`);
+                });
             }
         });
     }
 
     /* --- Event Listeners --- */
 
-    // Save Changes (Form Submit)
+    // Save Form
     $('#edit-device-form').on('submit', function (e) {
-        e.preventDefault(); // CRITICAL: This stops the page from refreshing/redirecting to dash
+        e.preventDefault();
         e.stopPropagation();
 
-        const updatedData = {
+        const payload = {
             full_name: $('#name').val(),
             email: $('#email').val()
-            // Password reset logic can be added here if needed
         };
 
         $.ajax({
             url: `${API_URL}/users/${userId}`,
             method: 'PUT',
             headers: { 
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json' 
             },
-            data: JSON.stringify(updatedData),
+            data: JSON.stringify(payload),
             success: function () {
-                alert("User updated successfully!");
+                alert("User updated successfully");
                 window.location.href = 'users.html';
             },
-            error: function (xhr) {
-                console.error("Update failed:", xhr);
-                alert("Failed to save changes. Please check your connection.");
+            error: function () {
+                alert("Update failed.");
             }
         });
     });
 
-    // Delete Button logic
+    // Delete User
     $('.delete-btn').on('click', function (e) {
         e.preventDefault();
-        if (confirm('Are you sure you want to PERMANENTLY delete this user?')) {
+        if (confirm("Permanently delete this user?")) {
             $.ajax({
                 url: `${API_URL}/users/${userId}`,
                 method: 'DELETE',
-                headers: { 'Authorization': 'Bearer ' + token },
-                success: function () {
-                    alert("User deleted.");
-                    window.location.href = 'users.html';
-                },
-                error: function (xhr) {
-                    console.error("Deletion failed:", xhr);
-                    alert("Could not delete user.");
-                }
+                headers: { 'Authorization': `Bearer ${token}` },
+                success: () => window.location.href = 'users.html',
+                error: () => alert("Delete failed.")
             });
         }
     });
 
-    // Cancel / Back Navigation
-    $('.back, .cancel-btn').on('click', function (e) {
+    // Logout
+    $('.user').on('click', function() {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    });
+
+    // Fix for the "Back" button redirecting to dashboard instead of users list
+    $('.back, .cancel-btn').on('click', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         window.location.href = 'users.html';
     });
 
-    // Log out logic
-    $('.user').on('click', function () {
-        if (confirm('Do you want to log out?')) {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = 'login.html';
-        }
-    });
-
-    // Run on initialization
-    loadUserData();
+    // Initial load
+    loadUser();
     loadDevices();
 });
