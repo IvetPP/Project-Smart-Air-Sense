@@ -82,7 +82,7 @@ $(document).ready(function () {
                     const borderColor = isNorm ? "#9400D3" : "red";
                     
                     // CO2 (First Square) value text always stays black.
-                    const valueTextColor = isFirstSquare ? "black" : (isNorm ? "black" : "red");
+                    const valueTextColor = "black" // isFirstSquare ? "black" : (isNorm ? "black" : "red");
 
                     // 1. Set text colors
                     $(`.${selector}.value`).text(val).css("color", valueTextColor);

@@ -6,7 +6,7 @@ $(document).ready(function () {
 
     // Centering Logout button & Dynamic Username
     const payload = JSON.parse(atob(token.split('.')[1]));
-    $('.user').text((payload.user_name || "USER").substring(0, 5).toUpperCase());
+    $('.user').text((payload.user_name || "Log out").substring(0, 5).toUpperCase());
 
     $('#add-device-form').on('submit', function (e) {
         e.preventDefault();
