@@ -8,7 +8,7 @@ $(document).ready(function () {
     // Set Username in Profile Circle
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        $('.user.pers').text(payload.user_name?.substring(0,5).toUpperCase() || 'LOGOUT');
+        $('.user.pers').text(payload.user_name?.substring(0,5).toUpperCase() || 'LOG OUT');
     } catch (e) {
         $('.user.pers').text('USER');
     }

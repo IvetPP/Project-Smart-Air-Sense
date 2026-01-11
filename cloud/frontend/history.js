@@ -11,7 +11,7 @@ $(document).ready(function () {
         $.ajax({
             url: `${API_BASE_URL}/devices`,
             method: 'GET',
-            headers: { 
+            headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
             },
@@ -43,7 +43,7 @@ $(document).ready(function () {
         $.ajax({
             url: url,
             method: 'GET',
-            headers: { 
+            headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
             },
@@ -59,7 +59,7 @@ $(document).ready(function () {
                 $('.next').prop('disabled', (currentPage * PAGE_SIZE) >= total);
                 $('.page-info').text(`Page ${currentPage} of ${Math.ceil(total / PAGE_SIZE) || 1}`);
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 console.error("Load failed:", xhr.responseText);
                 $('.history-table tbody').html('<tr><td colspan="6" style="text-align:center;color:red;">Failed to load data from server.</td></tr>');
             }
@@ -70,6 +70,9 @@ $(document).ready(function () {
         const $tbody = $('.history-table tbody');
         $tbody.empty();
 
+        // Get the currently selected parameter from the dropdown
+        const selectedParam = $('#filter-parameter').val();
+
         if (!rows || rows.length === 0) {
             $tbody.append('<tr><td colspan="6" style="text-align:center;">No data found.</td></tr>');
             return;
@@ -78,60 +81,65 @@ $(document).ready(function () {
         rows.forEach(row => {
             let params = [], values = [], statusHtml = [], limits = [];
 
-            // This helper handles the "null" values seen in your Supabase logs
             const check = (val, fullLabel, unit, type) => {
+                if (selectedParam && selectedParam !== type) return;
+
                 if (val !== null && val !== undefined && val !== "") {
                     const numVal = parseFloat(val);
                     if (isNaN(numVal)) return;
 
                     params.push(fullLabel);
                     values.push(`${numVal.toFixed(1)}${unit}`);
-                    
-                    let statText = "Normal", isNorm = true, limText = "";
+
+                    let statText = "Normal";
+                    let isNorm = true;
+                    let limText = "";
 
                     if (type === 'co2') {
                         isNorm = numVal >= 400 && numVal <= 1000;
                         statText = isNorm ? 'Normal' : (numVal < 400 ? 'Low' : 'High');
                         limText = "400 - 1000 ppm";
-                    } else if (type === 'temp') {
+                    } else if (type === 'temperature') {
                         isNorm = numVal >= 20 && numVal <= 24;
                         statText = isNorm ? 'Normal' : 'Out of range';
                         limText = "20 - 24 °C";
-                    } else if (type === 'hum') {
+                    } else if (type === 'humidity') {
                         isNorm = numVal >= 40 && numVal <= 60;
                         statText = isNorm ? 'Normal' : (numVal < 40 ? 'Low' : 'High');
                         limText = "40 - 60 %";
-                    } else if (type === 'press') {
+                    } else if (type === 'pressure') {
                         const p = numVal > 5000 ? numVal / 100 : numVal;
-                        statText = p >= 1013 ? 'Higher' : 'Lower';
+                        isNorm = Math.round(p) === 1013;
+                        statText = isNorm ? 'Normal' : (p > 1013 ? 'Higher' : 'Lower');
                         limText = "1013 hPa";
                     }
 
-                    statusHtml.push(`<span class="${isNorm ? 'normal-text' : 'warning'}" style="${!isNorm ? 'color:red;' : ''}">${statText}</span>`);
+                    statusHtml.push(`<span class="${isNorm ? 'normal-text' : 'warning'}" style="color: ${isNorm ? 'inherit' : 'red'}; font-weight: ${isNorm ? 'normal' : 'bold'};">${statText}</span>`);
                     limits.push(limText);
                 }
             };
 
-            // Column Mapping (Matching your Supabase columns)
+            // Column Mapping
             check(row.co2, "CO2 Concentration", " ppm", 'co2');
-            check(row.temperature, "Temperature", " °C", 'temp');
-            check(row.humidity, "Humidity", " %", 'hum');
-            check(row.pressure, "Barometric Pressure", " hPa", 'press');
+            check(row.temperature, "Temperature", " °C", 'temperature');
+            check(row.humidity, "Humidity", " %", 'humidity');
+            check(row.pressure, "Barometric Pressure", " hPa", 'pressure');
 
-            // Fallback for missing row data
-            const timestamp = row.created_at ? new Date(row.created_at).toLocaleString() : '---';
-            const deviceName = row.device_name || row.device_id || 'Unknown';
+            if (params.length > 0) {
+                const timestamp = row.created_at ? new Date(row.created_at).toLocaleString() : '---';
+                const deviceName = row.device_name || row.device_id || 'Unknown';
 
-            $tbody.append(`
-                <tr>
-                    <td>${timestamp}</td>
-                    <td><strong>${deviceName}</strong></td>
-                    <td>${params.join('<br>') || '--'}</td>
-                    <td>${values.join('<br>') || '--'}</td>
-                    <td>${statusHtml.join('<br>') || '--'}</td>
-                    <td class="limit-cell">${limits.join('<br>') || '--'}</td>
-                </tr>
-            `);
+                $tbody.append(`
+                    <tr>
+                        <td>${timestamp}</td>
+                        <td><strong>${deviceName}</strong></td>
+                        <td>${params.join('<br>')}</td>
+                        <td>${values.join('<br>')}</td>
+                        <td>${statusHtml.join('<br>')}</td>
+                        <td class="limit-cell">${limits.join('<br>')}</td>
+                    </tr>
+                `);
+            }
         });
     }
 
@@ -139,27 +147,43 @@ $(document).ready(function () {
     $('.filter-btn.device').on('click', () => $('.device-panel').slideToggle(200));
     $('.filter-btn.time').on('click', () => $('.time-panel').slideToggle(200));
     $('.filter-btn.par').on('click', () => $('.param-panel').slideToggle(200));
-    
+
     $('#filter-device, #filter-from, #filter-to, #filter-parameter').on('change', () => {
-        currentPage = 1; loadMeasurements();
+        currentPage = 1;
+        loadMeasurements();
     });
 
     $('#clear-filters').on('click', () => {
         $('#filter-device, #filter-from, #filter-to, #filter-parameter').val('');
-        currentPage = 1; loadMeasurements();
+        currentPage = 1;
+        loadMeasurements();
     });
 
-    $('#update-values').on('click', () => loadMeasurements());
+    $(document).on('click', '#update-values', function () {
+        console.log("Update button clicked");
+        currentPage = 1;
+        loadMeasurements();
+    });
+
     $('.back, .cur-values').on('click', () => window.location.href = 'dashboard.html');
 
     $('.user').on('click', () => {
-        if(confirm("Log out?")) { 
-            localStorage.clear(); 
-            sessionStorage.clear(); 
-            window.location.href = 'login.html'; 
+        if (confirm("Do you want to log out?")) {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'login.html';
         }
     });
 
-    $('.next').on('click', () => { currentPage++; loadMeasurements(); });
-    $('.prev').on('click', () => { if(currentPage > 1) { currentPage--; loadMeasurements(); }});
+    $('.next').on('click', () => {
+        currentPage++;
+        loadMeasurements();
+    });
+
+    $('.prev').on('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            loadMeasurements();
+        }
+    });
 });
