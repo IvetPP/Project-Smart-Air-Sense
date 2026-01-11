@@ -98,6 +98,10 @@ $(document).ready(function () {
                     
                     // 2. Set border color of the parent box
                     $(`.${selector}`).closest('.box').css("border-color", borderColor);
+
+                    // 3. FIX: Set border color for the state indicator (the "Normal/Low" box)
+                    // This targets the specific element with the class '.state'
+                    $(`.${selector}.state`).css("border-color", borderColor);
                 };
 
                 // CO2 Logic
