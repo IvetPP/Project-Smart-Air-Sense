@@ -38,7 +38,6 @@ $(document).ready(function () {
         if (deviceId) url += `&device_id=${encodeURIComponent(deviceId)}`;
         if (fromDate) url += `&from=${encodeURIComponent(fromDate)}`;
         if (toDate) url += `&to=${encodeURIComponent(toDate)}`;
-        // Fix: Ensure parameter filter is sent to API
         if (parameter) url += `&parameter=${encodeURIComponent(parameter)}`;
 
         $.ajax({
@@ -134,18 +133,30 @@ $(document).ready(function () {
 
     /* NAVIGATION & BUTTON LOGIC */
 
-    // Back Arrow / History of Values button
-    $('.back-btn, .nav-btn:contains("History of values")').on('click', function() {
-        window.location.href = 'history.html'; // Adjust this to your history filename
+    // Arrow back returns to dashboard
+    $('.back').on('click', function() {
+        window.location.href = 'dashboard.html';
     });
 
-    // Current Value Button
-    $('.nav-btn:contains("Current value")').on('click', function() {
-        window.location.href = 'dashboard.html'; // Adjust to your main dashboard filename
+    // Log out button
+    $('.user').on('click', function() {
+        localStorage.removeItem('auth_token');
+        sessionStorage.removeItem('auth_token');
+        window.location.href = 'login.html'; // Adjust to your login page filename
     });
 
-    // Update Values Button
-    $('.nav-btn:contains("Update values")').on('click', function() {
+    // Current values button
+    $('.cur-values').on('click', function() {
+        window.location.href = 'dashboard.html';
+    });
+
+    // History of values button (remains on this page or reloads)
+    $('.his-values').on('click', function() {
+        window.location.href = 'history.html';
+    });
+
+    // Update values button
+    $('#update-values').on('click', function() {
         currentPage = 1;
         loadMeasurements();
     });
@@ -155,6 +166,7 @@ $(document).ready(function () {
     $('.filter-btn.time').on('click', () => $('.time-panel').slideToggle(200));
     $('.filter-btn.par').on('click', () => $('.param-panel').slideToggle(200));
 
+    // Triggers load on every change (Device, Date, or Parameter)
     $('#filter-device, #filter-from, #filter-to, #filter-parameter').on('change', () => {
         currentPage = 1;
         loadMeasurements();
