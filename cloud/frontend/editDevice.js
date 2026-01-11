@@ -18,27 +18,39 @@ $(document).ready(function () {
     /**
      * 1. Fetch current device data to fill the form
      */
-    $.ajax({
-        url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
-        method: 'GET',
-        headers: { Authorization: 'Bearer ' + token },
-        success: function(dev) {
-            // Fill the form fields with data from the server
-            $('#device-id').val(dev.device_id || deviceId);
-            $('#device-name').val(dev.device_name || '');
-            $('#device-type').val(dev.device_type || '');
-            $('#device-location').val(dev.location || '');
-            
-            // Handle optional fields if they exist in your DB
-            if(dev.assigned_user) $('#device-user').val(dev.assigned_user);
-            if(dev.install_date) $('#device-date').val(dev.install_date.split('T')[0]);
-        },
-        error: function(xhr) {
-            console.error("Fetch error:", xhr);
-            alert('Could not fetch device details. The device ID might not exist in the database.');
-            // Optional: window.location.href = 'index.html';
+    // Inside editDevice.js -> AJAX GET request
+
+$.ajax({
+    url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
+    method: 'GET',
+    headers: { Authorization: 'Bearer ' + token },
+    success: function(response) {
+        // Debugging: See what the server actually sends
+        console.log("Server response:", response);
+
+        // Handle cases where backend wraps data in an object (e.g., response.device or response.data)
+        const dev = response.device || response.data || response;
+
+        if(!dev || (!dev.device_id && !dev.id)) {
+            alert('Device found but data is empty.');
+            return;
         }
-    });
+
+        // Fill the form fields
+        $('#device-id').val(dev.device_id || dev.id || deviceId);
+        $('#device-name').val(dev.device_name || '');
+        $('#device-type').val(dev.device_type || '');
+        $('#device-location').val(dev.location || '');
+        
+        if(dev.assigned_user) $('#device-user').val(dev.assigned_user);
+        if(dev.install_date) $('#device-date').val(dev.install_date.split('T')[0]);
+    },
+    error: function(xhr) {
+        console.error("Fetch error status:", xhr.status);
+        console.error("Fetch error response:", xhr.responseText);
+        alert('Could not fetch device details. Status: ' + xhr.status);
+    }
+});
 
     /**
      * 2. Handle Update (Save Button)

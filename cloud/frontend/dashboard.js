@@ -47,75 +47,37 @@ $(document).ready(function () {
      * Main UI Update Logic
      * FIXED: Button state is now managed independently of data presence.
      */
-    function loadLatestMeasurements(deviceId = null) {
-        // 1. If no device selected, reset UI and disable button
-        if (!deviceId || deviceId === "" || deviceId === "null") { 
-            clearUI(); 
-            $(".edit").prop('disabled', true).css({"opacity": "0.5", "cursor": "not-allowed"});
-            return; 
-        }
-        
-        // 2. Enable the button IMMEDIATELY because a device is selected
-        $(".edit").prop('disabled', false).css({"opacity": "1", "cursor": "pointer"});
-        
-        fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
-            .then(res => res.json())
-            .then(response => {
-                const rows = response.measurements || [];
-                
-                // 3. If no data, clear sensor labels but DO NOT disable the button
-                if (rows.length === 0) { 
-                    clearUI(); 
-                    return; 
-                }
+    // Inside dashboard.js -> loadLatestMeasurements(deviceId)
 
-                let latest = { co2: null, temp: null, hum: null, press: null, time: rows[0].created_at };
-                for (const r of rows) {
-                    if (latest.co2 === null) latest.co2 = r.co2;
-                    if (latest.temp === null) latest.temp = r.temperature;
-                    if (latest.hum === null) latest.hum = r.humidity;
-                    if (latest.press === null) latest.press = r.pressure;
-                }
-
-                // Update Status & Time
-                $(".iot-status").css({"border": "1px solid #6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
-                               .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
-
-                const dt = new Date(latest.time);
-                $(".time").css({"border": "1px solid #6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
-                          .html(`Date and time value: <span style="color: black;">${dt.toLocaleString()}</span>`);
-
-                const updateBox = (selector, val, isNorm, stateText) => {
-                    const stateColor = isNorm ? "black" : "red";
-                    const borderColor = isNorm ? "#9400D3" : "red";
-                    $(`.${selector}.value`).text(val).css("color", "black");
-                    $(`.${selector}.state`).text(stateText).css("color", stateColor);
-                    $(`.${selector}`).closest('.box').css("border-color", borderColor);
-                };
-
-                if (latest.co2 !== null) {
-                    const v = Math.round(latest.co2);
-                    updateBox('co2', v, (v >= 400 && v <= 1000), (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal'));
-                }
-                if (latest.temp !== null) {
-                    const v = Number(latest.temp).toFixed(1);
-                    updateBox('temp', v, (v >= 20 && v <= 24), (v >= 20 && v <= 24 ? 'Normal' : 'Out of range'));
-                }
-                if (latest.hum !== null) {
-                    const v = Number(latest.hum).toFixed(1);
-                    updateBox('hum', v, (v >= 40 && v <= 60), (v < 40 ? 'Low' : v > 60 ? 'High' : 'Normal'));
-                }
-                if (latest.press !== null) {
-                    const p = latest.press > 5000 ? Math.round(latest.press / 100) : Math.round(latest.press);
-                    const isStandard = (p === 1013);
-                    updateBox('bar', p, isStandard, (isStandard ? 'Normal' : (p > 1013 ? 'Higher' : 'Lower')));
-                }
-            })
-            .catch(err => {
-                console.error("Error loading measurements:", err);
-                clearUI();
-            });
+function loadLatestMeasurements(deviceId = null) {
+    // 1. If NO device is selected in the dropdown
+    if (!deviceId || deviceId === "" || deviceId === "null") { 
+        clearUI(); 
+        $(".edit").prop('disabled', true).css({"opacity": "0.5", "cursor": "not-allowed"});
+        return; 
     }
+    
+    // 2. A device IS selected, so enable the button IMMEDIATELY
+    // This allows editing even if the device has 0 measurements
+    $(".edit").prop('disabled', false).css({"opacity": "1", "cursor": "pointer"});
+
+    fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
+        .then(res => res.json())
+        .then(response => {
+            const rows = response.measurements || [];
+            if (rows.length === 0) { 
+                clearUI(); 
+                // DO NOT disable the button here. Just leave the UI cleared.
+                return; 
+            }
+            // ... rest of your logic to display data
+        })
+        .catch(err => {
+            console.error("Error loading measurements:", err);
+            clearUI();
+            // DO NOT disable the button here.
+        });
+}
 
     // --- Event Listeners ---
 
