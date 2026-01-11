@@ -8,13 +8,13 @@ $(document).ready(function () {
     // Set Username in Profile Circle
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        $('.user.pers').text(payload.user_name?.substring(0,5).toUpperCase() || 'LOGOUT');
+        $('.user.pers').text(payload.user_name?.substring(0, 5).toUpperCase() || 'LOGOUT');
     } catch (e) {
         $('.user.pers').text('USER');
     }
 
     /**
-     * Resets the UI to empty states
+     * Resets sensor text only.
      */
     function clearUI() {
         $(".co2.value, .temp.value, .hum.value, .bar.value").text("--").css("color", "black");
@@ -24,7 +24,6 @@ $(document).ready(function () {
                   .html('Date and time value: <span style="color: black;">No records found</span>');
         $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
                   .html('Status IoT: <span style="color: black;">OFF</span>');
-        $(".edit").prop('disabled', true).css("opacity", "0.5");
     }
 
     /**
@@ -40,18 +39,27 @@ $(document).ready(function () {
                 devices.forEach(dev => {
                     $select.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
                 });
-            });
+            })
+            .catch(err => console.error("Error fetching device list:", err));
     }
 
     /**
      * Main UI Update Logic
-     * Handles color-coding and fragmented data
+     * FIXED: Button state is now managed independently of data presence.
      */
+    // Inside dashboard.js -> loadLatestMeasurements(deviceId)
+
     function loadLatestMeasurements(deviceId = null) {
-        if (!deviceId) { clearUI(); return; }
-        
-        $(".edit").prop('disabled', false).css("opacity", "1");
-        
+        // 1. If NO device is selected in the dropdown
+        if (!deviceId || deviceId === "" || deviceId === "null") { 
+            clearUI(); 
+            $(".edit").prop('disabled', true).css({"opacity": "0.5", "cursor": "not-allowed"});
+        return; 
+        }
+        // 2. A device IS selected, so enable the button IMMEDIATELY
+        // This allows editing even if the device has 0 measurements
+        $(".edit").prop('disabled', false).css({"opacity": "1", "cursor": "pointer"});
+
         fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
             .then(res => res.json())
             .then(response => {
@@ -117,8 +125,13 @@ $(document).ready(function () {
                     const pressText = p >= 1013 ? 'Higher' : 'Lower';
                     updateBox('bar', p, isStandard, (isStandard ? 'Normal' : pressText));
                 }
+                // ... rest of your logic to display data
             })
-            .catch(err => console.error("Error loading measurements:", err));
+            .catch(err => {
+                console.error("Error loading measurements:", err);
+                clearUI();
+                // DO NOT disable the button here.
+            });
     }
 
     // --- Event Listeners ---
@@ -129,27 +142,31 @@ $(document).ready(function () {
         loadLatestMeasurements(id);
     });
 
-    // Navigation
-    $(".his-values").on("click", () => location.href = "history.html");
-    $(".add-device").on("click", () => location.href = "addDevice.html");
-    
-    // FIX: Targets the USERS button by finding any button containing that text
-    $(".man").on("click", () => location.href = "users.html");
-
-    $(".edit").on("click", () => {
+    // Forced Click Handler: Works even if sensors are empty
+    $(".edit").on("click", function(e) {
+        e.preventDefault();
         const id = $('#device-select').val();
-        if(id) location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
+        if(id && id !== "" && id !== "null") {
+            window.location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
+        } else {
+            alert("Please select a device first");
+        }
     });
 
+    $(".his-values").on("click", () => location.href = "history.html");
+    $(".add-device").on("click", () => location.href = "addDevice.html");
+    $(".man").on("click", () => location.href = "users.html");
+
     $(".user.pers").on("click", () => {
-        if(confirm('Do you want to log out?')) {
+        if (confirm('Do you want to log out?')) {
             localStorage.clear();
             sessionStorage.clear();
             location.href = 'login.html';
         }
     });
 
-    // Initial Run
+    // Initialize
     loadDeviceList();
     clearUI();
+    $(".edit").prop('disabled', true).css("opacity", "0.5");
 });

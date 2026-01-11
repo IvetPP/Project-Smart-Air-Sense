@@ -12,41 +12,50 @@ $(document).ready(function () {
         $.ajax({
             url: `${API_BASE_URL}/devices`,
             method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
+            headers: { Authorization: 'Bearer ' + token },
             success: function (data) {
                 const deviceSelect = $('#filter-device');
                 deviceSelect.find('option:not(:first)').remove();
                 data.forEach(dev => {
                     deviceSelect.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
                 });
-            }
+            },
+            error: err => console.error('Device list error', err)
         });
     }
 
     function loadMeasurements() {
         const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
         const offset = (currentPage - 1) * PAGE_SIZE;
+
         const deviceId = $('#filter-device').val();
         const fromDate = $('#filter-from').val();
         const toDate = $('#filter-to').val();
+        const parameter = $('#filter-parameter').val();
 
         let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
+
         if (deviceId) url += `&device_id=${encodeURIComponent(deviceId)}`;
         if (fromDate) url += `&from=${encodeURIComponent(fromDate)}`;
         if (toDate) url += `&to=${encodeURIComponent(toDate)}`;
+        if (parameter) url += `&parameter=${encodeURIComponent(parameter)}`;
 
         $.ajax({
-            url: url,
+            url,
             method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
+            headers: { Authorization: 'Bearer ' + token },
             success: function (response) {
                 const rows = response.measurements || [];
-                const total = response.totalCount || 0;
+                const total = response.totalCount || rows.length;
                 renderTable(rows);
-                
+
                 $('.prev').prop('disabled', currentPage === 1);
-                $('.next').prop('disabled', (currentPage * PAGE_SIZE) >= total);
-                $('.page-info').text(`Page ${currentPage} of ${Math.ceil(total / PAGE_SIZE) || 1}`);
+                $('.next').prop('disabled', currentPage * PAGE_SIZE >= total);
+                const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+                $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
+            },
+            error: function (xhr) {
+                $('.history-table tbody').html('<tr><td colspan="6" style="text-align:center;color:red;">Failed to load data</td></tr>');
             }
         });
     }
@@ -98,10 +107,46 @@ $(document).ready(function () {
                 }
             };
 
-            check(row.co2, "CO2 Concentration", " ppm", 'co2');
-            check(row.temperature, "Temperature", " °C", 'temp');
-            check(row.humidity, "Humidity", " %", 'hum');
-            check(row.pressure, "Barometric Pressure", " hPa", 'press');
+            // CO2 Logic
+            if (row.co2 !== null && row.co2 !== undefined) {
+                const v = Math.round(row.co2);
+                const status = (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal');
+                params.push('CO₂ concentration');
+                values.push(`${v} ppm`);
+                statuses.push(getStatusHtml(status));
+                limits.push('400–1000 ppm');
+            }
+
+            // Temp Logic
+            if (row.temperature !== null && row.temperature !== undefined) {
+                const v = Number(row.temperature).toFixed(1);
+                const status = (v >= 20 && v <= 24 ? 'Normal' : 'Out of range');
+                params.push('Temperature');
+                values.push(`${v} °C`);
+                statuses.push(getStatusHtml(status));
+                limits.push('20–24 °C');
+            }
+
+            // Humidity Logic
+            if (row.humidity !== null && row.humidity !== undefined) {
+                const v = Number(row.humidity).toFixed(1);
+                const status = (v < 40 ? 'Low' : v > 60 ? 'High' : 'Normal');
+                params.push('Humidity');
+                values.push(`${v} %`);
+                statuses.push(getStatusHtml(status));
+                limits.push('40–60 %');
+            }
+
+            // Pressure Logic
+            if (row.pressure !== null && row.pressure !== undefined) {
+                const p = row.pressure > 5000 ? Math.round(row.pressure / 100) : Math.round(row.pressure);
+                const isStandard = (p === 1013);
+                const status = isStandard ? 'Normal' : (p >= 1013 ? 'Higher' : 'Lower');
+                params.push('Barometric pressure');
+                values.push(`${p} hPa`);
+                statuses.push(getStatusHtml(status));
+                limits.push('≈1013 hPa');
+            }
 
             $tbody.append(`
                 <tr>
@@ -109,30 +154,60 @@ $(document).ready(function () {
                     <td><strong>${row.device_name || row.device_id}</strong></td>
                     <td>${params.join('<br>')}</td>
                     <td>${values.join('<br>')}</td>
-                    <td>${statusHtml.join('<br>')}</td>
-                    <td class="limit-cell">${limits.join('<br>')}</td>
+                    <td>${statuses.join('<br>')}</td>
+                    <td>${limits.join('<br>')}</td>
                 </tr>
             `);
         });
     }
 
-    /* Events */
+    /* NAVIGATION & BUTTON LOGIC */
+
+    // Arrow back returns to dashboard
+    $('.back').on('click', function() {
+        window.location.href = 'dashboard.html';
+    });
+
+    // Log out button
+    $('.user').on('click', function() {
+        localStorage.removeItem('auth_token');
+        sessionStorage.removeItem('auth_token');
+        window.location.href = 'login.html'; // Adjust to your login page filename
+    });
+
+    // Current values button
+    $('.cur-values').on('click', function() {
+        window.location.href = 'dashboard.html';
+    });
+
+    // History of values button (remains on this page or reloads)
+    $('.his-values').on('click', function() {
+        window.location.href = 'history.html';
+    });
+
+    // Update values button
+    $('#update-values').on('click', function() {
+        currentPage = 1;
+        loadMeasurements();
+    });
+
+    /* FILTER EVENTS */
     $('.filter-btn.device').on('click', () => $('.device-panel').slideToggle(200));
     $('.filter-btn.time').on('click', () => $('.time-panel').slideToggle(200));
     $('.filter-btn.par').on('click', () => $('.param-panel').slideToggle(200));
-    
+
+    // Triggers load on every change (Device, Date, or Parameter)
     $('#filter-device, #filter-from, #filter-to, #filter-parameter').on('change', () => {
-        currentPage = 1; loadMeasurements();
+        currentPage = 1;
+        loadMeasurements();
     });
 
-    $('#update-values').on('click', () => location.reload());
-    $('.cur-values').on('click', () => window.location.href = 'index.html');
-    $('.back').on('click', () => window.location.href = 'index.html');
-
-    $('.user').on('click', () => {
-        if(confirm("Log out?")) { localStorage.clear(); window.location.href = 'login.html'; }
+    $('#clear-filters').on('click', () => {
+        $('#filter-device, #filter-from, #filter-to, #filter-parameter').val('');
+        currentPage = 1;
+        loadMeasurements();
     });
 
     $('.next').on('click', () => { currentPage++; loadMeasurements(); });
-    $('.prev').on('click', () => { if(currentPage > 1) { currentPage--; loadMeasurements(); }});
+    $('.prev').on('click', () => { if (currentPage > 1) { currentPage--; loadMeasurements(); } });
 });
