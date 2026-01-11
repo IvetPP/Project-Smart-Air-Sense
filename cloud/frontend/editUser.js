@@ -1,85 +1,93 @@
-// 1. LOCK THE PAGE (Run this before jQuery loads anything)
-// This prevents other scripts from changing the location for 2 seconds
-(function() {
-    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-    if (!token) {
-        window.location.replace('login.html');
-        return;
-    }
-    console.log("Edit User Page: Auth Lock Engaged");
-})();
-
-$(document).ready(function () {
-    const API_URL = '/api';
-    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+$(document).ready(async function () {
     const params = new URLSearchParams(window.location.search);
     const userId = params.get('id');
 
-    // 2. STOP GLOBAL REDIRECTS
-    // This disables any click listeners from index.js that might be "bleeding" into this page
-    $(document).off('click'); 
-
     if (!userId) {
-        console.error("No ID found in URL");
-        window.location.href = 'users.html';
+        console.error("No user ID found in URL");
         return;
     }
 
-    function loadUser() {
-        $.ajax({
-            url: `${API_URL}/users/${userId}`,
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
-            success: function (user) {
-                // Supabase fix: try multiple field names
-                $('#name').val(user.full_name || user.user_name || '');
-                $('#email').val(user.email || '');
-                if (user.created_at) {
-                    $('#registration-date').val(user.created_at.split('T')[0]);
-                }
-            },
-            error: function (xhr) {
-                console.error("Load Error:", xhr);
-                if(xhr.status === 401) window.location.href = 'login.html';
-            }
-        });
+    // --- 1. Load User Data ---
+    async function loadUser() {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('user_id, user_name, email, full_name, created_at')
+            .eq('user_id', userId)
+            .single();
+
+        if (error) {
+            console.error('Error loading user:', error.message);
+            return;
+        }
+
+        if (user) {
+            // Mapping values to your inputs
+            $('#name').val(user.user_name);
+            $('#full-name').val(user.full_name || '');
+            $('#email').val(user.email || '');
+            $('#registration-date').val(user.created_at?.split('T')[0]);
+        }
     }
 
-    // 3. Form Submit Fix
-    $('#edit-device-form').on('submit', function (e) {
-        e.preventDefault();
-        e.stopImmediatePropagation(); // Prevents other scripts from seeing the submit
+    // --- 2. Change Password Function ---
+    async function updatePassword(newPassword) {
+        if (!newPassword) return alert("Please enter a new password.");
 
-        const payload = {
-            full_name: $('#name').val(),
+        const { error } = await supabase
+            .from('users')
+            .update({ password: newPassword }) // Directly updating the password column
+            .eq('user_id', userId);
+
+        if (error) {
+            alert('Update failed: ' + error.message);
+        } else {
+            alert('Password changed successfully!');
+            $('#password-input').val(''); // Clear the field
+        }
+    }
+
+    // --- 3. Save General Profile Changes ---
+    async function updateProfile() {
+        const updatedData = {
+            user_name: $('#name').val(),
+            full_name: $('#full-name').val(),
             email: $('#email').val()
         };
 
-        $.ajax({
-            url: `${API_URL}/users/${userId}`,
-            method: 'PUT',
-            headers: { 
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json' 
-            },
-            data: JSON.stringify(payload),
-            success: function () {
-                alert("Saved!");
-                window.location.href = 'users.html';
-            }
-        });
+        const { error } = await supabase
+            .from('users')
+            .update(updatedData)
+            .eq('user_id', userId);
+
+        if (error) alert('Error: ' + error.message);
+        else alert('Profile updated!');
+    }
+
+    // --- Event Handlers ---
+
+    // Password change trigger (replace #change-pw-btn with your actual ID)
+    $('#change-pw-btn').on('click', function() {
+        const newPass = $('#password-input').val();
+        updatePassword(newPass);
     });
 
-    // 4. Navigation (Direct override)
-    $(document).on('click', '.back, .cancel-btn', function(e) {
-        e.preventDefault();
-        window.location.replace('users.html');
+    // Save button trigger
+    $('.save-btn').on('click', updateProfile);
+
+    // Delete trigger
+    $('.delete-btn').on('click', async function() {
+        if(confirm('Are you sure you want to delete this user?')) {
+            const { error } = await supabase
+                .from('users')
+                .delete()
+                .eq('user_id', userId);
+
+            if (!error) window.location.href = 'users.html';
+        }
     });
 
-    $('.user').on('click', function() {
-        localStorage.clear();
-        window.location.href = 'login.html';
-    });
+    $('.back, .cancel-btn').on('click', () => window.location.href = 'users.html');
 
+    // Initial Execution
     loadUser();
 });
