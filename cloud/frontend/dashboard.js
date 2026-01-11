@@ -8,7 +8,7 @@ $(document).ready(function () {
     // Set Username in Profile Circle
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        $('.user.pers').text(payload.user_name?.substring(0,5).toUpperCase() || 'LOGOUT');
+        $('.user.pers').text(payload.user_name?.substring(0, 5).toUpperCase() || 'LOGOUT');
     } catch (e) {
         $('.user.pers').text('USER');
     }
@@ -50,7 +50,7 @@ $(document).ready(function () {
         if (!deviceId) { clearUI(); return; }
         
         $(".edit").prop('disabled', false).css("opacity", "1");
-        
+
         fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
             .then(res => res.json())
             .then(response => {
@@ -70,8 +70,8 @@ $(document).ready(function () {
                                .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
 
                 const dt = new Date(latest.time);
-                $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
-                          .html(`Date and time value: <span style="color: black;">${dt.toLocaleString()}</span>`);
+                $(".time").css({ "border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px" })
+                    .html(`Date and time value: <span style="color: black;">${dt.toLocaleString()}</span>`);
 
                 /**
                  * Helper to update UI boxes
@@ -135,7 +135,7 @@ $(document).ready(function () {
     });
 
     $(".user.pers").on("click", () => {
-        if(confirm('Do you want to log out?')) {
+        if (confirm('Do you want to log out?')) {
             localStorage.clear();
             sessionStorage.clear();
             location.href = 'login.html';
