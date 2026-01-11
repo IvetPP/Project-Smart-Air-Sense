@@ -76,18 +76,16 @@ $(document).ready(function () {
                 if (val !== null && val !== undefined && !isNaN(val)) {
                     params.push(fullLabel);
                     values.push(`${Number(val).toFixed(1)}${unit}`);
+                    
+                    let statText = "Normal", isNorm = true, limText = "";
 
-                    // Default values
-                    let statText = "Normal";
-                    let isNorm = true; 
-                    let limText = "";
                     if (type === 'co2') {
                         isNorm = val >= 400 && val <= 1000;
                         statText = isNorm ? 'Normal' : (val < 400 ? 'Low' : 'High');
                         limText = "400 - 1000 ppm";
                     } else if (type === 'temp') {
                         isNorm = val >= 20 && val <= 24;
-                        statText = isNorm ? 'Normal' : (val < 20 ? 'Too Low' : 'Too High');
+                        statText = isNorm ? 'Normal' : 'Out of range';
                         limText = "20 - 24 °C";
                     } else if (type === 'hum') {
                         isNorm = val >= 40 && val <= 60;
@@ -95,13 +93,10 @@ $(document).ready(function () {
                         limText = "40 - 60 %";
                     } else if (type === 'press') {
                         const p = val > 5000 ? val / 100 : val;
-                        // Pressure logic: Is it normal? (Assuming 1013 is the target)
-                        // If you want it red whenever it isn't exactly 1013:
-                        isNorm = Math.round(p) === 1013; 
-                        statText = isNorm ? 'Normal' : (p > 1013 ? 'Higher' : 'Lower');
+                        statText = p >= 1013 ? 'Higher' : 'Lower';
                         limText = "1013 hPa";
                     }
-                    // This line uses 'warning' (red) if isNorm is false
+
                     statusHtml.push(`<span class="${isNorm ? 'normal-text' : 'warning'}">${statText}</span>`);
                     limits.push(limText);
                 }
