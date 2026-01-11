@@ -15,8 +15,8 @@ $(document).ready(function () {
             url: `${AUTH_API}/login`,
             method: 'POST',
             contentType: 'application/json',
-            // FIX: Changed 'email' to 'user_name' to match your backend's expectation
-            data: JSON.stringify({ user_name: email, password: password }), 
+            // FIXED: Sending 'email' key instead of 'user_name'
+            data: JSON.stringify({ email: email, password: password }), 
             success: function (res) {
                 localStorage.setItem('auth_token', res.token);
                 if (!remember) {
@@ -26,14 +26,11 @@ $(document).ready(function () {
             },
             error: function (xhr) {
                 let errMsg = 'Login failed';
-                
-                // FIX: Parse the array of error objects you received
                 if (Array.isArray(xhr.responseJSON)) {
                     errMsg = xhr.responseJSON.map(err => `${err.param}: ${err.msg}`).join('\n');
                 } else if (xhr.responseJSON?.error) {
                     errMsg = xhr.responseJSON.error;
                 }
-                
                 alert(errMsg);
             }
         });
@@ -45,30 +42,40 @@ $(document).ready(function () {
     $('#signup-form').on('submit', function (e) {
         e.preventDefault();
 
-        const email = $('#signup-username').val().trim();
+        // Capture all fields
+        const firstName = $('#signup-firstname').val()?.trim() || '';
+        const lastName = $('#signup-lastname').val()?.trim() || '';
+        const email = $('#signup-username').val().trim(); // This is the email input
         const password = $('#signup-password').val();
         const confirmPw = $('#signup-password-confirm').val();
 
-        // 1. Check if Passwords Match
+        // 1. Combine names for the 'full_name' column
+        const fullName = `${firstName} ${lastName}`.trim();
+
+        // 2. Check if Passwords Match
         if (password !== confirmPw) {
             alert("Error: Passwords do not match!");
             return;
         }
 
-        // 2. Password Complexity Requirements
+        // 3. Password Complexity Requirements
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d\W]{8,}$/;
         if (!passwordRegex.test(password)) {
             alert("Password must be 8+ chars, with 1 uppercase, 1 lowercase, and 1 number.");
             return;
         }
 
-        // 3. Send AJAX Request
+        // 4. Send AJAX Request
         $.ajax({
             url: `${AUTH_API}/register`,
             method: 'POST',
             contentType: 'application/json',
-            // FIX: Match the backend 'user_name' requirement here too
-            data: JSON.stringify({ user_name: email, password: password }),
+            // FIXED: Sending 'email' and 'full_name' to match Supabase columns
+            data: JSON.stringify({ 
+                email: email, 
+                password: password,
+                full_name: fullName 
+            }),
             success: function (res) {
                 alert('Registration successful! You can now log in.');
                 $('#signup-form')[0].reset();
@@ -76,14 +83,13 @@ $(document).ready(function () {
             },
             error: function (xhr) {
                 let errMsg = 'Registration failed';
-                
-                // FIX: Parse the error array
                 if (Array.isArray(xhr.responseJSON)) {
                     errMsg = xhr.responseJSON.map(err => `${err.param}: ${err.msg}`).join('\n');
                 } else if (xhr.responseJSON?.error) {
-                    errMsg = xhr.responseJSON.error;
+                    errMsg = (typeof xhr.responseJSON.error === 'object') 
+                        ? JSON.stringify(xhr.responseJSON.error) 
+                        : xhr.responseJSON.error;
                 }
-                
                 alert(errMsg);
             }
         });
