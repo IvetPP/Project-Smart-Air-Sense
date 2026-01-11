@@ -8,7 +8,6 @@ const { JWT_SECRET } = require('../middleware/auth');
 
 /**
  * Register a new user
- * Expects: email, password, full_name
  */
 router.post('/register',
   body('email').isEmail().withMessage('Enter a valid email address'),
@@ -19,7 +18,7 @@ router.post('/register',
     const { email, password, full_name } = req.body;
 
     try {
-      // 1. Check if user already exists using the email column
+      // 1. Check if user already exists
       const { data: existingUser } = await supabase
         .from('users')
         .select('user_id')
@@ -30,18 +29,19 @@ router.post('/register',
         return res.status(409).json({ error: 'User with this email already exists' });
       }
 
-      // 2. Insert into Supabase mapping to correct columns
-      const { data: newUser, error } = await supabase
+      // 2. Insert into Supabase - Renamed 'error' to 'dbError'
+      const { data: newUser, error: dbError } = await supabase
         .from('users')
         .insert({
-          email: email,       // Saves to email column
-          password: password, // Plain text
-          full_name: full_name // Saves to full_name column
+          email: email,
+          user_name: email, // Keeps your validation happy if user_name is required
+          password: password,
+          full_name: full_name
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
       res.status(201).json({ 
         message: 'User registered successfully', 
@@ -49,16 +49,15 @@ router.post('/register',
         email: newUser.email 
       });
 
-    } catch (error) {
-      console.error('Registration Error:', error.message);
-      res.status(500).json({ error: 'Database insertion failed' });
+    } catch (err) {
+      console.error('Registration Error:', err.message);
+      res.status(500).json({ error: 'Database insertion failed', details: err.message });
     }
   }
 );
 
 /**
  * Login User
- * Expects: email, password
  */
 router.post('/login',
   body('email').isEmail().withMessage('Enter a valid email address'),
@@ -68,15 +67,15 @@ router.post('/login',
     const { email, password } = req.body;
 
     try {
-      // 1. Fetch user by email column
-      const { data: user, error } = await supabase
+      // 1. Fetch user by email - Renamed 'error' to 'fetchError'
+      const { data: user, error: fetchError } = await supabase
         .from('users')
         .select('user_id, email, password, full_name')
         .eq('email', email)
         .single();
 
       // 2. Check if user exists and password matches
-      if (error || !user || user.password !== password) {
+      if (fetchError || !user || user.password !== password) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
@@ -95,8 +94,8 @@ router.post('/login',
         full_name: user.full_name
       });
 
-    } catch (error) {
-      console.error('Login Error:', error.message);
+    } catch (err) {
+      console.error('Login Error:', err.message);
       res.status(500).json({ error: 'Internal Server Error' });
     }
   }
