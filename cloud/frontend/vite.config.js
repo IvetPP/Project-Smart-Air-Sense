@@ -11,6 +11,7 @@ export default defineConfig({
         users: resolve(__dirname, 'users.html'),
         addDevice: resolve(__dirname, 'addDevice.html'),
         editDevice: resolve(__dirname, 'editDevice.html'),
+        editUser: resolve(__dirname, 'editUser.html'),
       }
     }
   }

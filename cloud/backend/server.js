@@ -48,9 +48,19 @@ app.use('/api', (req, res) => {
 const frontendPath = path.join(__dirname, '../frontend/dist');
 app.use(express.static(frontendPath));
 
-// Only return index.html for non-API routes
+// 1. Try to serve the specific file if it exists (e.g., /editUser.html)
+// 2. If it's an API route, do nothing here (it's handled above)
+// 3. ONLY if the file doesn't exist and it's not an API, send index.html
 app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
+    const requestedPath = path.join(frontendPath, req.path);
+    
+    // Check if the requested file (like editUser.html) actually exists
+    res.sendFile(requestedPath, (err) => {
+        if (err) {
+            // If file doesn't exist, fall back to index.html (SPA routing)
+            res.sendFile(path.join(frontendPath, 'index.html'));
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3000;

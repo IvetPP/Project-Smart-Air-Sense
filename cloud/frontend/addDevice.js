@@ -48,12 +48,5 @@ $(document).ready(function () {
     });
     
     $('.back').on('click', () => window.location.href = 'index.html');
-    
-    $('.user').on('click', () => { 
-        if(confirm('Log out?')) { 
-            localStorage.clear(); 
-            sessionStorage.clear();
-            window.location.href='login.html'; 
-        }
-    });
+    $('.user').on('click', () => { if(confirm('Do you want to log out?')) { localStorage.clear(); window.location.href='login.html'; }});
 });
