@@ -2,18 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="./logo.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="./logo.jpg" />
+
     <title>History of values</title>
-    <link rel="stylesheet" href="history.css">
-    <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="history.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap"
+        rel="stylesheet"
+    />
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
-
     <div class="container">
         <div class="header-row">
-            <img src="./logo.jpg" class="logo" alt="Logo">
+            <img src="./logo.jpg" class="logo" alt="Logo" />
+
             <div class="header-nav">
                 <button class="back">&lt;</button>
                 <h1 class="history-title">History of values</h1>
@@ -37,7 +42,8 @@
         <div class="main-content">
             <div class="left-column">
                 <div class="filter">
-                    Filter by:
+                    <span>Filter by:</span>
+
                     <div class="filter-buttons">
                         <button class="filter-btn device">Device</button>
                         <button class="filter-btn time">Time</button>
@@ -56,11 +62,13 @@
 
                 <button id="clear-filters">Clear All Filters</button>
 
-                <div class="device-panel">
-                    <select id="filter-device">
-                        <option value="">All Devices</option>
-                    </select>
-                </div>
+                    <div class="time-panel" style="display: none;">
+                        <label for="filter-from">From:</label>
+                        <input type="date" id="filter-from" />
+
+                        <label for="filter-to">To:</label>
+                        <input type="date" id="filter-to" />
+                    </div>
 
                 <div class="time-panel">
                     <label>From</label>
@@ -95,13 +103,15 @@
                             </tr>
                         </thead>
                         <tbody>
-                            </tbody>
+                            <!-- rows injected via JS -->
+                        </tbody>
                     </table>
 
-                <div class="pagination">
-                    <button class="prev">&lt;- Previous</button>
-                    <span class="page-info">Page 1</span>
-                    <button class="next">Next -&gt;</button>
+                    <div class="pagination">
+                        <button class="prev">&lt;- Previous</button>
+                        <span class="page-info">Page 1</span>
+                        <button class="next">Next -&gt;</button>
+                    </div>
                 </div>
             </div>
         </div>
