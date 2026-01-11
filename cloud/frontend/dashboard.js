@@ -49,35 +49,34 @@ $(document).ready(function () {
      */
     // Inside dashboard.js -> loadLatestMeasurements(deviceId)
 
-function loadLatestMeasurements(deviceId = null) {
-    // 1. If NO device is selected in the dropdown
-    if (!deviceId || deviceId === "" || deviceId === "null") { 
-        clearUI(); 
-        $(".edit").prop('disabled', true).css({"opacity": "0.5", "cursor": "not-allowed"});
+    function loadLatestMeasurements(deviceId = null) {
+        // 1. If NO device is selected in the dropdown
+        if (!deviceId || deviceId === "" || deviceId === "null") { 
+            clearUI(); 
+            $(".edit").prop('disabled', true).css({"opacity": "0.5", "cursor": "not-allowed"});
         return; 
-    }
-    
-    // 2. A device IS selected, so enable the button IMMEDIATELY
-    // This allows editing even if the device has 0 measurements
-    $(".edit").prop('disabled', false).css({"opacity": "1", "cursor": "pointer"});
+        }
+        // 2. A device IS selected, so enable the button IMMEDIATELY
+        // This allows editing even if the device has 0 measurements
+        $(".edit").prop('disabled', false).css({"opacity": "1", "cursor": "pointer"});
 
-    fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
-        .then(res => res.json())
-        .then(response => {
-            const rows = response.measurements || [];
-            if (rows.length === 0) { 
-                clearUI(); 
-                // DO NOT disable the button here. Just leave the UI cleared.
-                return; 
-            }
-            // ... rest of your logic to display data
-        })
-        .catch(err => {
-            console.error("Error loading measurements:", err);
-            clearUI();
-            // DO NOT disable the button here.
-        });
-}
+        fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
+            .then(res => res.json())
+            .then(response => {
+                const rows = response.measurements || [];
+                if (rows.length === 0) { 
+                    clearUI(); 
+                    // DO NOT disable the button here. Just leave the UI cleared.
+                    return; 
+                }
+                // ... rest of your logic to display data
+            })
+            .catch(err => {
+                console.error("Error loading measurements:", err);
+                clearUI();
+                // DO NOT disable the button here.
+            });
+    }
 
     // --- Event Listeners ---
 
