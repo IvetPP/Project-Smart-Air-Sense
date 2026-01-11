@@ -88,12 +88,19 @@ $(document).ready(function () {
     // Search logic
     $('#user-search').on('keyup', function() {
         const term = $(this).val().toLowerCase().trim();
+        
         filteredUsers = allUsers.filter(u => {
+            const name = (u.full_name || "").toLowerCase();
             const email = (u.email || "").toLowerCase();
             const device = (u.assigned_device || "").toLowerCase();
-            return email.includes(term) || device.includes(term);
+            
+            // Returns true if the term matches any of the three fields
+            return name.includes(term) || 
+                   email.includes(term) || 
+                   device.includes(term);
         });
-        currentPage = 1; 
+
+        currentPage = 1; // Reset to first page after searching
         renderTable();
     });
 
