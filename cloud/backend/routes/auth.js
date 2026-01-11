@@ -8,33 +8,35 @@ const { JWT_SECRET } = require('../middleware/auth');
 
 /**
  * Register a new user
- * Expects: user_name, password
+ * Expects: email, password, full_name
  */
 router.post('/register',
-  body('user_name').isString().notEmpty(),
-  body('password').isLength({ min: 6 }), // Adjusted for development ease
+  body('email').isEmail().withMessage('Enter a valid email address'),
+  body('password').isLength({ min: 6 }), 
+  body('full_name').optional().isString(),
   handleValidation,
   async (req, res) => {
-    const { user_name, password } = req.body;
+    const { email, password, full_name } = req.body;
 
     try {
-      // 1. Check if user already exists
+      // 1. Check if user already exists using the email column
       const { data: existingUser } = await supabase
         .from('users')
         .select('user_id')
-        .eq('user_name', user_name)
+        .eq('email', email)
         .single();
 
       if (existingUser) {
-        return res.status(409).json({ error: 'Username already exists' });
+        return res.status(409).json({ error: 'User with this email already exists' });
       }
 
-      // 2. Insert into Supabase (user_id will auto-increment from 1)
+      // 2. Insert into Supabase mapping to correct columns
       const { data: newUser, error } = await supabase
         .from('users')
         .insert({
-          user_name: user_name,
-          password: password // Plain text as requested
+          email: email,       // Saves to email column
+          password: password, // Plain text
+          full_name: full_name // Saves to full_name column
         })
         .select()
         .single();
@@ -44,7 +46,7 @@ router.post('/register',
       res.status(201).json({ 
         message: 'User registered successfully', 
         user_id: newUser.user_id, 
-        user_name: newUser.user_name 
+        email: newUser.email 
       });
 
     } catch (error) {
@@ -56,21 +58,21 @@ router.post('/register',
 
 /**
  * Login User
- * Expects: user_name, password
+ * Expects: email, password
  */
 router.post('/login',
-  body('user_name').isString().notEmpty(),
+  body('email').isEmail().withMessage('Enter a valid email address'),
   body('password').isString(),
   handleValidation,
   async (req, res) => {
-    const { user_name, password } = req.body;
+    const { email, password } = req.body;
 
     try {
-      // 1. Fetch user by user_name
+      // 1. Fetch user by email column
       const { data: user, error } = await supabase
         .from('users')
-        .select('user_id, user_name, password')
-        .eq('user_name', user_name)
+        .select('user_id, email, password, full_name')
+        .eq('email', email)
         .single();
 
       // 2. Check if user exists and password matches
@@ -79,9 +81,8 @@ router.post('/login',
       }
 
       // 3. Generate JWT Token
-      // 'sub' is set to the integer user_id
       const token = jwt.sign(
-        { sub: user.user_id, username: user.user_name }, 
+        { sub: user.user_id, email: user.email, name: user.full_name }, 
         JWT_SECRET, 
         { expiresIn: '2h' }
       );
@@ -90,7 +91,8 @@ router.post('/login',
         token, 
         token_type: 'Bearer', 
         expires_in: 7200,
-        username: user.user_name 
+        email: user.email,
+        full_name: user.full_name
       });
 
     } catch (error) {
