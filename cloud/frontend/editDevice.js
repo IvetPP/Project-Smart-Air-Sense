@@ -31,6 +31,7 @@ $(document).ready(function () {
     });
 
     // 2. Handle Update
+    // previous commit fixed here:
     $('#edit-device-form').off('submit').on('submit', function (e) {
         e.preventDefault();
     
