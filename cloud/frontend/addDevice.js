@@ -1,12 +1,18 @@
 $(document).ready(function () {
-    const API_URL = '/api';
+    const API_URL = window.location.origin + '/api';
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
 
     if (!token) { window.location.href = 'login.html'; return; }
 
-    // Centering Logout button & Dynamic Username
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    $('.user').text((payload.user_name || "Log out").substring(0, 5).toUpperCase());
+    // Set Default Date to Today
+    const today = new Date().toISOString().split('T')[0];
+    $('#device-date').val(today);
+
+    // Dynamic Username logic
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        $('.user').text((payload.user_name || "LOG OUT").substring(0, 10).toUpperCase());
+    } catch (e) { console.error("Token parsing failed"); }
 
     $('#add-device-form').on('submit', function (e) {
         e.preventDefault();
@@ -14,7 +20,8 @@ $(document).ready(function () {
         const deviceData = {
             device_name: $('#device-name').val().trim(),
             device_type: $('#device-type').val().trim(),
-            location: $('#device-location').val().trim()
+            location: $('#device-location').val().trim(),
+            registration_date: $('#device-date').val()
         };
 
         $.ajax({
@@ -24,12 +31,11 @@ $(document).ready(function () {
             contentType: 'application/json',
             data: JSON.stringify(deviceData),
             success: function (res) {
-                $('#device-id').val(res.device_id); // Show the new ID
+                $('#device-id').val(res.device_id); 
                 alert('Device successfully added!');
+                window.location.href = 'index.html';
             },
-            error: function (xhr) {
-                alert(xhr.responseJSON?.error || 'Failed to add device');
-            }
+            error: (xhr) => alert(xhr.responseJSON?.error || 'Failed to add device')
         });
     });
 
