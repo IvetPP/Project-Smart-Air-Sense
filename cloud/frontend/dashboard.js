@@ -14,17 +14,17 @@ $(document).ready(function () {
     }
 
     /**
-     * Resets the UI to empty states
+     * Resets the UI sensor values to empty states
      */
     function clearUI() {
         $(".co2.value, .temp.value, .hum.value, .bar.value").text("--").css("color", "black");
         $(".co2.state, .temp.state, .hum.state, .bar.state").text("No Data").css("color", "black");
+        // Keep standard border size, just ensure color is the default purple
         $(".box").css("border-color", "#9400D3");
         $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
                   .html('Date and time value: <span style="color: black;">No records found</span>');
         $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
                   .html('Status IoT: <span style="color: black;">OFF</span>');
-        $(".edit").prop('disabled', true).css("opacity", "0.5");
     }
 
     /**
@@ -47,7 +47,11 @@ $(document).ready(function () {
      * Main UI Update Logic
      */
     function loadLatestMeasurements(deviceId = null) {
-        if (!deviceId) { clearUI(); return; }
+        if (!deviceId) { 
+            clearUI(); 
+            $(".edit").prop('disabled', true).css("opacity", "0.5");
+            return; 
+        }
         
         $(".edit").prop('disabled', false).css("opacity", "1");
         
@@ -55,7 +59,11 @@ $(document).ready(function () {
             .then(res => res.json())
             .then(response => {
                 const rows = response.measurements || [];
-                if (rows.length === 0) { clearUI(); return; }
+                
+                if (rows.length === 0) { 
+                    clearUI(); 
+                    return; 
+                }
 
                 let latest = { co2: null, temp: null, hum: null, press: null, time: rows[0].created_at };
                 for (const r of rows) {
@@ -65,7 +73,6 @@ $(document).ready(function () {
                     if (latest.press === null) latest.press = r.pressure;
                 }
 
-                // Status IoT & Time
                 $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
                                .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
 
@@ -73,19 +80,15 @@ $(document).ready(function () {
                 $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
                           .html(`Date and time value: <span style="color: black;">${dt.toLocaleString()}</span>`);
 
-                /**
-                 * Helper to update UI boxes
-                 * FIXED: Numbers are always black, borders turn red on warning
-                 */
+                // Updated updateBox logic for Red Borders on Warning
                 const updateBox = (selector, val, isNorm, stateText) => {
                     const stateColor = isNorm ? "black" : "red";
-                    const borderColor = isNorm ? "#9400D3" : "red";
+                    const borderColor = isNorm ? "#9400D3" : "red"; // Changes to red if not normal
                     
-                    // 1. Set text colors (Value is now ALWAYS black)
                     $(`.${selector}.value`).text(val).css("color", "black");
                     $(`.${selector}.state`).text(stateText).css("color", stateColor);
                     
-                    // 2. Set border color of the parent box
+                    // Update only border-color to preserve existing CSS size/padding/width
                     $(`.${selector}`).closest('.box').css("border-color", borderColor);
                 };
 
@@ -115,7 +118,10 @@ $(document).ready(function () {
                     updateBox('bar', p, isStandard, (isStandard ? 'Normal' : pressText));
                 }
             })
-            .catch(err => console.error("Error loading measurements:", err));
+            .catch(err => {
+                console.error("Error loading measurements:", err);
+                clearUI();
+            });
     }
 
     // --- Event Listeners ---
@@ -129,9 +135,11 @@ $(document).ready(function () {
     $(".add-device").on("click", () => location.href = "addDevice.html");
     $(".man").on("click", () => location.href = "users.html");
 
-    $(".edit").on("click", () => {
+    $(document).on("click", ".edit", function() {
         const id = $('#device-select').val();
-        if(id) location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
+        if(id) {
+            location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
+        }
     });
 
     $(".user.pers").on("click", () => {
@@ -144,4 +152,5 @@ $(document).ready(function () {
 
     loadDeviceList();
     clearUI();
+    $(".edit").prop('disabled', true).css("opacity", "0.5");
 });
