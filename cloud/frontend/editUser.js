@@ -3,18 +3,13 @@ $(document).ready(async function () {
     const userId = params.get('id');
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
 
-    // --- 1. Authentication & Log Out (Same as your reference) ---
-    if (!token) { 
-        window.location.href = 'login.html'; 
-        return; 
-    }
+    // --- 1. Auth & Log Out (Matching your reference logic) ---
+    if (!token) { window.location.href = 'login.html'; return; }
 
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         $('.user').text((payload.user_name || "LOG OUT").substring(0, 10).toUpperCase());
-    } catch (e) { 
-        console.error("Token parsing failed"); 
-    }
+    } catch (e) { console.error("Token parsing failed"); }
 
     $('.user').on('click', function() { 
         if(confirm('Do you want to log out?')) { 
@@ -24,11 +19,11 @@ $(document).ready(async function () {
     });
 
     if (!userId) {
-        console.error("No user ID found in URL");
+        window.location.href = 'users.html';
         return;
     }
 
-    // --- 2. Load User Data (full_name and email) ---
+    // --- 2. Load User Data from Supabase ---
     async function loadUser() {
         const { data: user, error } = await supabase
             .from('users')
@@ -47,7 +42,7 @@ $(document).ready(async function () {
         }
     }
 
-    // --- 3. Save Logic (Profile + Password) ---
+    // --- 3. Save Changes (Profile + Password) ---
     $('#edit-user-form').on('submit', async function (e) {
         e.preventDefault();
 
@@ -58,7 +53,7 @@ $(document).ready(async function () {
 
         const newPass = $('#password-input').val();
         if (newPass && newPass.trim() !== "") {
-            updatedData.password = newPass; // Only update password if field is not empty
+            updatedData.password = newPass; // Include password only if typed
         }
 
         const { error } = await supabase
@@ -69,7 +64,7 @@ $(document).ready(async function () {
         if (error) {
             alert('Update failed: ' + error.message);
         } else {
-            alert('User successfully updated!');
+            alert('User updated successfully!');
             window.location.href = 'users.html';
         }
     });
@@ -82,17 +77,14 @@ $(document).ready(async function () {
                 .delete()
                 .eq('user_id', userId);
 
-            if (!error) {
-                window.location.href = 'users.html';
-            } else {
-                alert('Error deleting user: ' + error.message);
-            }
+            if (!error) window.location.href = 'users.html';
+            else alert('Delete failed: ' + error.message);
         }
     });
 
     // --- 5. Navigation ---
     $('.back, .cancel-btn').on('click', () => window.location.href = 'users.html');
 
-    // Initial Execution
+    // Load user on start
     loadUser();
 });
