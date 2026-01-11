@@ -24,32 +24,46 @@ $(document).ready(function () {
     }
 
     function loadMeasurements() {
-        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-        const offset = (currentPage - 1) * PAGE_SIZE;
-        const deviceId = $('#filter-device').val();
-        const fromDate = $('#filter-from').val();
-        const toDate = $('#filter-to').val();
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    const offset = (currentPage - 1) * PAGE_SIZE;
+    const deviceId = $('#filter-device').val();
+    const fromDate = $('#filter-from').val();
+    const toDate = $('#filter-to').val();
 
-        let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
-        if (deviceId) url += `&device_id=${encodeURIComponent(deviceId)}`;
-        if (fromDate) url += `&from=${encodeURIComponent(fromDate)}`;
-        if (toDate) url += `&to=${encodeURIComponent(toDate)}`;
+    // 1. Check if the URL matches what the dashboard uses
+    let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
+    
+    if (deviceId) url += `&device_id=${encodeURIComponent(deviceId)}`;
+    if (fromDate) url += `&from=${encodeURIComponent(fromDate)}`;
+    if (toDate) url += `&to=${encodeURIComponent(toDate)}`;
 
-        $.ajax({
-            url: url,
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
-            success: function (response) {
-                const rows = response.measurements || [];
-                const total = response.totalCount || 0;
-                renderTable(rows);
-                
-                $('.prev').prop('disabled', currentPage === 1);
-                $('.next').prop('disabled', (currentPage * PAGE_SIZE) >= total);
-                $('.page-info').text(`Page ${currentPage} of ${Math.ceil(total / PAGE_SIZE) || 1}`);
-            }
-        });
-    }
+    $.ajax({
+        url: url,
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function (response) {
+            // DEBUG: See what the server is actually sending back
+            console.log("History API Response:", response);
+
+            // Handle both object-wrapped and direct array responses
+            const rows = response.measurements || (Array.isArray(response) ? response : []);
+            
+            // If totalCount is missing, use the length of the returned rows
+            const total = response.totalCount || rows.length;
+            
+            renderTable(rows);
+            
+            $('.prev').prop('disabled', currentPage === 1);
+            // If total is just the row length, this button might disable early
+            $('.next').prop('disabled', rows.length < PAGE_SIZE); 
+            $('.page-info').text(`Page ${currentPage}`);
+        },
+        error: function(xhr) {
+            console.error("History Load Failed:", xhr.status, xhr.responseText);
+            $('.history-table tbody').html(`<tr><td colspan="6" style="color:red; text-align:center;">Error loading data: ${xhr.status}</td></tr>`);
+        }
+    });
+}
 
     function renderTable(rows) {
         const $tbody = $('.history-table tbody');
