@@ -8,7 +8,7 @@ $(document).ready(function () {
     // Set Username in Profile Circle
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        $('.user.pers').text(payload.user_name?.substring(0,5).toUpperCase() || 'LOGOUT');
+        $('.user.pers').text(payload.user_name?.substring(0, 5).toUpperCase() || 'LOGOUT');
     } catch (e) {
         $('.user.pers').text('USER');
     }
@@ -102,7 +102,7 @@ $(document).ready(function () {
     $(".man").on("click", () => location.href = "users.html");
 
     $(".user.pers").on("click", () => {
-        if(confirm('Do you want to log out?')) {
+        if (confirm('Do you want to log out?')) {
             localStorage.clear();
             sessionStorage.clear();
             location.href = 'login.html';
