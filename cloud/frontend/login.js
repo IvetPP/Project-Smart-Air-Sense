@@ -24,7 +24,9 @@ $(document).ready(function () {
                 window.location.href = 'index.html';
             },
             error: function (xhr) {
-                alert(xhr.responseJSON?.error || 'Login failed');
+                // Prevent [object Object] by checking if response is an object
+                const errorData = xhr.responseJSON?.error || xhr.responseJSON || 'Login failed';
+                alert(typeof errorData === 'object' ? JSON.stringify(errorData) : errorData);
             }
         });
     });
@@ -39,49 +41,47 @@ $(document).ready(function () {
         const password = $('#signup-password').val();
         const confirmPw = $('#signup-password-confirm').val();
 
-        // 1. Define Password Requirements
-        // Criteria: Min 8 chars, 1 uppercase, 1 lowercase, 1 number
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d\W]{8,}$/;
+        // 1. Check if Passwords Match
+        if (password !== confirmPw) {
+            alert("Error: Passwords do not match. Please re-enter your password.");
+            // Clear the confirm field to let them try again
+            $('#signup-password-confirm').val('');
+            $('#signup-password-confirm').focus();
+            return; // Stop the function here
+        }
 
-        // 2. Validate Password Requirements
+        // 2. Password Complexity Requirements
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d\W]{8,}$/;
         if (!passwordRegex.test(password)) {
             alert(
-                "Password does not meet the following requirements:\n" +
-                "• Minimum 8 characters long\n" +
-                "• At least one uppercase letter (A-Z)\n" +
-                "• At least one lowercase letter (a-z)\n" +
-                "• At least one number (0-9)"
+                "Password does not meet requirements:\n" +
+                "• Minimum 8 characters\n" +
+                "• At least one uppercase letter\n" +
+                "• At least one lowercase letter\n" +
+                "• At least one number"
             );
             return;
         }
 
-        // 3. Validate Password Match
-        if (password !== confirmPw) {
-            alert("Passwords do not match!");
-            return;
-        }
-
-        // 4. Proceed with Registration
+        // 3. Send AJAX Request
         $.ajax({
             url: `${AUTH_API}/register`,
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ email, password }),
             success: function (res) {
-                alert('Registration successful! You can now log in using the form above.');
+                alert('Registration successful! You can now log in.');
                 $('#signup-form')[0].reset();
-                // Pre-fill login username for convenience
                 $('#login-username').val(email);
             },
             error: function (xhr) {
-                alert(xhr.responseJSON?.error || 'Registration failed');
+                // Prevent [object Object] for registration errors
+                const errorData = xhr.responseJSON?.error || xhr.responseJSON || 'Registration failed';
+                alert(typeof errorData === 'object' ? JSON.stringify(errorData) : errorData);
             }
         });
     });
 
-    /* ============================
-       UI INTERACTIONS
-    ============================ */
     $('.cancel-btn').on('click', () => $('#signup-form')[0].reset());
     $('.back').on('click', () => window.location.href = 'index.html');
 });

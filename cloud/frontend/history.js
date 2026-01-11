@@ -3,18 +3,37 @@ $(document).ready(function () {
     const PAGE_SIZE = 10;
     let currentPage = 1;
 
-    // Initial Load: Load devices first, then measurements
+    // --- Auth & Profile Setup ---
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const authHeaders = { 
+        'Authorization': 'Bearer ' + token, 
+        'Content-Type': 'application/json' 
+    };
+
+    // Set Username in Profile Circle (Matches Dashboard logic)
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        $('.user.pers').text(payload.user_name?.substring(0, 5).toUpperCase() || 'LOG OUT');
+    } catch (e) {
+        $('.user.pers').text('USER');
+    }
+
+    // Initial Load
     loadDeviceList();
 
+    /**
+     * Populates the device dropdown in the filter panel
+     */
     function loadDeviceList() {
-        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
         $.ajax({
             url: `${API_BASE_URL}/devices`,
             method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json'
-            },
+            headers: authHeaders,
             success: function (data) {
                 const deviceSelect = $('#filter-device');
                 deviceSelect.find('option:not(:first)').remove();
@@ -28,32 +47,28 @@ $(document).ready(function () {
         });
     }
 
+    /**
+     * Fetches historical data based on current page and active filters
+     */
     function loadMeasurements() {
-        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
         const offset = (currentPage - 1) * PAGE_SIZE;
         const deviceId = $('#filter-device').val();
         const fromDate = $('#filter-from').val();
         const toDate = $('#filter-to').val();
-        const selectedParam = $('#filter-parameter').val(); // Get the parameter here
+        const selectedParam = $('#filter-parameter').val();
 
         let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
         
         if (deviceId) url += `&device_id=${encodeURIComponent(deviceId)}`;
         if (fromDate) url += `&from=${encodeURIComponent(fromDate)}`;
         if (toDate) url += `&to=${encodeURIComponent(toDate)}`;
-
-        // ADD THIS LINE: Pass the parameter to the server
         if (selectedParam) url += `&parameter=${encodeURIComponent(selectedParam)}`;    
 
         $.ajax({
             url: url,
             method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json'
-            },
+            headers: authHeaders,
             success: function (response) {
-                console.log("Data received:", response);
                 const rows = response.measurements || (Array.isArray(response) ? response : []);
                 const total = response.totalCount || 0;
 
@@ -71,15 +86,17 @@ $(document).ready(function () {
         });
     }
 
+    /**
+     * Renders rows into the table with color-coded status
+     */
     function renderTable(rows) {
         const $tbody = $('.history-table tbody');
         $tbody.empty();
 
-        // Get the currently selected parameter from the dropdown
         const selectedParam = $('#filter-parameter').val();
 
         if (!rows || rows.length === 0) {
-            $tbody.append('<tr><td colspan="6" style="text-align:center;">No data found.</td></tr>');
+            $tbody.append('<tr><td colspan="7" style="text-align:center;">No data found.</td></tr>');
             return;
         }
 
@@ -119,12 +136,11 @@ $(document).ready(function () {
                         limText = "1013 hPa";
                     }
 
-                    statusHtml.push(`<span class="${isNorm ? 'normal-text' : 'warning'}" style="color: ${isNorm ? '#248b28' : 'red'}; font-weight: ${isNorm ? 'normal' : 'bold'};">${statText}</span>`);
+                    statusHtml.push(`<span style="color: ${isNorm ? '#228B22' : 'red'}; font-weight: bold;">${statText}</span>`);
                     limits.push(limText);
                 }
             };
 
-            // Column Mapping
             check(row.co2, "CO<sub>2</sub> Concentration", " ppm", 'co2');
             check(row.temperature, "Temperature", " °C", 'temperature');
             check(row.humidity, "Humidity", " %", 'humidity');
@@ -148,31 +164,38 @@ $(document).ready(function () {
         });
     }
 
-    /* Event Listeners */
+    // --- Event Listeners ---
+
+    // Toggle filter panels
     $('.filter-btn.device').on('click', () => $('.device-panel').slideToggle(200));
     $('.filter-btn.time').on('click', () => $('.time-panel').slideToggle(200));
     $('.filter-btn.par').on('click', () => $('.param-panel').slideToggle(200));
 
+    // Update data on filter change
     $('#filter-device, #filter-from, #filter-to, #filter-parameter').on('change', () => {
         currentPage = 1;
         loadMeasurements();
     });
 
+    // Clear Filters
     $('#clear-filters').on('click', () => {
         $('#filter-device, #filter-from, #filter-to, #filter-parameter').val('');
         currentPage = 1;
         loadMeasurements();
     });
 
+    // Update Values button
     $(document).on('click', '#update-values', function () {
-        console.log("Update button clicked");
         currentPage = 1;
         loadMeasurements();
     });
 
-    $('.back, .cur-values').on('click', () => window.location.href = 'dashboard.html');
+    // Navigation
+    $('.cur-values').on('click', () => window.location.href = 'index.html');
+    $('.back').on('click', () => window.location.href = 'index.html');
 
-    $('.user').on('click', () => {
+    // Logout logic (Matches Dashboard)
+    $('.user.pers').on('click', () => {
         if (confirm("Do you want to log out?")) {
             localStorage.clear();
             sessionStorage.clear();
@@ -180,6 +203,7 @@ $(document).ready(function () {
         }
     });
 
+    // Pagination
     $('.next').on('click', () => {
         currentPage++;
         loadMeasurements();
