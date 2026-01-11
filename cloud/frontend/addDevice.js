@@ -41,5 +41,5 @@ $(document).ready(function () {
 
     $('.delete-btn').on('click', () => $('#add-device-form').trigger('reset'));
     $('.back').on('click', () => window.location.href = 'index.html');
-    $('.user').on('click', () => { if(confirm('Log out?')) { localStorage.clear(); window.location.href='login.html'; }});
+    $('.user').on('click', () => { if(confirm('Do you want to log out?')) { localStorage.clear(); window.location.href='login.html'; }});
 });
