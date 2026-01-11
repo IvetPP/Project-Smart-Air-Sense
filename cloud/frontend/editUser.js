@@ -1,90 +1,120 @@
-$(document).ready(async function () {
+$(document).ready(function () {
+    const API_URL = window.location.origin + '/api';
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     const params = new URLSearchParams(window.location.search);
     const userId = params.get('id');
-    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
 
-    // --- 1. Auth & Log Out (Matching your reference logic) ---
-    if (!token) { window.location.href = 'login.html'; return; }
+    // --- 1. Authentication & Log Out ---
+    if (!token) { 
+        window.location.href = 'login.html'; 
+        return; 
+    }
 
+    // Set Logged-in Username logic
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         $('.user').text((payload.user_name || "LOG OUT").substring(0, 10).toUpperCase());
-    } catch (e) { console.error("Token parsing failed"); }
+    } catch (e) { 
+        console.error("Token parsing failed"); 
+    }
 
+    // Log Out with confirmation (Matches your device page logic)
     $('.user').on('click', function() { 
         if(confirm('Do you want to log out?')) { 
             localStorage.clear(); 
-            window.location.href='login.html'; 
+            window.location.href = 'login.html'; 
         }
     });
 
-    if (!userId) {
-        window.location.href = 'users.html';
-        return;
+    if (!userId) { 
+        window.location.href = 'users.html'; 
+        return; 
     }
 
-    // --- 2. Load User Data from Supabase ---
-    async function loadUser() {
-        const { data: user, error } = await supabase
-            .from('users')
-            .select('full_name, email')
-            .eq('user_id', userId)
-            .single();
+    // --- 2. Load User Data as Placeholders ---
+    function loadUser() {
+        $.ajax({
+            url: `${API_URL}/users/${encodeURIComponent(userId)}`,
+            method: 'GET',
+            headers: { Authorization: 'Bearer ' + token },
+            success: function(user) {
+                // Mapping DB columns to Input Placeholders
+                $('#full-name').attr('placeholder', user.full_name || 'Full Name');
+                $('#email').attr('placeholder', user.email || 'Email');
+                
+                // Ensure values are empty so placeholders show
+                $('#full-name').val('');
+                $('#email').val('');
+            },
+            error: function(xhr) {
+                console.error("Fetch Error:", xhr);
+                alert('Could not fetch user details.');
+            }
+        });
+    }
 
-        if (error) {
-            console.error('Error loading user:', error.message);
+    // --- 3. Save Logic (Update) ---
+    $('#edit-user-form').on('submit', function (e) {
+        e.preventDefault();
+
+        const nameVal = $('#full-name').val().trim();
+        const emailVal = $('#email').val().trim();
+        const passVal = $('#password-input').val().trim();
+
+        // Construct payload only with fields that have values
+        const payload = {};
+        if (nameVal !== "") payload.full_name = nameVal;
+        if (emailVal !== "") payload.email = emailVal;
+        if (passVal !== "") payload.password = passVal;
+
+        // If user clicked save without typing anything
+        if (Object.keys(payload).length === 0) {
+            alert("No changes entered to save.");
             return;
         }
 
-        if (user) {
-            $('#full-name').val(user.full_name || '');
-            $('#email').val(user.email || '');
-        }
-    }
-
-    // --- 3. Save Changes (Profile + Password) ---
-    $('#edit-user-form').on('submit', async function (e) {
-        e.preventDefault();
-
-        const updatedData = {
-            full_name: $('#full-name').val(),
-            email: $('#email').val()
-        };
-
-        const newPass = $('#password-input').val();
-        if (newPass && newPass.trim() !== "") {
-            updatedData.password = newPass; // Include password only if typed
-        }
-
-        const { error } = await supabase
-            .from('users')
-            .update(updatedData)
-            .eq('user_id', userId);
-
-        if (error) {
-            alert('Update failed: ' + error.message);
-        } else {
-            alert('User updated successfully!');
-            window.location.href = 'users.html';
-        }
+        $.ajax({
+            url: `${API_URL}/users/${encodeURIComponent(userId)}`,
+            method: 'PUT',
+            headers: { 
+                Authorization: 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(payload),
+            success: function() {
+                alert('User updated successfully!');
+                window.location.href = 'users.html';
+            },
+            error: function(xhr) {
+                alert('Error: ' + (xhr.responseJSON?.error || 'Server error'));
+            }
+        });
     });
 
     // --- 4. Delete Logic ---
-    $('.delete-btn').on('click', async function() {
+    $('.delete-btn').on('click', function() {
         if(confirm('Are you sure you want to delete this user?')) {
-            const { error } = await supabase
-                .from('users')
-                .delete()
-                .eq('user_id', userId);
-
-            if (!error) window.location.href = 'users.html';
-            else alert('Delete failed: ' + error.message);
+            $.ajax({
+                url: `${API_URL}/users/${encodeURIComponent(userId)}`,
+                method: 'DELETE',
+                headers: { Authorization: 'Bearer ' + token },
+                success: function() {
+                    alert('User deleted.');
+                    window.location.href = 'users.html';
+                },
+                error: function(xhr) {
+                    alert('Delete failed: ' + (xhr.responseJSON?.error || 'Server error'));
+                }
+            });
         }
     });
 
     // --- 5. Navigation ---
-    $('.back, .cancel-btn').on('click', () => window.location.href = 'users.html');
+    $('.back, .cancel-btn').on('click', function(e) {
+        e.preventDefault();
+        window.location.href = 'users.html';
+    });
 
-    // Load user on start
+    // Initial load
     loadUser();
 });
