@@ -29,26 +29,9 @@ $(document).ready(function () {
             alert('Could not fetch device details. Status: ' + xhr.status);
         }
 
-        // Fill the form fields
-        $('#device-id').val(dev.device_id || dev.id || deviceId);
-        $('#device-name').val(dev.device_name || '');
-        $('#device-type').val(dev.device_type || '');
-        $('#device-location').val(dev.location || '');
-        
-        if(dev.assigned_user) $('#device-user').val(dev.assigned_user);
-        if(dev.install_date) $('#device-date').val(dev.install_date.split('T')[0]);
-    },
-    error: function(xhr) {
-        console.error("Fetch error status:", xhr.status);
-        console.error("Fetch error response:", xhr.responseText);
-        alert('Could not fetch device details. Status: ' + xhr.status);
-    }
-});
-
-    /**
-     * 2. Handle Update (Save Button)
-     */
-    $('#edit-device-form').on('submit', function (e) {
+    // 2. Handle Update
+    // previous commit fixed here:
+    $('#edit-device-form').off('submit').on('submit', function (e) {
         e.preventDefault();
     
         const safeId = encodeURIComponent($('#device-id').val().trim());
