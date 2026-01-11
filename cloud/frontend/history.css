@@ -1,42 +1,95 @@
-.container { width: 95%; margin: 0 auto; font-family: 'ADLaM Display', sans-serif; }
-.header-row { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
-.logo { width: 120px; }
-.header-nav { display: flex; align-items: center; gap: 15px; flex-grow: 1; }
-.history-title { flex-grow: 1; margin: 0; }
-
-.nav-buttons-row { display: flex; gap: 10px; margin-bottom: 20px; }
-.cur-values, .his-values, #update-values {
-    padding: 10px 20px;
+/* Inherit Dashboard Button Styles */
+.cur-values, .his-values {
+    padding: 20px; /* Large padding as seen on dashboard */
+    color: #9400D3;
+    margin-right: 15px;
     border: 1px solid #9400D3;
     border-radius: 5px;
     font-family: 'ADLaM Display';
     cursor: pointer;
-    background: white;
-    color: #9400D3;
 }
-.his-values { background-color: #dcdcdc; color: #9400D3; }
-.cur-values:hover, #update-values:hover { background-color: #f0f0f0; }
 
-.main-content { display: flex; gap: 30px; }
+.cur-values {
+    background-color: white;
+}
+
+.cur-values:hover {
+    background-color: #dcdcdc;
+}
+
+/* History is active on this page, so it stays grey */
+.his-values {
+    background-color: #dcdcdc;
+}
+
+#update-values {
+    background-color: white;
+    padding: 10px;
+    border: 1px solid #9400D3;
+    border-radius: 5px;
+    color: #9400D3;
+    font-family: 'ADLaM Display';
+    cursor: pointer;
+    width: 150px;
+}
+
+#update-values:hover {
+    background-color: #dcdcdc;
+}
+
+/* Container and Layout to match Dashboard */
+.container { 
+    display: flex;
+    align-items: flex-start;
+    gap: 40px;
+    width: 95%; 
+    margin: 20px auto; 
+    font-family: 'ADLaM Display', sans-serif; 
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.logo { width: 100px; }
+
+/* User Circle matching dashboard */
+.user {
+    background-color: #dcdcdc;
+    border: 1px solid #9400D3;
+    border-radius: 50%; 
+    width: 50px; 
+    height: 50px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: bold;
+    overflow: hidden;
+    padding: 2px;
+}
+
+/* Table and Content Styling */
+.main-content { display: flex; gap: 30px; width: 100%; }
 .left-column { min-width: 200px; }
-.filter-buttons { display: flex; flex-direction: column; gap: 5px; margin: 10px 0; }
-.filter-btn { padding: 8px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; background: white; font-family: 'ADLaM Display'; }
-#clear-filters { width: 100%; padding: 8px; background: #fff0f0; border: 1px solid #ffcccc; color: #cc0000; cursor: pointer; border-radius: 5px; }
+.right-column { flex-grow: 1; }
 
 .history-table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #DCDCDC; }
 .history-table th, .history-table td { border: 1px solid #DCDCDC; padding: 12px; text-align: center; }
 .history-table th { background: #F8F8F8; color: #9400D3; font-weight: normal; }
+.history-table tbody tr:hover { background-color: #f5e6ff !important; }
 
-/* ROW HOVER EFFECT */
-.history-table tbody tr:hover { background-color: #e2b8f2 !important; }
+.filter-buttons { display: flex; flex-direction: column; gap: 5px; margin: 10px 0; }
+.filter-btn { padding: 8px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; background: white; font-family: 'ADLaM Display'; }
+#clear-filters { width: 100%; padding: 8px; background: #fff0f0; border: 1px solid #ffcccc; color: #cc0000; cursor: pointer; border-radius: 5px; }
 
-.normal-text { color: #228B22; font-weight: bold; }
-.warning { color: #ff0000; font-weight: bold; }
-.limit-cell { color: #6E6D6D; font-size: 0.85rem; }
-
-.pagination { margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 20px; }
-.user { 
-    background-color: #dcdcdc; border: 1px solid #9400D3; border-radius: 50%; 
-    width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
-    text-align: center; cursor: pointer; font-size: 10px; font-weight: bold; padding: 5px;
-}
+.pagination { margin-top: 20px; display: flex; justify-content: center; gap: 20px; }

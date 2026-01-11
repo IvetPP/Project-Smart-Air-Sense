@@ -5,28 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="./logo.jpg" />
     <title>History of values</title>
-    <link rel="stylesheet" href="history.css">
+    
+    <link rel="stylesheet" href="style.css"> <link rel="stylesheet" href="history.css">
+    
     <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
 
     <div class="container">
-        <div class="header-row">
-            <img src="./logo.jpg" class="logo" alt="Logo">
-            <div class="header-nav">
-                <button class="back">&lt;</button>
-                <h1 class="history-title">History of values</h1>
-                <div class="user pers">LOG OUT</div>
+        <img src="./logo.jpg" class="logo" alt="Logo">
+        
+        <div class="column">
+            <h1 class="history-title">History of values</h1>
+            <div class="row">
+                <button class="cur-values">Current values</button>
+                <button class="his-values">History of values</button>
             </div>
         </div>
 
-        <div class="nav-buttons-row">
-            <button class="cur-values">Current values</button>
-            <button class="his-values">History of values</button>
+        <div class="column">
             <button id="update-values">🔄 Update values</button>
         </div>
 
+        <div class="row">
+            <div class="user pers">USER</div>
+        </div>
+    </div>
+
+    <div class="container">
         <div class="main-content">
             <div class="left-column">
                 <div class="filter">
@@ -77,8 +84,7 @@
                                 <th>LIMIT OF NORMAL VALUES</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            </tbody>
+                        <tbody></tbody>
                     </table>
 
                     <div class="pagination">
