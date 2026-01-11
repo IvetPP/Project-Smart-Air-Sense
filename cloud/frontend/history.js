@@ -12,15 +12,20 @@ $(document).ready(function () {
         $.ajax({
             url: `${API_BASE_URL}/devices`,
             method: 'GET',
-            headers: { Authorization: 'Bearer ' + token },
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json' 
+            },
             success: function (data) {
                 const deviceSelect = $('#filter-device');
                 deviceSelect.find('option:not(:first)').remove();
                 data.forEach(dev => {
                     deviceSelect.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
                 });
-            },
-            error: err => console.error('Device list error', err)
+                
+                // LOAD MEASUREMENTS ONLY AFTER DEVICES ARE READY
+                loadMeasurements(); 
+            }
         });
     }
 
@@ -41,15 +46,16 @@ $(document).ready(function () {
     $.ajax({
         url: url,
         method: 'GET',
-        headers: { 'Authorization': 'Bearer ' + token },
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json' 
+        },
         success: function (response) {
             // DEBUG: See what the server is actually sending back
             console.log("History API Response:", response);
 
-            // Handle both object-wrapped and direct array responses
+            // This line covers both: response.measurements OR if the response IS the array
             const rows = response.measurements || (Array.isArray(response) ? response : []);
-            
-            // If totalCount is missing, use the length of the returned rows
             const total = response.totalCount || rows.length;
             
             renderTable(rows);
