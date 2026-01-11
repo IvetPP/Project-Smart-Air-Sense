@@ -28,7 +28,6 @@ $(document).ready(function () {
             console.error("Fetch error:", xhr);
             alert('Could not fetch device details. Status: ' + xhr.status);
         }
-    });
 
     // 2. Handle Update
     // previous commit fixed here:
@@ -40,29 +39,36 @@ $(document).ready(function () {
         const payload = {
             device_name: $('#device-name').val().trim(),
             location: $('#device-location').val().trim(),
-            device_type: $('#device-type').val().trim()
+            device_type: $('#device-type').val().trim(),
+            // Adding these in case your backend supports them:
+            assigned_user: $('#device-user').val() ? $('#device-user').val().trim() : null,
+            install_date: $('#device-date').val() || null
         };
 
         $.ajax({
             url: `${API_URL}/devices/${safeId}`,
             method: 'PUT',
-            headers: { Authorization: 'Bearer ' + token },
-            contentType: 'application/json',
+            headers: { 
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json' 
+            },
             data: JSON.stringify(payload),
             success: function () {
                 alert('Device updated successfully!');
                 window.location.href = 'index.html';
             },
             error: function (xhr) {
-                console.error(xhr);
-                alert('Error: ' + (xhr.responseJSON?.error || 'Server error'));
+                const errorMsg = xhr.responseJSON?.error || xhr.responseText || 'Server error';
+                alert('Error updating device: ' + errorMsg);
             }
         });
     });
 
-    // 3. Handle Delete
+    /**
+     * 3. Handle Delete
+     */
     $('.delete-btn').on('click', function() {
-        if(confirm('Permanently delete this device?')) {
+        if(confirm('Are you sure you want to permanently delete this device? This action cannot be undone.')) {
             $.ajax({
                 url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
                 method: 'DELETE',
@@ -78,5 +84,15 @@ $(document).ready(function () {
         }
     });
 
+    // Logout Functionality
+    $('.user').on('click', function() {
+        if(confirm('Log out?')) {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+    });
+
+    // Navigation
     $('.back, .cancel-btn').on('click', () => window.location.href = 'index.html');
 });
