@@ -45,7 +45,6 @@ $(document).ready(function () {
 
     /**
      * Main UI Update Logic
-     * Handles color-coding and fragmented data
      */
     function loadLatestMeasurements(deviceId = null) {
         if (!deviceId) { clearUI(); return; }
@@ -66,7 +65,7 @@ $(document).ready(function () {
                     if (latest.press === null) latest.press = r.pressure;
                 }
 
-                // Status IoT & Time (Grey borders, split colors)
+                // Status IoT & Time
                 $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
                                .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
 
@@ -76,16 +75,14 @@ $(document).ready(function () {
 
                 /**
                  * Helper to update UI boxes
+                 * FIXED: Numbers are always black, borders turn red on warning
                  */
-                const updateBox = (selector, val, isNorm, stateText, isFirstSquare = false) => {
+                const updateBox = (selector, val, isNorm, stateText) => {
                     const stateColor = isNorm ? "black" : "red";
                     const borderColor = isNorm ? "#9400D3" : "red";
                     
-                    // CO2 (First Square) value text always stays black.
-                    const valueTextColor = isFirstSquare ? "black" : (isNorm ? "black" : "red");
-
-                    // 1. Set text colors
-                    $(`.${selector}.value`).text(val).css("color", valueTextColor);
+                    // 1. Set text colors (Value is now ALWAYS black)
+                    $(`.${selector}.value`).text(val).css("color", "black");
                     $(`.${selector}.state`).text(stateText).css("color", stateColor);
                     
                     // 2. Set border color of the parent box
@@ -95,7 +92,7 @@ $(document).ready(function () {
                 // CO2 Logic
                 if (latest.co2 !== null) {
                     const v = Math.round(latest.co2);
-                    updateBox('co2', v, (v >= 400 && v <= 1000), (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal'), true);
+                    updateBox('co2', v, (v >= 400 && v <= 1000), (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal'));
                 }
 
                 // Temp Logic
@@ -122,18 +119,14 @@ $(document).ready(function () {
     }
 
     // --- Event Listeners ---
-
-    $('#device-select').on('change', function () {
+    $('#device-select').on('change', function() {
         const id = $(this).val();
         $('#current-device-name').text(id ? $(this).find('option:selected').text() : "Select a device");
         loadLatestMeasurements(id);
     });
 
-    // Navigation
     $(".his-values").on("click", () => location.href = "history.html");
     $(".add-device").on("click", () => location.href = "addDevice.html");
-    
-    // FIX: Targets the USERS button by finding any button containing that text
     $(".man").on("click", () => location.href = "users.html");
 
     $(".edit").on("click", () => {
@@ -149,7 +142,6 @@ $(document).ready(function () {
         }
     });
 
-    // Initial Run
     loadDeviceList();
     clearUI();
 });
