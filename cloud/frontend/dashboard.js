@@ -14,12 +14,11 @@ $(document).ready(function () {
     }
 
     /**
-     * Resets the UI sensor values to empty states
+     * Resets sensor text only.
      */
     function clearUI() {
         $(".co2.value, .temp.value, .hum.value, .bar.value").text("--").css("color", "black");
         $(".co2.state, .temp.state, .hum.state, .bar.state").text("No Data").css("color", "black");
-        // Keep standard border size, just ensure color is the default purple
         $(".box").css("border-color", "#9400D3");
         $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
                   .html('Date and time value: <span style="color: black;">No records found</span>');
@@ -40,26 +39,31 @@ $(document).ready(function () {
                 devices.forEach(dev => {
                     $select.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
                 });
-            });
+            })
+            .catch(err => console.error("Error fetching device list:", err));
     }
 
     /**
      * Main UI Update Logic
+     * FIXED: Button state is now managed independently of data presence.
      */
     function loadLatestMeasurements(deviceId = null) {
-        if (!deviceId) { 
+        // 1. If no device selected, reset UI and disable button
+        if (!deviceId || deviceId === "" || deviceId === "null") { 
             clearUI(); 
-            $(".edit").prop('disabled', true).css("opacity", "0.5");
+            $(".edit").prop('disabled', true).css({"opacity": "0.5", "cursor": "not-allowed"});
             return; 
         }
         
-        $(".edit").prop('disabled', false).css("opacity", "1");
+        // 2. Enable the button IMMEDIATELY because a device is selected
+        $(".edit").prop('disabled', false).css({"opacity": "1", "cursor": "pointer"});
         
         fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
             .then(res => res.json())
             .then(response => {
                 const rows = response.measurements || [];
                 
+                // 3. If no data, clear sensor labels but DO NOT disable the button
                 if (rows.length === 0) { 
                     clearUI(); 
                     return; 
@@ -73,49 +77,38 @@ $(document).ready(function () {
                     if (latest.press === null) latest.press = r.pressure;
                 }
 
-                $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
+                // Update Status & Time
+                $(".iot-status").css({"border": "1px solid #6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
                                .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
 
                 const dt = new Date(latest.time);
-                $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
+                $(".time").css({"border": "1px solid #6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
                           .html(`Date and time value: <span style="color: black;">${dt.toLocaleString()}</span>`);
 
-                // Updated updateBox logic for Red Borders on Warning
                 const updateBox = (selector, val, isNorm, stateText) => {
                     const stateColor = isNorm ? "black" : "red";
-                    const borderColor = isNorm ? "#9400D3" : "red"; // Changes to red if not normal
-                    
+                    const borderColor = isNorm ? "#9400D3" : "red";
                     $(`.${selector}.value`).text(val).css("color", "black");
                     $(`.${selector}.state`).text(stateText).css("color", stateColor);
-                    
-                    // Update only border-color to preserve existing CSS size/padding/width
                     $(`.${selector}`).closest('.box').css("border-color", borderColor);
                 };
 
-                // CO2 Logic
                 if (latest.co2 !== null) {
                     const v = Math.round(latest.co2);
                     updateBox('co2', v, (v >= 400 && v <= 1000), (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal'));
                 }
-
-                // Temp Logic
                 if (latest.temp !== null) {
                     const v = Number(latest.temp).toFixed(1);
                     updateBox('temp', v, (v >= 20 && v <= 24), (v >= 20 && v <= 24 ? 'Normal' : 'Out of range'));
                 }
-
-                // Humidity Logic
                 if (latest.hum !== null) {
                     const v = Number(latest.hum).toFixed(1);
                     updateBox('hum', v, (v >= 40 && v <= 60), (v < 40 ? 'Low' : v > 60 ? 'High' : 'Normal'));
                 }
-
-                // Pressure Logic
                 if (latest.press !== null) {
                     const p = latest.press > 5000 ? Math.round(latest.press / 100) : Math.round(latest.press);
                     const isStandard = (p === 1013);
-                    const pressText = p >= 1013 ? 'Higher' : 'Lower';
-                    updateBox('bar', p, isStandard, (isStandard ? 'Normal' : pressText));
+                    updateBox('bar', p, isStandard, (isStandard ? 'Normal' : (p > 1013 ? 'Higher' : 'Lower')));
                 }
             })
             .catch(err => {
@@ -125,22 +118,27 @@ $(document).ready(function () {
     }
 
     // --- Event Listeners ---
+
     $('#device-select').on('change', function() {
         const id = $(this).val();
         $('#current-device-name').text(id ? $(this).find('option:selected').text() : "Select a device");
         loadLatestMeasurements(id);
     });
 
+    // Forced Click Handler: Works even if sensors are empty
+    $(".edit").on("click", function(e) {
+        e.preventDefault();
+        const id = $('#device-select').val();
+        if(id && id !== "" && id !== "null") {
+            window.location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
+        } else {
+            alert("Please select a device first");
+        }
+    });
+
     $(".his-values").on("click", () => location.href = "history.html");
     $(".add-device").on("click", () => location.href = "addDevice.html");
     $(".man").on("click", () => location.href = "users.html");
-
-    $(document).on("click", ".edit", function() {
-        const id = $('#device-select').val();
-        if(id) {
-            location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
-        }
-    });
 
     $(".user.pers").on("click", () => {
         if(confirm('Do you want to log out?')) {
@@ -150,6 +148,7 @@ $(document).ready(function () {
         }
     });
 
+    // Initialize
     loadDeviceList();
     clearUI();
     $(".edit").prop('disabled', true).css("opacity", "0.5");
