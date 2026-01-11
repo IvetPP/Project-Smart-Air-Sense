@@ -1,3 +1,6 @@
+/* ============================
+   GLOBAL & LAYOUT
+============================ */
 .container {
     width: 95%;
     margin: 0 auto;
@@ -12,21 +15,24 @@
 }
 
 .logo {
-    width: 120px;
+    width: 150px;
+    height: auto;
 }
 
 .header-nav {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
     flex-grow: 1;
 }
 
-.history-title {
-    flex-grow: 1;
-    margin: 0;
+.header-nav .user {
+    margin-left: auto;
 }
 
+/* ============================
+   NAV BUTTONS
+============================ */
 .nav-buttons-row {
     display: flex;
     gap: 10px;
@@ -47,7 +53,6 @@
 
 .his-values {
     background-color: #dcdcdc;
-    color: #9400D3;
 }
 
 .cur-values:hover,
@@ -55,74 +60,146 @@
     background-color: #f0f0f0;
 }
 
+/* ============================
+   MAIN CONTENT
+============================ */
 .main-content {
     display: flex;
-    gap: 30px;
+    gap: 40px;
 }
 
+/* ============================
+   LEFT COLUMN (FILTERS)
+============================ */
 .left-column {
-    min-width: 200px;
+    min-width: 220px;
+}
+
+.filter {
+    color: #9400D3;
 }
 
 .filter-buttons {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    margin: 10px 0;
+    margin-top: 5px;
 }
 
 .filter-btn {
-    padding: 8px;
-    border: 1px solid #ccc;
+    margin-bottom: 5px;
+    padding: 10px 5px;
+    background: white;
+    border: 1px solid #6E6D6D;
     border-radius: 5px;
     cursor: pointer;
-    background: white;
+    font-family: 'ADLaM Display';
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    background-color: #DCDCDC;
+}
+
+.filter-btn.active {
+    background-color: #9400D3;
+    color: white;
+    border-color: #9400D3;
+}
+
+/* Filter Panels */
+.device-panel,
+.time-panel,
+.param-panel {
+    background-color: #f9f9f9;
+    padding: 12px;
+    border: 1px solid #DCDCDC;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    display: none;
+}
+
+.device-panel select,
+.param-panel select,
+.time-panel input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.time-panel label {
+    font-size: 0.8rem;
+    display: block;
+    margin: 8px 0 4px;
+    color: #666;
+}
+
+/* Clear Filters */
+#clear-filters {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #fff0f0;
+    border: 1px solid #ffcccc;
+    border-radius: 5px;
+    color: #cc0000;
+    cursor: pointer;
     font-family: 'ADLaM Display';
 }
 
-#clear-filters {
+#clear-filters:hover {
+    background-color: #ffdada;
+}
+
+/* ============================
+   RIGHT COLUMN (TABLE)
+============================ */
+.right-column {
+    flex-grow: 1;
+}
+
+.history-table-container {
     width: 100%;
-    padding: 8px;
-    background: #fff0f0;
-    border: 1px solid #ffcccc;
-    color: #cc0000;
-    cursor: pointer;
-    border-radius: 5px;
+    overflow-x: auto;
+    border: 1px solid #DCDCDC;
+    border-radius: 8px;
 }
 
 .history-table {
     width: 100%;
     border-collapse: collapse;
     background: white;
-    border: 1px solid #DCDCDC;
 }
 
 .history-table th,
 .history-table td {
     border: 1px solid #DCDCDC;
-    padding: 12px;
+    padding: 12px 8px;
     text-align: center;
 }
 
 .history-table th {
-    background: #F8F8F8;
+    background-color: #F8F8F8;
     color: #9400D3;
     font-weight: normal;
 }
 
-/* ROW HOVER EFFECT */
 .history-table tbody tr:hover {
-    background-color: #e2b8f2 !important;
+    background-color: #e2b8f2;
 }
 
+/* Status Text */
 .normal-text {
-    color: #228B22;
+    color: #28a745;
     font-weight: bold;
+    font-size: 0.85rem;
 }
 
 .warning {
-    color: #ff0000;
+    color: #d8000c;
     font-weight: bold;
+    font-size: 0.85rem;
 }
 
 .limit-cell {
@@ -130,26 +207,64 @@
     font-size: 0.85rem;
 }
 
+/* ============================
+   PAGINATION
+============================ */
 .pagination {
     margin-top: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
+}
+
+.pagination button {
+    padding: 8px 15px;
+    background: white;
+    border: 1px solid #DCDCDC;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'ADLaM Display';
+}
+
+.pagination button:hover:not(:disabled) {
+    background-color: #DCDCDC;
+}
+
+.pagination button:disabled {
+    background-color: #f5f5f5;
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+/* ============================
+   USER & BACK BUTTON
+============================ */
+.back {
+    background: white;
+    border: 1px solid #DCDCDC;
+    border-radius: 5px;
+    padding: 5px 15px;
+    cursor: pointer;
+    font-family: 'ADLaM Display';
+}
+
+.back:hover {
+    background-color: #DCDCDC;
 }
 
 .user {
     background-color: #dcdcdc;
     border: 1px solid #9400D3;
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-    text-align: center;
-    cursor: pointer;
     font-size: 10px;
     font-weight: bold;
-    padding: 5px;
+    cursor: pointer;
+    text-align: center;
+    padding: 2px;
 }
