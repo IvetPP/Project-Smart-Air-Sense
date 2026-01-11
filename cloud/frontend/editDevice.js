@@ -28,9 +28,9 @@ $(document).ready(function () {
             console.error("Fetch error:", xhr);
             alert('Could not fetch device details. Status: ' + xhr.status);
         }
+    }); // <--- This was the missing closing for the first AJAX call
 
     // 2. Handle Update
-    // previous commit fixed here:
     $('#edit-device-form').off('submit').on('submit', function (e) {
         e.preventDefault();
     
@@ -64,9 +64,7 @@ $(document).ready(function () {
         });
     });
 
-    /**
-     * 3. Handle Delete
-     */
+    // 3. Handle Delete
     $('.delete-btn').on('click', function() {
         if(confirm('Are you sure you want to permanently delete this device? This action cannot be undone.')) {
             $.ajax({
