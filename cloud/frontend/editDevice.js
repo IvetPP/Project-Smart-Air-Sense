@@ -4,38 +4,37 @@ $(document).ready(function () {
     const params = new URLSearchParams(window.location.search);
     const deviceId = params.get('id');
 
-    if (!deviceId) { window.location.href = 'index.html'; return; }
+    // Redirect if no ID is present in the URL
+    if (!deviceId) { 
+        window.location.href = 'index.html'; 
+        return; 
+    }
 
-    // 1. Fetch current data
+    // 1. Fetch current data and populate remaining fields
     $.ajax({
         url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
         method: 'GET',
         headers: { Authorization: 'Bearer ' + token },
         success: function(dev) {
-            $('#device-id').val(dev.device_id);
             $('#device-name').val(dev.device_name);
             $('#device-type').val(dev.device_type);
             $('#device-location').val(dev.location);
-            
-            if (dev.registration_date) {
-                $('#device-date').val(dev.registration_date.split('T')[0]);
-            }
         },
         error: () => alert('Could not fetch device details.')
     });
 
-    // 2. Update
+    // 2. Update Device Logic
     $('#edit-device-form').on('submit', function (e) {
         e.preventDefault();
+        
         const payload = {
             device_name: $('#device-name').val().trim(),
             location: $('#device-location').val().trim(),
-            device_type: $('#device-type').val().trim(),
-            registration_date: $('#device-date').val()
+            device_type: $('#device-type').val().trim()
         };
 
         $.ajax({
-            url: `${API_URL}/devices/${encodeURIComponent($('#device-id').val())}`,
+            url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
             method: 'PUT',
             headers: { Authorization: 'Bearer ' + token },
             contentType: 'application/json',
@@ -48,17 +47,22 @@ $(document).ready(function () {
         });
     });
 
-    // 3. Delete & Nav
+    // 3. Delete Device Logic
     $('.delete-btn').on('click', function() {
-        if(confirm('Delete this device?')) {
+        if(confirm('Are you sure you want to delete this device?')) {
             $.ajax({
                 url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
                 method: 'DELETE',
                 headers: { Authorization: 'Bearer ' + token },
-                success: () => window.location.href='index.html'
+                success: () => {
+                    alert('Device deleted.');
+                    window.location.href = 'index.html';
+                },
+                error: (xhr) => alert('Error: ' + (xhr.responseJSON?.error || 'Could not delete device'))
             });
         }
     });
 
+    // Navigation back to dashboard
     $('.back, .cancel-btn').on('click', () => window.location.href = 'index.html');
 });

@@ -6,18 +6,13 @@ $(document).ready(function () {
     let allUsers = []; 
     let filteredUsers = []; 
 
-    // 1. Initial Auth Check
     if (!token) { 
         window.location.href = 'login.html'; 
         return; 
     }
 
-    // 2. Set Circle Text to Log Out (Requested Change)
     $('.user').text("LOG OUT");
 
-    /**
-     * Fetch users from API
-     */
     function loadUsers() {
         $.ajax({
             url: `${API_URL}/users`,
@@ -35,9 +30,6 @@ $(document).ready(function () {
         });
     }
 
-    /**
-     * Render the table based on search and pagination
-     */
     function renderTable() {
         const tbody = $(".history-table tbody");
         tbody.empty();
@@ -51,31 +43,56 @@ $(document).ready(function () {
         } else {
             pageItems.forEach(user => {
                 const regDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
+                const devices = user.assigned_devices || [];
                 
-                // Ensuring we capture user_id from Supabase
-                const userId = user.user_id || user.id; 
-                const device = user.assigned_device || 'None';
+                // --- DROPDOWN LOGIC ---
+                let deviceHtml = "";
+                if (devices.length > 1) {
+                    deviceHtml = `<select style="width:100%; padding:4px; border-radius:4px; border:1px solid #ddd; font-family:inherit; background:white;">`;
+                    devices.forEach(d => {
+                        deviceHtml += `<option value="${d.device_id}">${d.device_name}</option>`;
+                    });
+                    deviceHtml += `</select>`;
+                } else if (devices.length === 1) {
+                    deviceHtml = `<code style="background:#f0f0f0; padding:2px 5px; border-radius:3px; border: 1px solid #ddd;">${devices[0].device_name}</code>`;
+                } else {
+                    deviceHtml = `<span style="color:#999; font-style:italic;">No devices</span>`;
+                }
 
                 tbody.append(`
                     <tr>
-                        <td>${user.full_name || 'No Name'}</td>
-                        <td>${user.email || 'No Email'}</td>
+                        <td>${user.full_name}</td>
+                        <td>${user.email}</td>
                         <td>${regDate}</td>
-                        <td><code style="background:#f0f0f0; padding:2px 5px; border-radius:3px; border: 1px solid #ddd;">${device}</code></td>
+                        <td>${deviceHtml}</td>
                         <td>
-                            <button type="button" class="edit-btn" data-id="${userId}" style="cursor:pointer; background:white; border:1px solid #9400D3; border-radius:4px; padding:4px 12px; font-family:inherit;">🖊️ EDIT</button>
+                            <button type="button" class="edit-btn" data-id="${user.id}" style="cursor:pointer; background:white; border:1px solid #9400D3; border-radius:4px; padding:4px 12px; font-family:inherit;">🖊️ EDIT</button>
                         </td>
                     </tr>
                 `);
             });
         }
-
         updatePaginationUI();
     }
 
-    /**
-     * Update Pagination UI
-     */
+    // Search logic updated for multiple devices
+    $('#user-search').on('keyup', function() {
+        const term = $(this).val().toLowerCase().trim();
+        
+        filteredUsers = allUsers.filter(u => {
+            const name = (u.full_name || "").toLowerCase();
+            const email = (u.email || "").toLowerCase();
+            const matchesDevice = (u.assigned_devices || []).some(d => 
+                d.device_name.toLowerCase().includes(term) || d.device_id.toLowerCase().includes(term)
+            );
+            
+            return name.includes(term) || email.includes(term) || matchesDevice;
+        });
+
+        currentPage = 1;
+        renderTable();
+    });
+
     function updatePaginationUI() {
         const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE) || 1;
         $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
@@ -83,61 +100,21 @@ $(document).ready(function () {
         $('.next').prop('disabled', currentPage >= totalPages);
     }
 
-    /* --- Event Handlers --- */
-
-    // Search logic
-    $('#user-search').on('keyup', function() {
-        const term = $(this).val().toLowerCase().trim();
-        
-        filteredUsers = allUsers.filter(u => {
-            const name = (u.full_name || "").toLowerCase();
-            const email = (u.email || "").toLowerCase();
-            const device = (u.assigned_device || "").toLowerCase();
-            
-            // Returns true if the term matches any of the three fields
-            return name.includes(term) || 
-                   email.includes(term) || 
-                   device.includes(term);
-        });
-
-        currentPage = 1; // Reset to first page after searching
-        renderTable();
-    });
-
-    /**
-     * FIXED: Edit Button Redirect logic
-     */
     $(document).on("click", ".edit-btn", function (e) {
-        e.preventDefault();
-        e.stopPropagation(); 
-
         const id = $(this).attr("data-id");
-        console.log("Edit requested for ID:", id);
-        
-        if (id && id !== "undefined" && id !== "null") {
+        if (id && id !== "undefined") {
             window.location.href = `editUser.html?id=${encodeURIComponent(id)}`;
-        } else {
-            console.error("Missing User ID in button data-id attribute");
-            alert("Error: User ID not found. Ensure 'user_id' is returned by your API.");
         }
     });
 
-    // Navigation
-    $(".back, .home, .cur-values").on("click", function() {
-        window.location.href = "index.html";
-    });
-
-    // Pagination
     $('.next').on('click', function() { 
-        const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
-        if (currentPage < totalPages) { currentPage++; renderTable(); }
+        if (currentPage < Math.ceil(filteredUsers.length / PAGE_SIZE)) { currentPage++; renderTable(); }
     });
 
     $('.prev').on('click', function() { 
         if (currentPage > 1) { currentPage--; renderTable(); }
     });
 
-    // Logout via the "Log out" circle
     $('.user').on('click', function() {
         if(confirm('Do you want to log out?')) {
             localStorage.clear();
@@ -146,6 +123,5 @@ $(document).ready(function () {
         }
     });
 
-    // Init
     loadUsers();
 });
