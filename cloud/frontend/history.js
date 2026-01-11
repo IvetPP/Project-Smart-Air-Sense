@@ -70,11 +70,41 @@ $(document).ready(function () {
         }
 
         rows.forEach(row => {
-            let params = [], values = [], statuses = [], limits = [];
+            let params = [], values = [], statusHtml = [], limits = [];
 
-            const getStatusHtml = (statusText) => {
-                const isNormal = statusText === 'Normal';
-                return `<span class="${isNormal ? 'normal-text' : 'warning'}" style="${!isNormal ? 'color:red;' : ''}">${statusText}</span>`;
+            const check = (val, fullLabel, unit, type) => {
+                if (val !== null && val !== undefined && !isNaN(val)) {
+                    params.push(fullLabel);
+                    values.push(`${Number(val).toFixed(1)}${unit}`);
+
+                    // Default values
+                    let statText = "Normal";
+                    let isNorm = true; 
+                    let limText = "";
+                    if (type === 'co2') {
+                        isNorm = val >= 400 && val <= 1000;
+                        statText = isNorm ? 'Normal' : (val < 400 ? 'Low' : 'High');
+                        limText = "400 - 1000 ppm";
+                    } else if (type === 'temp') {
+                        isNorm = val >= 20 && val <= 24;
+                        statText = isNorm ? 'Normal' : (val < 20 ? 'Too Low' : 'Too High');
+                        limText = "20 - 24 °C";
+                    } else if (type === 'hum') {
+                        isNorm = val >= 40 && val <= 60;
+                        statText = isNorm ? 'Normal' : (val < 40 ? 'Low' : 'High');
+                        limText = "40 - 60 %";
+                    } else if (type === 'press') {
+                        const p = val > 5000 ? val / 100 : val;
+                        // Pressure logic: Is it normal? (Assuming 1013 is the target)
+                        // If you want it red whenever it isn't exactly 1013:
+                        isNorm = Math.round(p) === 1013; 
+                        statText = isNorm ? 'Normal' : (p > 1013 ? 'Higher' : 'Lower');
+                        limText = "1013 hPa";
+                    }
+                    // This line uses 'warning' (red) if isNorm is false
+                    statusHtml.push(`<span class="${isNorm ? 'normal-text' : 'warning'}">${statText}</span>`);
+                    limits.push(limText);
+                }
             };
 
             // CO2 Logic
