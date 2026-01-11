@@ -125,10 +125,10 @@ $(document).ready(function () {
             };
 
             // Column Mapping
-            check(row.co2, "CO2 Concentration", " ppm", 'co2');
+            check(row.co2, "CO<sub>2</sub> Concentration", " ppm", 'co2');
             check(row.temperature, "Temperature", " °C", 'temperature');
             check(row.humidity, "Humidity", " %", 'humidity');
-            check(row.pressure, "Barometric Pressure", " hPa", 'pressure');
+            check(row.pressure, "Barometric pressure", " hPa", 'pressure');
 
             if (params.length > 0) {
                 const timestamp = row.created_at ? new Date(row.created_at).toLocaleString() : '---';
