@@ -15,7 +15,8 @@ $(document).ready(function () {
             url: `${AUTH_API}/login`,
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ email, password }),
+            // FIX: Changed 'email' to 'user_name' to match your backend's expectation
+            data: JSON.stringify({ user_name: email, password: password }), 
             success: function (res) {
                 localStorage.setItem('auth_token', res.token);
                 if (!remember) {
@@ -24,9 +25,16 @@ $(document).ready(function () {
                 window.location.href = 'index.html';
             },
             error: function (xhr) {
-                // Prevent [object Object] by checking if response is an object
-                const errorData = xhr.responseJSON?.error || xhr.responseJSON || 'Login failed';
-                alert(typeof errorData === 'object' ? JSON.stringify(errorData) : errorData);
+                let errMsg = 'Login failed';
+                
+                // FIX: Parse the array of error objects you received
+                if (Array.isArray(xhr.responseJSON)) {
+                    errMsg = xhr.responseJSON.map(err => `${err.param}: ${err.msg}`).join('\n');
+                } else if (xhr.responseJSON?.error) {
+                    errMsg = xhr.responseJSON.error;
+                }
+                
+                alert(errMsg);
             }
         });
     });
@@ -43,23 +51,14 @@ $(document).ready(function () {
 
         // 1. Check if Passwords Match
         if (password !== confirmPw) {
-            alert("Error: Passwords do not match. Please re-enter your password.");
-            // Clear the confirm field to let them try again
-            $('#signup-password-confirm').val('');
-            $('#signup-password-confirm').focus();
-            return; // Stop the function here
+            alert("Error: Passwords do not match!");
+            return;
         }
 
         // 2. Password Complexity Requirements
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d\W]{8,}$/;
         if (!passwordRegex.test(password)) {
-            alert(
-                "Password does not meet requirements:\n" +
-                "• Minimum 8 characters\n" +
-                "• At least one uppercase letter\n" +
-                "• At least one lowercase letter\n" +
-                "• At least one number"
-            );
+            alert("Password must be 8+ chars, with 1 uppercase, 1 lowercase, and 1 number.");
             return;
         }
 
@@ -68,16 +67,24 @@ $(document).ready(function () {
             url: `${AUTH_API}/register`,
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ email, password }),
+            // FIX: Match the backend 'user_name' requirement here too
+            data: JSON.stringify({ user_name: email, password: password }),
             success: function (res) {
                 alert('Registration successful! You can now log in.');
                 $('#signup-form')[0].reset();
                 $('#login-username').val(email);
             },
             error: function (xhr) {
-                // Prevent [object Object] for registration errors
-                const errorData = xhr.responseJSON?.error || xhr.responseJSON || 'Registration failed';
-                alert(typeof errorData === 'object' ? JSON.stringify(errorData) : errorData);
+                let errMsg = 'Registration failed';
+                
+                // FIX: Parse the error array
+                if (Array.isArray(xhr.responseJSON)) {
+                    errMsg = xhr.responseJSON.map(err => `${err.param}: ${err.msg}`).join('\n');
+                } else if (xhr.responseJSON?.error) {
+                    errMsg = xhr.responseJSON.error;
+                }
+                
+                alert(errMsg);
             }
         });
     });
