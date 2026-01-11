@@ -27,8 +27,10 @@ $(document).ready(function () {
         $.ajax({
             url: API_URL + '/devices',
             method: 'POST',
-            headers: { Authorization: 'Bearer ' + token },
-            contentType: 'application/json',
+            headers: { 
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
             data: JSON.stringify(deviceData),
             success: function (res) {
                 $('#device-id').val(res.device_id); 
@@ -39,7 +41,12 @@ $(document).ready(function () {
         });
     });
 
-    $('.delete-btn').on('click', () => $('#add-device-form').trigger('reset'));
+    // Reset button or Cancel
+    $('.delete-btn').on('click', function(e) {
+        e.preventDefault();
+        if(confirm('Clear form?')) $('#add-device-form').trigger('reset');
+    });
+    
     $('.back').on('click', () => window.location.href = 'index.html');
     $('.user').on('click', () => { if(confirm('Do you want to log out?')) { localStorage.clear(); window.location.href='login.html'; }});
 });

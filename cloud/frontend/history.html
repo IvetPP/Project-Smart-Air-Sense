@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="./logo.jpg" />
+    <link rel="icon" href="./logo.jpg">
     <title>History of values</title>
     
     <link rel="stylesheet" href="style.css"> <link rel="stylesheet" href="history.css">
@@ -27,6 +27,13 @@
         <div class="column">
             <button id="update-values">🔄 Update values</button>
         </div>
+    </div>
+
+    <div class="nav-buttons-row">
+        <button class="cur-values">Current values</button>
+        <button class="his-values">History of values</button>
+        <button id="update-values">🔄 Update values</button>
+    </div>
 
         <div class="row">
             <div class="user pers">USER</div>
@@ -44,32 +51,42 @@
                         <button class="filter-btn par">Parameter</button>
                     </div>
 
-                    <button id="clear-filters">Clear All Filters</button>
+        <!-- FILTERS -->
+        <div class="left-column">
+            <div class="filter">
+                Filter by:
+                <div class="filter-buttons">
+                    <button class="filter-btn device">Device</button>
+                    <button class="filter-btn time">Time</button>
+                    <button class="filter-btn par">Parameter</button>
+                </div>
 
-                    <div class="device-panel" style="display: none;">
-                        <select id="filter-device">
-                            <option value="">All Devices</option>
-                        </select>
-                    </div>
+                <button id="clear-filters">Clear All Filters</button>
 
-                    <div class="time-panel" style="display: none;">
-                        <label>From:</label>
-                        <input type="date" id="filter-from">
-                        <label>To:</label>
-                        <input type="date" id="filter-to">
-                    </div>
+                <div class="device-panel">
+                    <select id="filter-device">
+                        <option value="">All Devices</option>
+                    </select>
+                </div>
 
-                    <div class="param-panel" style="display: none;">
-                        <select id="filter-parameter">
-                            <option value="">All Parameters</option>
-                            <option value="co2">CO2 Only</option>
-                            <option value="temperature">Temperature Only</option>
-                            <option value="humidity">Humidity Only</option>
-                            <option value="pressure">Pressure Only</option>
-                        </select>
-                    </div>
+                <div class="time-panel">
+                    <label>From</label>
+                    <input type="date" id="filter-from">
+                    <label>To</label>
+                    <input type="date" id="filter-to">
+                </div>
+
+                <div class="param-panel">
+                    <select id="filter-parameter">
+                        <option value="">All Parameters</option>
+                        <option value="co2">CO₂ Only</option>
+                        <option value="temperature">Temperature Only</option>
+                        <option value="humidity">Humidity Only</option>
+                        <option value="pressure">Pressure Only</option>
+                    </select>
                 </div>
             </div>
+        </div>
 
             <div class="right-column">
                 <div class="history-table-container">
@@ -87,16 +104,17 @@
                         <tbody></tbody>
                     </table>
 
-                    <div class="pagination">
-                        <button class="prev">&lt;- Previous</button>
-                        <span class="page-info">Page 1</span>
-                        <button class="next">Next -></button>
-                    </div>
+                <div class="pagination">
+                    <button class="prev">&lt;- Previous</button>
+                    <span class="page-info">Page 1</span>
+                    <button class="next">Next -&gt;</button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script type="module" src="history.js"></script>
+    </div>
+</div>
+
+<script type="module" src="history.js"></script>
 </body>
 </html>
