@@ -36,8 +36,10 @@ $(document).ready(function () {
         $.ajax({
             url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
             method: 'PUT',
-            headers: { Authorization: 'Bearer ' + token },
-            contentType: 'application/json',
+            headers: { 
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json' 
+            },
             data: JSON.stringify(payload),
             success: () => {
                 alert('Device updated successfully!');

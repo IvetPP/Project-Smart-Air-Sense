@@ -31,8 +31,10 @@ $(document).ready(function () {
         $.ajax({
             url: API_URL + '/devices',
             method: 'POST',
-            headers: { Authorization: 'Bearer ' + token },
-            contentType: 'application/json',
+            headers: { 
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
             data: JSON.stringify(deviceData),
             success: function (res) {
                 alert('Device successfully added!');
