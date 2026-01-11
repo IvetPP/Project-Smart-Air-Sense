@@ -43,7 +43,7 @@ $(document).ready(function () {
         if (toDate) url += `&to=${encodeURIComponent(toDate)}`;
 
         // ADD THIS LINE: Pass the parameter to the server
-        //if (selectedParam) url += `&parameter=${encodeURIComponent(selectedParam)}`;    
+        if (selectedParam) url += `&parameter=${encodeURIComponent(selectedParam)}`;    
 
         $.ajax({
             url: url,

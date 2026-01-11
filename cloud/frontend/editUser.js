@@ -4,13 +4,12 @@ $(document).ready(function () {
     const params = new URLSearchParams(window.location.search);
     const userId = params.get('id');
 
-    // --- 1. Authentication & Log Out ---
+    // --- 1. Auth & Log Out ---
     if (!token) { 
         window.location.href = 'login.html'; 
         return; 
     }
 
-    // Set Logged-in Username logic
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         $('.user').text((payload.user_name || "LOG OUT").substring(0, 10).toUpperCase());
@@ -18,7 +17,6 @@ $(document).ready(function () {
         console.error("Token parsing failed"); 
     }
 
-    // Log Out with confirmation (Matches your device page logic)
     $('.user').on('click', function() { 
         if(confirm('Do you want to log out?')) { 
             localStorage.clear(); 
@@ -26,34 +24,48 @@ $(document).ready(function () {
         }
     });
 
+    // Check if ID exists before trying to fetch
     if (!userId) { 
+        alert("Error: No User ID provided in the URL.");
         window.location.href = 'users.html'; 
         return; 
     }
 
-    // --- 2. Load User Data as Placeholders ---
+    // --- 2. Load User Data (GET) ---
     function loadUser() {
         $.ajax({
             url: `${API_URL}/users/${encodeURIComponent(userId)}`,
             method: 'GET',
             headers: { Authorization: 'Bearer ' + token },
             success: function(user) {
-                // Mapping DB columns to Input Placeholders
-                $('#full-name').attr('placeholder', user.full_name || 'Full Name');
-                $('#email').attr('placeholder', user.email || 'Email');
+                // Check common field name variations from your server
+                const displayName = user.full_name || user.user_name || user.name || "";
+                const displayEmail = user.email || "";
+
+                $('#full-name').attr('placeholder', displayName);
+                $('#email').attr('placeholder', displayEmail);
                 
-                // Ensure values are empty so placeholders show
+                // Keep values empty so placeholders are visible
                 $('#full-name').val('');
                 $('#email').val('');
             },
             error: function(xhr) {
-                console.error("Fetch Error:", xhr);
-                alert('Could not fetch user details.');
+                // Log the actual server response to help you debug
+                console.error("Server Response Code:", xhr.status);
+                console.error("Server Error Detail:", xhr.responseJSON);
+                
+                if (xhr.status === 404) {
+                    alert("User not found (404). Check if the ID in the URL is correct.");
+                } else if (xhr.status === 401 || xhr.status === 403) {
+                    alert("Session expired or permission denied. Please log in again.");
+                } else {
+                    alert("Error loading user data. Check console (F12) for details.");
+                }
             }
         });
     }
 
-    // --- 3. Save Logic (Update) ---
+    // --- 3. Save Changes (PUT) ---
     $('#edit-user-form').on('submit', function (e) {
         e.preventDefault();
 
@@ -61,15 +73,14 @@ $(document).ready(function () {
         const emailVal = $('#email').val().trim();
         const passVal = $('#password-input').val().trim();
 
-        // Construct payload only with fields that have values
+        // Build payload only with changed fields
         const payload = {};
         if (nameVal !== "") payload.full_name = nameVal;
         if (emailVal !== "") payload.email = emailVal;
         if (passVal !== "") payload.password = passVal;
 
-        // If user clicked save without typing anything
         if (Object.keys(payload).length === 0) {
-            alert("No changes entered to save.");
+            alert("No changes entered.");
             return;
         }
 
@@ -86,35 +97,25 @@ $(document).ready(function () {
                 window.location.href = 'users.html';
             },
             error: function(xhr) {
-                alert('Error: ' + (xhr.responseJSON?.error || 'Server error'));
+                alert('Update failed: ' + (xhr.responseJSON?.error || 'Server error'));
             }
         });
     });
 
-    // --- 4. Delete Logic ---
+    // --- 4. Delete & Navigation ---
     $('.delete-btn').on('click', function() {
         if(confirm('Are you sure you want to delete this user?')) {
             $.ajax({
                 url: `${API_URL}/users/${encodeURIComponent(userId)}`,
                 method: 'DELETE',
                 headers: { Authorization: 'Bearer ' + token },
-                success: function() {
-                    alert('User deleted.');
-                    window.location.href = 'users.html';
-                },
-                error: function(xhr) {
-                    alert('Delete failed: ' + (xhr.responseJSON?.error || 'Server error'));
-                }
+                success: () => { window.location.href = 'users.html'; },
+                error: (xhr) => alert('Delete failed: ' + (xhr.responseJSON?.error || 'Server error'))
             });
         }
     });
 
-    // --- 5. Navigation ---
-    $('.back, .cancel-btn').on('click', function(e) {
-        e.preventDefault();
-        window.location.href = 'users.html';
-    });
+    $('.back, .cancel-btn').on('click', () => window.location.href = 'users.html');
 
-    // Initial load
     loadUser();
 });
