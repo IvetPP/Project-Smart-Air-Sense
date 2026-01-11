@@ -139,9 +139,11 @@ $(document).ready(function () {
     $('.filter-btn.device').on('click', () => $('.device-panel').slideToggle(200));
     $('.filter-btn.time').on('click', () => $('.time-panel').slideToggle(200));
     $('.filter-btn.par').on('click', () => $('.param-panel').slideToggle(200));
-    
+
+    // Triggers load on every change (Device, Date, or Parameter)
     $('#filter-device, #filter-from, #filter-to, #filter-parameter').on('change', () => {
-        currentPage = 1; loadMeasurements();
+        currentPage = 1;
+        loadMeasurements();
     });
 
     $('#clear-filters').on('click', () => {
@@ -161,5 +163,5 @@ $(document).ready(function () {
     });
 
     $('.next').on('click', () => { currentPage++; loadMeasurements(); });
-    $('.prev').on('click', () => { if(currentPage > 1) { currentPage--; loadMeasurements(); }});
+    $('.prev').on('click', () => { if (currentPage > 1) { currentPage--; loadMeasurements(); } });
 });
