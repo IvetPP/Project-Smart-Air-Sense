@@ -37,8 +37,10 @@ $(document).ready(function () {
         $.ajax({
             url: `${API_URL}/devices/${encodeURIComponent($('#device-id').val())}`,
             method: 'PUT',
-            headers: { Authorization: 'Bearer ' + token },
-            contentType: 'application/json',
+            headers: { 
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json' 
+            },
             data: JSON.stringify(payload),
             success: () => {
                 alert('Device updated successfully!');
@@ -60,5 +62,15 @@ $(document).ready(function () {
         }
     });
 
+    // Logout Functionality
+    $('.user').on('click', function() {
+        if(confirm('Log out?')) {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+    });
+
+    // Navigation
     $('.back, .cancel-btn').on('click', () => window.location.href = 'index.html');
 });
