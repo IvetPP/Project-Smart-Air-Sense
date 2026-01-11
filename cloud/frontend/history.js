@@ -34,11 +34,16 @@ $(document).ready(function () {
         const deviceId = $('#filter-device').val();
         const fromDate = $('#filter-from').val();
         const toDate = $('#filter-to').val();
+        const selectedParam = $('#filter-parameter').val(); // Get the parameter here
 
         let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
+        
         if (deviceId) url += `&device_id=${encodeURIComponent(deviceId)}`;
         if (fromDate) url += `&from=${encodeURIComponent(fromDate)}`;
         if (toDate) url += `&to=${encodeURIComponent(toDate)}`;
+
+        // ADD THIS LINE: Pass the parameter to the server
+        if (selectedParam) url += `&parameter=${encodeURIComponent(selectedParam)}`;    
 
         $.ajax({
             url: url,
@@ -114,7 +119,7 @@ $(document).ready(function () {
                         limText = "1013 hPa";
                     }
 
-                    statusHtml.push(`<span class="${isNorm ? 'normal-text' : 'warning'}" style="color: ${isNorm ? 'inherit' : 'red'}; font-weight: ${isNorm ? 'normal' : 'bold'};">${statText}</span>`);
+                    statusHtml.push(`<span class="${isNorm ? 'normal-text' : 'warning'}" style="color: ${isNorm ? '#248b28' : 'red'}; font-weight: ${isNorm ? 'normal' : 'bold'};">${statText}</span>`);
                     limits.push(limText);
                 }
             };

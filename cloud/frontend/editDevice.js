@@ -1,11 +1,8 @@
 $(document).ready(function () {
-    const API_URL = '/api';
+    const API_URL = window.location.origin + '/api';
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     
-    // Redirect if no token
-    if (!token) { window.location.href = 'login.html'; return; }
-
-    // Get ID from URL (e.g., editDevice.html?id=123)
+    // Get ID from URL (e.g., editDevice.html?id=co2-monitor:0)
     const params = new URLSearchParams(window.location.search);
     const deviceId = params.get('id');
 
@@ -15,25 +12,21 @@ $(document).ready(function () {
         return;
     }
 
-    /**
-     * 1. Fetch current device data to fill the form
-     */
-    // Inside editDevice.js -> AJAX GET request
-
-$.ajax({
-    url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
-    method: 'GET',
-    headers: { Authorization: 'Bearer ' + token },
-    success: function(response) {
-        // Debugging: See what the server actually sends
-        console.log("Server response:", response);
-
-        // Handle cases where backend wraps data in an object (e.g., response.device or response.data)
-        const dev = response.device || response.data || response;
-
-        if(!dev || (!dev.device_id && !dev.id)) {
-            alert('Device found but data is empty.');
-            return;
+    // 1. Fetch current device data to fill the form
+    $.ajax({
+        // Use encodeURIComponent to handle colons like "co2-monitor:0"
+        url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
+        method: 'GET',
+        headers: { Authorization: 'Bearer ' + token },
+        success: function(dev) {
+            $('#device-id').val(dev.device_id);
+            $('#device-name').val(dev.device_name);
+            $('#device-type').val(dev.device_type);
+            $('#device-location').val(dev.location);
+        },
+        error: function(xhr) {
+            console.error("Fetch error:", xhr);
+            alert('Could not fetch device details. Status: ' + xhr.status);
         }
 
         // Fill the form fields
@@ -57,6 +50,8 @@ $.ajax({
      */
     $('#edit-device-form').on('submit', function (e) {
         e.preventDefault();
+    
+        const safeId = encodeURIComponent($('#device-id').val().trim());
 
         const payload = {
             device_name: $('#device-name').val().trim(),
@@ -68,7 +63,7 @@ $.ajax({
         };
 
         $.ajax({
-            url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
+            url: `${API_URL}/devices/${safeId}`,
             method: 'PUT',
             headers: { 
                 'Authorization': 'Bearer ' + token,
@@ -95,12 +90,12 @@ $.ajax({
                 url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
                 method: 'DELETE',
                 headers: { Authorization: 'Bearer ' + token },
-                success: function() { 
-                    alert('Device deleted successfully'); 
-                    window.location.href = 'index.html'; 
+                success: () => { 
+                    alert('Deleted successfully'); 
+                    window.location.href='index.html'; 
                 },
-                error: function(xhr) {
-                    alert('Error deleting device: ' + (xhr.responseJSON?.error || 'Server error'));
+                error: (xhr) => {
+                    alert('Delete failed: ' + (xhr.responseJSON?.error || 'Unknown error'));
                 }
             });
         }
