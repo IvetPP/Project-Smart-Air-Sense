@@ -5,32 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="./logo.jpg" />
     <title>Users</title>
+    
     <link rel="stylesheet" href="history.css">
     <link rel="stylesheet" href="users.css">
     <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <style>
-        /* Specific hover color requested */
         .history-table tbody tr:hover {
             background-color: #e2b8f2 !important;
             cursor: pointer;
         }
-        .search-container {
-            margin-bottom: 15px;
-        }
+        .search-container { margin-bottom: 15px; }
         #user-search {
             width: 400px;
             padding: 10px;
             border: 1px solid #9400D3;
             border-radius: 5px;
-            font-family: 'ADLaM+Display', sans-serif;
+            font-family: 'ADLaM Display', sans-serif;
+        }
+        /* Style for Select2 to match your theme */
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #9400D3;
         }
     </style>
 </head>
 <body>
-
     <div class="container">
         <div class="header-row">
             <img src="./logo.jpg" class="logo">
@@ -58,12 +61,11 @@
                                 <th>LAST AND FIRST NAME</th>
                                 <th>USER NAME/EMAIL</th>
                                 <th>REGISTRATION DATE</th>
-                                <th>ASSIGNED DEVICE</th>
+                                <th>ASSIGNED DEVICES</th>
                                 <th></th>
                             </tr>
                         </thead>
-                        <tbody>
-                            </tbody>
+                        <tbody></tbody>
                     </table>
 
                     <div class="pagination">
