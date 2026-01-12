@@ -2,9 +2,11 @@ $(document).ready(function () {
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     const API_URL = '/api';
     const PAGE_SIZE = 10;
+    
     let currentPage = 1;
     let allUsers = []; 
     let filteredUsers = []; 
+    let allDevices = []; // To store the list of all available devices
 
     if (!token) { 
         window.location.href = 'login.html'; 
@@ -13,6 +15,26 @@ $(document).ready(function () {
 
     $('.user').text("LOG OUT");
 
+    /**
+     * Fetch all available devices for the dropdown options
+     */
+    function loadDevices() {
+        return $.ajax({
+            url: `${API_URL}/devices`, 
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token },
+            success: function (data) {
+                allDevices = Array.isArray(data) ? data : [];
+            },
+            error: function (xhr) {
+                console.error("Failed to load devices list", xhr);
+            }
+        });
+    }
+
+    /**
+     * Fetch users and their current device assignments
+     */
     function loadUsers() {
         $.ajax({
             url: `${API_URL}/users`,
@@ -25,11 +47,14 @@ $(document).ready(function () {
             },
             error: function (xhr) {
                 console.error("API Error:", xhr);
-                $(".history-table tbody").html('<tr><td colspan="5" style="color:red; text-align:center;">Error loading users from database.</td></tr>');
+                $(".history-table tbody").html('<tr><td colspan="5" style="color:red; text-align:center;">Error loading users.</td></tr>');
             }
         });
     }
 
+    /**
+     * Render the table
+     */
     function renderTable() {
         const tbody = $(".history-table tbody");
         tbody.empty();
@@ -43,56 +68,74 @@ $(document).ready(function () {
         } else {
             pageItems.forEach(user => {
                 const regDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
-                const devices = user.assigned_devices || [];
+                const userId = user.user_id || user.id;
                 
-                // --- DROPDOWN LOGIC ---
-                let deviceHtml = "";
-                if (devices.length > 1) {
-                    deviceHtml = `<select style="width:100%; padding:4px; border-radius:4px; border:1px solid #ddd; font-family:inherit; background:white;">`;
-                    devices.forEach(d => {
-                        deviceHtml += `<option value="${d.device_id}">${d.device_name}</option>`;
-                    });
-                    deviceHtml += `</select>`;
-                } else if (devices.length === 1) {
-                    deviceHtml = `<code style="background:#f0f0f0; padding:2px 5px; border-radius:3px; border: 1px solid #ddd;">${devices[0].device_name}</code>`;
-                } else {
-                    deviceHtml = `<span style="color:#999; font-style:italic;">No devices</span>`;
-                }
+                // Expecting user.device_ids to be an array from your API join: [1, 4, 7]
+                const assignedIds = Array.isArray(user.assigned_device_ids) ? user.assigned_device_ids : [];
+
+                // Generate <option> tags
+                let optionsHtml = allDevices.map(dev => {
+                    const isSelected = assignedIds.includes(dev.device_id) ? 'selected' : '';
+                    return `<option value="${dev.device_id}" ${isSelected}>${dev.device_name || dev.name}</option>`;
+                }).join('');
 
                 tbody.append(`
                     <tr>
                         <td>${user.full_name}</td>
                         <td>${user.email}</td>
                         <td>${regDate}</td>
-                        <td>${deviceHtml}</td>
+                        <td style="min-width: 250px;">
+                            <select class="device-mapper" data-user-id="${userId}" multiple="multiple">
+                                ${optionsHtml}
+                            </select>
+                        </td>
                         <td>
-                            <button type="button" class="edit-btn" data-id="${user.id}" style="cursor:pointer; background:white; border:1px solid #9400D3; border-radius:4px; padding:4px 12px; font-family:inherit;">🖊️ EDIT</button>
+                            <button type="button" class="edit-btn" data-id="${userId}" style="cursor:pointer; background:white; border:1px solid #9400D3; border-radius:4px; padding:4px 12px;">🖊️ EDIT</button>
                         </td>
                     </tr>
                 `);
+            });
+
+            // Initialize Select2 for the new dropdowns
+            $('.device-mapper').select2({
+                placeholder: "Select devices",
+                allowClear: true,
+                width: '100%'
             });
         }
         updatePaginationUI();
     }
 
-    // Search logic updated for multiple devices
-    $('#user-search').on('keyup', function() {
-        const term = $(this).val().toLowerCase().trim();
-        
-        filteredUsers = allUsers.filter(u => {
-            const name = (u.full_name || "").toLowerCase();
-            const email = (u.email || "").toLowerCase();
-            const matchesDevice = (u.assigned_devices || []).some(d => 
-                d.device_name.toLowerCase().includes(term) || d.device_id.toLowerCase().includes(term)
-            );
-            
-            return name.includes(term) || email.includes(term) || matchesDevice;
-        });
+    /**
+     * Save Mapping Changes (Updates the device_users table)
+     */
+    $(document).on('change', '.device-mapper', function () {
+        const userId = $(this).data('user-id');
+        const selectedIds = $(this).val(); // Array of device IDs
 
-        currentPage = 1;
-        renderTable();
+        $.ajax({
+            url: `${API_URL}/device-users/sync`,
+            method: 'POST',
+            headers: { 
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json' 
+            },
+            data: JSON.stringify({
+                user_id: userId,
+                device_ids: selectedIds
+            }),
+            success: function() {
+                console.log(`Successfully updated devices for user ${userId}`);
+            },
+            error: function() {
+                alert("Error updating device assignments.");
+            }
+        });
     });
 
+    /**
+     * Search & Pagination Logic
+     */
     function updatePaginationUI() {
         const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE) || 1;
         $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
@@ -100,20 +143,23 @@ $(document).ready(function () {
         $('.next').prop('disabled', currentPage >= totalPages);
     }
 
+    $('#user-search').on('keyup', function() {
+        const term = $(this).val().toLowerCase().trim();
+        filteredUsers = allUsers.filter(u => {
+            return (u.full_name || "").toLowerCase().includes(term) || 
+                   (u.email || "").toLowerCase().includes(term);
+        });
+        currentPage = 1;
+        renderTable();
+    });
+
     $(document).on("click", ".edit-btn", function (e) {
         const id = $(this).attr("data-id");
-        if (id && id !== "undefined") {
-            window.location.href = `editUser.html?id=${encodeURIComponent(id)}`;
-        }
+        if (id) window.location.href = `editUser.html?id=${encodeURIComponent(id)}`;
     });
 
-    $('.next').on('click', function() { 
-        if (currentPage < Math.ceil(filteredUsers.length / PAGE_SIZE)) { currentPage++; renderTable(); }
-    });
-
-    $('.prev').on('click', function() { 
-        if (currentPage > 1) { currentPage--; renderTable(); }
-    });
+    $('.next').on('click', function() { currentPage++; renderTable(); });
+    $('.prev').on('click', function() { currentPage--; renderTable(); });
 
     $('.user').on('click', function() {
         if(confirm('Do you want to log out?')) {
@@ -123,5 +169,6 @@ $(document).ready(function () {
         }
     });
 
-    loadUsers();
+    // STARTUP: Load Devices first, then Users
+    loadDevices().then(loadUsers);
 });
