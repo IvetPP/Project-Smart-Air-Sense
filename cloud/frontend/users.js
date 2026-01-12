@@ -2,9 +2,11 @@ $(document).ready(function () {
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     const API_URL = '/api';
     const PAGE_SIZE = 10;
+    
     let currentPage = 1;
     let allUsers = []; 
     let filteredUsers = []; 
+    let allDevices = []; // To store the list of all available devices
 
     // 1. Initial Auth Check
     if (!token) { 
@@ -12,11 +14,27 @@ $(document).ready(function () {
         return; 
     }
 
-    // 2. Set Circle Text to Log Out (Requested Change)
     $('.user').text("LOG OUT");
 
     /**
-     * Fetch users from API
+     * Fetch all available devices for the dropdown options
+     */
+    function loadDevices() {
+        return $.ajax({
+            url: `${API_URL}/devices`, 
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token },
+            success: function (data) {
+                allDevices = Array.isArray(data) ? data : [];
+            },
+            error: function (xhr) {
+                console.error("Failed to load devices list", xhr);
+            }
+        });
+    }
+
+    /**
+     * Fetch users and their current device assignments
      */
     function loadUsers() {
         $.ajax({
@@ -30,13 +48,13 @@ $(document).ready(function () {
             },
             error: function (xhr) {
                 console.error("API Error:", xhr);
-                $(".history-table tbody").html('<tr><td colspan="5" style="color:red; text-align:center;">Error loading users from database.</td></tr>');
+                $(".history-table tbody").html('<tr><td colspan="5" style="color:red; text-align:center;">Error loading users.</td></tr>');
             }
         });
     }
 
     /**
-     * Render the table based on search and pagination
+     * Render the table
      */
     function renderTable() {
         const tbody = $(".history-table tbody");
@@ -51,30 +69,73 @@ $(document).ready(function () {
         } else {
             pageItems.forEach(user => {
                 const regDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
+                const userId = user.user_id || user.id;
                 
-                // Ensuring we capture user_id from Supabase
-                const userId = user.user_id || user.id; 
-                const device = user.assigned_device || 'None';
+                // Expecting user.device_ids to be an array from your API join: [1, 4, 7]
+                const assignedIds = Array.isArray(user.assigned_device_ids) ? user.assigned_device_ids : [];
+
+                // Generate <option> tags
+                let optionsHtml = allDevices.map(dev => {
+                    const isSelected = assignedIds.includes(dev.device_id) ? 'selected' : '';
+                    return `<option value="${dev.device_id}" ${isSelected}>${dev.device_name || dev.name}</option>`;
+                }).join('');
 
                 tbody.append(`
                     <tr>
                         <td>${user.full_name || 'No Name'}</td>
                         <td>${user.email || 'No Email'}</td>
                         <td>${regDate}</td>
-                        <td><code style="background:#f0f0f0; padding:2px 5px; border-radius:3px; border: 1px solid #ddd;">${device}</code></td>
+                        <td style="min-width: 250px;">
+                            <select class="device-mapper" data-user-id="${userId}" multiple="multiple">
+                                ${optionsHtml}
+                            </select>
+                        </td>
                         <td>
-                            <button type="button" class="edit-btn" data-id="${userId}" style="cursor:pointer; background:white; border:1px solid #9400D3; border-radius:4px; padding:4px 12px; font-family:inherit;">🖊️ EDIT</button>
+                            <button type="button" class="edit-btn" data-id="${userId}" style="cursor:pointer; background:white; border:1px solid #9400D3; border-radius:4px; padding:4px 12px;">🖊️ EDIT</button>
                         </td>
                     </tr>
                 `);
             });
-        }
 
+            // Initialize Select2 for the new dropdowns
+            $('.device-mapper').select2({
+                placeholder: "Select devices",
+                allowClear: true,
+                width: '100%'
+            });
+        }
         updatePaginationUI();
     }
 
     /**
-     * Update Pagination UI
+     * Save Mapping Changes (Updates the device_users table)
+     */
+    $(document).on('change', '.device-mapper', function () {
+        const userId = $(this).data('user-id');
+        const selectedIds = $(this).val(); // Array of device IDs
+
+        $.ajax({
+            url: `${API_URL}/device-users/sync`,
+            method: 'POST',
+            headers: { 
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json' 
+            },
+            data: JSON.stringify({
+                user_id: userId,
+                device_ids: selectedIds
+            }),
+            success: function() {
+                console.log(`Successfully updated devices for user ${userId}`);
+            },
+            error: function() {
+                alert("Error updating device assignments.");
+            }
+        });
+    });
+
+    /**
+     * Search & Pagination Logic
      */
     function updatePaginationUI() {
         const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE) || 1;
@@ -83,61 +144,24 @@ $(document).ready(function () {
         $('.next').prop('disabled', currentPage >= totalPages);
     }
 
-    /* --- Event Handlers --- */
-
-    // Search logic
     $('#user-search').on('keyup', function() {
         const term = $(this).val().toLowerCase().trim();
-        
         filteredUsers = allUsers.filter(u => {
-            const name = (u.full_name || "").toLowerCase();
-            const email = (u.email || "").toLowerCase();
-            const device = (u.assigned_device || "").toLowerCase();
-            
-            // Returns true if the term matches any of the three fields
-            return name.includes(term) || 
-                   email.includes(term) || 
-                   device.includes(term);
+            return (u.full_name || "").toLowerCase().includes(term) || 
+                   (u.email || "").toLowerCase().includes(term);
         });
-
-        currentPage = 1; // Reset to first page after searching
+        currentPage = 1;
         renderTable();
     });
 
-    /**
-     * FIXED: Edit Button Redirect logic
-     */
     $(document).on("click", ".edit-btn", function (e) {
-        e.preventDefault();
-        e.stopPropagation(); 
-
         const id = $(this).attr("data-id");
-        console.log("Edit requested for ID:", id);
-        
-        if (id && id !== "undefined" && id !== "null") {
-            window.location.href = `editUser.html?id=${encodeURIComponent(id)}`;
-        } else {
-            console.error("Missing User ID in button data-id attribute");
-            alert("Error: User ID not found. Ensure 'user_id' is returned by your API.");
-        }
+        if (id) window.location.href = `editUser.html?id=${encodeURIComponent(id)}`;
     });
 
-    // Navigation
-    $(".back, .home, .cur-values").on("click", function() {
-        window.location.href = "index.html";
-    });
+    $('.next').on('click', function() { currentPage++; renderTable(); });
+    $('.prev').on('click', function() { currentPage--; renderTable(); });
 
-    // Pagination
-    $('.next').on('click', function() { 
-        const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
-        if (currentPage < totalPages) { currentPage++; renderTable(); }
-    });
-
-    $('.prev').on('click', function() { 
-        if (currentPage > 1) { currentPage--; renderTable(); }
-    });
-
-    // Logout via the "Log out" circle
     $('.user').on('click', function() {
         if(confirm('Do you want to log out?')) {
             localStorage.clear();
@@ -146,6 +170,6 @@ $(document).ready(function () {
         }
     });
 
-    // Init
-    loadUsers();
+    // STARTUP: Load Devices first, then Users
+    loadDevices().then(loadUsers);
 });

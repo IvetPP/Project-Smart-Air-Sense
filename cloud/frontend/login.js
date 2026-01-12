@@ -34,13 +34,14 @@ $(document).ready(function () {
     });
 
     /* ============================
-       REGISTRATION LOGIC
+    REGISTRATION LOGIC
     ============================ */
     $('#signup-form').on('submit', function (e) {
         e.preventDefault();
 
-        const firstName = $('#signup-firstname').val()?.trim() || '';
-        const lastName = $('#signup-lastname').val()?.trim() || '';
+        // FIXED: Get the value from the single 'full-name' ID used in your HTML
+        const fullName = $('#full-name').val()?.trim() || '';
+    
         const email = $('#signup-username').val().trim();
         const password = $('#signup-password').val();
         const confirmPw = $('#signup-password-confirm').val();
@@ -63,11 +64,10 @@ $(document).ready(function () {
             url: `${AUTH_API}/register`,
             method: 'POST',
             contentType: 'application/json',
-            // Updated keys to match your Supabase columns
             data: JSON.stringify({ 
                 email: email, 
                 password: password,
-                full_name: `${firstName} ${lastName}`.trim() 
+                full_name: fullName // Now correctly passing the captured name
             }),
             success: function (res) {
                 alert('Registration successful!');
