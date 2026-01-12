@@ -30,19 +30,24 @@ router.post('/register',
       }
 
       // 2. Insert into Supabase
-      // Note: We do NOT send 'user_id'. The database handles it now.
       const { data: newUser, error: dbError } = await supabase
         .from('users')
-        .insert({
+        .upsert({
           email: email,
           user_name: email, 
-          password: password, // Note: In production, hash this with bcrypt!
+          password: password,
           full_name: full_name
+        }, {
+          onConflict: 'email' // This tells Supabase: if the email exists, update the row instead of erroring
         })
         .select()
         .single();
 
-      if (dbError) throw dbError;
+if (dbError) {
+    // If it's STILL a duplicate key error, it means the user_id sequence is being ignored
+    console.error('Database Error:', dbError);
+    throw dbError;
+}
 
       res.status(201).json({ 
         message: 'User registered successfully', 
