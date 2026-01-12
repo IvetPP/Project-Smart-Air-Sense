@@ -125,7 +125,7 @@ $(document).ready(function () {
             };
 
             // Column Mapping
-            check(row.co2, "CO2 Concentration", " ppm", 'co2');
+            check(row.co2, "CO<sub>2</sub> Concentration", " ppm", 'co2');
             check(row.temperature, "Temperature", " °C", 'temperature');
             check(row.humidity, "Humidity", " %", 'humidity');
             check(row.pressure, "Barometric Pressure", " hPa", 'pressure');

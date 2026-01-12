@@ -6,6 +6,7 @@ const supabase = require('../db');
 // GET /api/users - List all users with ALL their assigned devices
 router.get('/', authMiddleware, async (req, res) => {
     try {
+        // We fetch user details and join through device_users to the devices table
         const { data, error } = await supabase
             .from('users')
             .select(`
@@ -18,6 +19,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
         if (error) throw error;
 
+        // Map the nested Supabase structure into a clean format for the frontend
         const formattedUsers = (data || []).map(u => ({
             id: u.user_id,
             full_name: u.full_name || 'No Name',
@@ -29,11 +31,12 @@ router.get('/', authMiddleware, async (req, res) => {
         
         res.json(formattedUsers);
     } catch (err) {
+        console.error("Fetch Users Error:", err.message);
         res.status(500).json({ error: err.message });
     }
 });
 
-// GET /api/users/:id - Fetch ONE user for the edit page
+// GET /api/users/:id - Fetch ONE user
 router.get('/:id', authMiddleware, async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -58,7 +61,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
         if (email) updateData.email = email;
         if (password) updateData.password = password;
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('users')
             .update(updateData)
             .eq('user_id', req.params.id);
@@ -70,7 +73,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// DELETE /api/users/:id - Delete user
+// DELETE /api/users/:id
 router.delete('/:id', authMiddleware, async (req, res) => {
     try {
         const { error } = await supabase.from('users').delete().eq('user_id', req.params.id);

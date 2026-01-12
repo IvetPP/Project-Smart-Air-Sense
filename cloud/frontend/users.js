@@ -8,7 +8,6 @@ $(document).ready(function () {
     let filteredUsers = []; 
     let allDevices = []; 
 
-    // 1. Initial Auth Check
     if (!token) { 
         window.location.href = 'login.html'; 
         return; 
@@ -83,8 +82,8 @@ $(document).ready(function () {
 
                 tbody.append(`
                     <tr>
-                        <td>${user.full_name || 'No Name'}</td>
-                        <td>${user.email || 'No Email'}</td>
+                        <td>${user.full_name}</td>
+                        <td>${user.email}</td>
                         <td>${regDate}</td>
                         <td style="min-width: 250px;">
                             <select class="device-mapper" data-user-id="${userId}" multiple="multiple">
