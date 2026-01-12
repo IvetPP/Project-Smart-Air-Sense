@@ -11,7 +11,7 @@ const { JWT_SECRET } = require('../middleware/auth');
  */
 router.post('/register',
   body('email').isEmail().withMessage('Enter a valid email address'),
-  body('password').isLength({ min: 6 }), 
+  body('password').isLength({ min: 8 }), // Matched your frontend 8+ char regex
   body('full_name').optional().isString(),
   handleValidation,
   async (req, res) => {
@@ -19,23 +19,24 @@ router.post('/register',
 
     try {
       // 1. Check if user already exists
-      const { data: existingUser } = await supabase
+      const { data: existingUser, error: checkError } = await supabase
         .from('users')
-        .select('user_id')
+        .select('email')
         .eq('email', email)
-        .single();
+        .maybeSingle(); // Better than .single() as it doesn't throw error if 0 rows
 
       if (existingUser) {
         return res.status(409).json({ error: 'User with this email already exists' });
       }
 
-      // 2. Insert into Supabase - Renamed 'error' to 'dbError'
+      // 2. Insert into Supabase
+      // Note: We do NOT send 'user_id'. The database handles it now.
       const { data: newUser, error: dbError } = await supabase
         .from('users')
         .insert({
           email: email,
-          user_name: email, // Keeps your validation happy if user_name is required
-          password: password,
+          user_name: email, 
+          password: password, // Note: In production, hash this with bcrypt!
           full_name: full_name
         })
         .select()
@@ -51,6 +52,7 @@ router.post('/register',
 
     } catch (err) {
       console.error('Registration Error:', err.message);
+      // Detailed error for debugging
       res.status(500).json({ error: 'Database insertion failed', details: err.message });
     }
   }
