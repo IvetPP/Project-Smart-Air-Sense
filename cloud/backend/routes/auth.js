@@ -11,7 +11,7 @@ const { JWT_SECRET } = require('../middleware/auth');
  */
 router.post('/register',
   body('email').isEmail().withMessage('Enter a valid email address'),
-  body('password').isLength({ min: 8 }), // Matched your frontend 8+ char regex
+  body('password').isLength({ min: 8 }), 
   body('full_name').optional().isString(),
   handleValidation,
   async (req, res) => {
@@ -19,35 +19,40 @@ router.post('/register',
 
     try {
       // 1. Check if user already exists
-      const { data: existingUser, error: checkError } = await supabase
+      const { data: existingUser } = await supabase
         .from('users')
         .select('email')
         .eq('email', email)
-        .maybeSingle(); // Better than .single() as it doesn't throw error if 0 rows
+        .maybeSingle();
 
       if (existingUser) {
         return res.status(409).json({ error: 'User with this email already exists' });
       }
 
       // 2. Insert into Supabase
-      const { data: newUser, error: dbError } = await supabase
+      // Note: We use .insert(). The database handles user_id automatically.
+      const { data: insertedData, error: dbError } = await supabase
         .from('users')
-        .upsert({
-          email: email,
-          user_name: email, 
-          password: password,
-          full_name: full_name
-        }, {
-          onConflict: 'email' // This tells Supabase: if the email exists, update the row instead of erroring
-        })
-        .select()
-        .single();
+        .insert([
+          {
+            email: email,
+            user_name: email, 
+            password: password, // Note: In production, use bcrypt to hash this!
+            full_name: full_name
+          }
+        ])
+        .select(); // Returns the created record
 
-if (dbError) {
-    // If it's STILL a duplicate key error, it means the user_id sequence is being ignored
-    console.error('Database Error:', dbError);
-    throw dbError;
-}
+      if (dbError) {
+        console.error('Supabase Insert Error:', dbError);
+        throw dbError;
+      }
+
+      if (!insertedData || insertedData.length === 0) {
+        throw new Error('No data returned after insertion');
+      }
+
+      const newUser = insertedData[0];
 
       res.status(201).json({ 
         message: 'User registered successfully', 
@@ -57,8 +62,10 @@ if (dbError) {
 
     } catch (err) {
       console.error('Registration Error:', err.message);
-      // Detailed error for debugging
-      res.status(500).json({ error: 'Database insertion failed', details: err.message });
+      res.status(500).json({ 
+        error: 'Database insertion failed', 
+        details: err.message 
+      });
     }
   }
 );
@@ -74,12 +81,12 @@ router.post('/login',
     const { email, password } = req.body;
 
     try {
-      // 1. Fetch user by email - Renamed 'error' to 'fetchError'
+      // 1. Fetch user by email
       const { data: user, error: fetchError } = await supabase
         .from('users')
         .select('user_id, email, password, full_name')
         .eq('email', email)
-        .single();
+        .maybeSingle();
 
       // 2. Check if user exists and password matches
       if (fetchError || !user || user.password !== password) {
