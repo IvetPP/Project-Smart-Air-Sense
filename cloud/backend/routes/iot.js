@@ -39,7 +39,7 @@ router.post('/ingest', async (req, res) => {
 
     // STORE IN SUPABASE
     const { error } = await supabase
-      .from('measurements')
+      .from('iot_data')
       .insert({
         device_id: data.device_id,
         co2: data.co2,
