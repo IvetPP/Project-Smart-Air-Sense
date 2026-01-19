@@ -85,5 +85,4 @@ $(document).ready(function () {
     });
 
     $('.cancel-btn').on('click', () => $('#signup-form')[0].reset());
-    $('.back').on('click', () => window.location.href = 'index.html');
 });

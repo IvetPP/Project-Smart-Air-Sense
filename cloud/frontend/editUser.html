@@ -13,7 +13,7 @@
     <div class="container">
         <div class="top-bar">
             <div class="top-left">
-                <img src="./logo.jpg" class="logo">
+                <img src="./logo.jpg" class="logo" alt="Logo">
                 <button class="back">&lt;</button>
                 <h1 class="page-title">Edit User</h1>
             </div>
@@ -22,28 +22,20 @@
 
         <div class="form-container">
             <form id="edit-user-form">
+                
                 <div class="form-group">
+                    <span class="field-label">Full name</span>
                     <input type="text" id="full-name" name="full-name" placeholder="Loading name...">
                 </div>
 
                 <div class="form-group">
+                    <span class="field-label">Email</span>
                     <input type="email" id="email" name="email" placeholder="Loading email...">
                 </div>
 
                 <div class="form-group">
+                    <span class="field-label">Password change</span>
                     <input type="password" id="password-input" name="password-input" placeholder="New Password (Optional)">
-                </div>
-
-                <div class="form-group">
-                    <select id="add-device" name="add-device">
-                        <option value="">Add device to be assigned</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <select id="assigned-device" name="assigned-device">
-                        <option value="">Assigned Device List</option>
-                    </select>
                 </div>
 
                 <div class="form-buttons">

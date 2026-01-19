@@ -12,94 +12,93 @@
 <body>
     <div class="container">
 
-  <div class="top-bar">
-    <div class="top-left">
-      <img src="./logo.jpg" class="logo">
-      <button class="back">&lt;</button>
-      <h1 class="page-title">Edit Device</h1>
+        <div class="top-bar">
+            <div class="top-left">
+                <img src="./logo.jpg" class="logo" alt="Logo">
+                <button class="back">&lt;</button>
+                <h1 class="page-title">Edit Device</h1>
+            </div>
+            <div class="user">LOG OUT</div>
+        </div>
+
+        <div class="form-container">
+            <form id="edit-device-form">
+                
+                <div class="form-group">
+                    <span class="field-label">Device ID</span>
+                    <input
+                        type="text"
+                        id="device-id"
+                        name="device-id"
+                        value="ID 1770542"
+                        readonly
+                    >
+                </div>
+
+                <div class="form-group">
+                    <span class="field-label">Device type</span>
+                    <input
+                        type="text"
+                        id="device-type"
+                        name="device-type"
+                        value="CO2 monitor Kit"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <span class="field-label">Device name</span>
+                    <input
+                        type="text"
+                        id="device-name"
+                        name="device-name"
+                        value="Office 1"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <span class="field-label">Device location</span>
+                    <input
+                        type="text"
+                        id="device-location"
+                        name="device-location"
+                        value="Office No. 17 - 1.NP"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <span class="field-label">User</span>
+                    <input
+                        type="text"
+                        id="device-user"
+                        name="device-user"
+                        value="User"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <span class="field-label">Date</span>
+                    <input
+                        type="date"
+                        id="device-date"
+                        name="device-date"
+                        required
+                    >
+                </div>
+
+                <div class="form-buttons">
+                    <button type="button" class="cancel-btn">Cancel</button>
+                    <button type="button" class="delete-btn">Delete</button>
+                    <button type="submit" class="save-btn">Save</button>
+                </div>
+
+            </form>
+        </div>
+
     </div>
-    <div class="user">LOG OUT</div>
-  </div>
-
-  <div class="form-container">
-    <form id="edit-device-form">
-      
-        <div class="form-group">
-            <input
-                type="text"
-                id="device-id"
-                name="device-id"
-                value="ID 1770542"
-                readonly
-            >
-        </div>
-
-        <div class="form-group">
-            <input
-                type="text"
-                id="device-type"
-                name="device-type"
-                value="CO2 monitor Kit"
-                required
-            >
-            <span class="for-admin">for Admin Edit</span>
-        </div>
-
-        <div class="form-group">
-            <input
-                type="text"
-                id="device-name"
-                name="device-name"
-                value="Office 1"
-                required
-            >
-            <span class="for-admin">for User and Admin Edit</span>
-        </div>
-
-        <div class="form-group">
-            <input
-                type="text"
-                id="device-location"
-                name="device-location"
-                value="Office No. 17 - 1.NP"
-                required
-            >
-            <span class="for-admin">for Admin Edit</span>
-        </div>
-
-        <div class="form-group">
-            <input
-                type="text"
-                id="device-user"
-                name="device-user"
-                value="User"
-                required
-            >
-            <span class="for-admin">for Admin Edit</span>
-        </div>
-
-        <div class="form-group">
-            <input
-                type="date"
-                id="device-date"
-                name="device-date"
-                value="Date of registration"
-                required
-            >
-            <span class="for-admin">for Admin Edit</span>
-        </div>
-
-
-        <div class="form-buttons">
-            <button type="button" class="cancel-btn">Cancel</button>
-            <button type="button" class="delete-btn">Delete</button>
-            <button type="submit" class="save-btn">Save</button>
-        </div>
-
-    </form>
-  </div>
-
-</div>
-<script type="module" src="editDevice.js"></script>
+    <script type="module" src="editDevice.js"></script>
 </body>
 </html>
