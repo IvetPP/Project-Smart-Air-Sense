@@ -4,7 +4,7 @@ const supabase = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
 /* ============================================================
-   HELPER: Check Device Permission
+    HELPER: Check Device Permission
    ============================================================ */
 async function hasDevicePermission(userId, deviceId, roles) {
     if (roles.includes('admin')) return true;
@@ -14,33 +14,24 @@ async function hasDevicePermission(userId, deviceId, roles) {
         .select('id')
         .eq('user_id', userId)
         .eq('device_id', deviceId)
-        .maybeSingle(); // Returns null if not found instead of throwing error
+        .maybeSingle(); 
     
-    return !!data; // returns true if mapping exists
+    return !!data; 
 }
 
 /* ============================================================
-   GET /api/measurements/
+    GET /api/measurements/
    ============================================================ */
 router.get('/', authMiddleware, async (req, res) => {
     try {
         const { limit = 10, offset = 0, device_id, from, to, parameter } = req.query;
-        const userId = req.user.user_id;
+        
+        // FIX 1 & 2: Use 'sub' and ensure it is an Integer
+        const userId = parseInt(req.user.sub, 10);
         const userRoles = req.user.roles || [];
+        const isAdmin = userRoles.includes('admin');
 
-        // 1. SECURITY CHECK: If device_id is provided, verify ownership
-        if (device_id && device_id.trim() !== "" && device_id !== "null") {
-            const allowed = await hasDevicePermission(userId, device_id.trim(), userRoles);
-            if (!allowed) {
-                return res.status(403).json({ error: 'Access denied to this device data' });
-            }
-        } else if (!userRoles.includes('admin')) {
-            // If no device_id specified and not admin, user shouldn't be allowed to 
-            // query "all" measurements globally.
-            return res.status(400).json({ error: 'device_id is required' });
-        }
-
-        // 2. Prepare base query
+        // Prepare base query
         let query = supabase
             .from('iot_data') 
             .select(`
@@ -48,15 +39,46 @@ router.get('/', authMiddleware, async (req, res) => {
                 devices ( device_name )
             `, { count: 'exact' });
 
-        // 3. Apply Filters
-        if (device_id) query = query.eq('device_id', device_id.trim());
+        // --- FIX 3: SECURITY & AUTO-FILTERING ---
+        if (!isAdmin) {
+            // Get all devices assigned to this user
+            const { data: mappings } = await supabase
+                .from('device_users')
+                .select('device_id')
+                .eq('user_id', userId);
+
+            const allowedIds = mappings?.map(m => m.device_id) || [];
+
+            if (allowedIds.length === 0) {
+                // User has no devices, return empty set instead of error
+                return res.json({ measurements: [], totalCount: 0 });
+            }
+
+            if (device_id && device_id.trim() !== "" && device_id !== "null") {
+                // If specific device requested, verify ownership
+                if (!allowedIds.includes(device_id.trim())) {
+                    return res.status(403).json({ error: 'Access denied to this device data' });
+                }
+                query = query.eq('device_id', device_id.trim());
+            } else {
+                // If NO device_id provided, show data for ALL their assigned devices
+                query = query.in('device_id', allowedIds);
+            }
+        } else {
+            // Admin logic: only filter if they explicitly provided an ID
+            if (device_id && device_id.trim() !== "" && device_id !== "null") {
+                query = query.eq('device_id', device_id.trim());
+            }
+        }
+
+        // Apply shared filters
         if (from) query = query.gte('created_at', from);
         if (to) query = query.lte('created_at', to);
         if (parameter && parameter.trim() !== "" && parameter !== "null") {
             query = query.not(parameter, 'is', null);
         }
 
-        // 4. Pagination & Sort
+        // Pagination & Sort
         const start = parseInt(offset) || 0;
         const end = start + (parseInt(limit) || 10) - 1;
 
@@ -64,16 +86,22 @@ router.get('/', authMiddleware, async (req, res) => {
             .order('created_at', { ascending: false })
             .range(start, end);
 
-        // 5. Fallback for Relationship issues
+        // Fallback for Relationship issues
         if (error && error.message.includes("relationship")) {
+            console.warn("Falling back to raw iot_data query");
             let fallbackQuery = supabase.from('iot_data').select('*', { count: 'exact' });
-            if (device_id) fallbackQuery = fallbackQuery.eq('device_id', device_id.trim());
-            if (parameter) fallbackQuery = fallbackQuery.not(parameter, 'is', null);
-
-            const fallback = await fallbackQuery
-                .order('created_at', { ascending: false })
-                .range(start, end);
             
+            // Re-apply the same filters used above to fallback
+            if (!isAdmin) {
+                const { data: m } = await supabase.from('device_users').select('device_id').eq('user_id', userId);
+                const ids = m?.map(i => i.device_id) || [];
+                if (device_id) { fallbackQuery = fallbackQuery.eq('device_id', device_id.trim()); }
+                else { fallbackQuery = fallbackQuery.in('device_id', ids); }
+            } else if (device_id) {
+                fallbackQuery = fallbackQuery.eq('device_id', device_id.trim());
+            }
+
+            const fallback = await fallbackQuery.order('created_at', { ascending: false }).range(start, end);
             data = fallback.data;
             error = fallback.error;
             count = fallback.count;
@@ -94,12 +122,12 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 /* ============================================================
-   GET /api/measurements/latest
+    GET /api/measurements/latest
    ============================================================ */
 router.get('/latest', authMiddleware, async (req, res) => {
     try {
         const { device_id } = req.query;
-        const userId = req.user.user_id;
+        const userId = parseInt(req.user.sub, 10);
         const userRoles = req.user.roles || [];
 
         if (!device_id || device_id === "null") {
