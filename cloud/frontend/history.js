@@ -3,7 +3,7 @@ $(document).ready(function () {
     const PAGE_SIZE = 10;
     let currentPage = 1;
 
-    // Initial Load: Load devices first, then measurements
+    // Initial Load
     loadDeviceList();
 
     function loadDeviceList() {
@@ -21,7 +21,7 @@ $(document).ready(function () {
                 data.forEach(dev => {
                     deviceSelect.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
                 });
-                // Trigger first data load after devices are populated
+                // Initial data load
                 loadMeasurements();
             },
             error: (err) => console.error("Device load error:", err)
@@ -34,16 +34,15 @@ $(document).ready(function () {
         const deviceId = $('#filter-device').val();
         const fromDate = $('#filter-from').val();
         const toDate = $('#filter-to').val();
-        const selectedParam = $('#filter-parameter').val(); // Get the parameter here
+        const selectedParam = $('#filter-parameter').val();
 
+        // Use standard query params matching your backend route
         let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
         
-        if (deviceId) url += `&device_id=${encodeURIComponent(deviceId)}`;
+        if (deviceId && deviceId !== "null") url += `&device_id=${encodeURIComponent(deviceId)}`;
         if (fromDate) url += `&from=${encodeURIComponent(fromDate)}`;
         if (toDate) url += `&to=${encodeURIComponent(toDate)}`;
-
-        // ADD THIS LINE: Pass the parameter to the server
-        if (selectedParam) url += `&parameter=${encodeURIComponent(selectedParam)}`;    
+        if (selectedParam && selectedParam !== "null") url += `&parameter=${encodeURIComponent(selectedParam)}`;    
 
         $.ajax({
             url: url,
@@ -53,8 +52,7 @@ $(document).ready(function () {
                 'Content-Type': 'application/json'
             },
             success: function (response) {
-                console.log("Data received:", response);
-                const rows = response.measurements || (Array.isArray(response) ? response : []);
+                const rows = response.measurements || [];
                 const total = response.totalCount || 0;
 
                 renderTable(rows);
@@ -62,7 +60,9 @@ $(document).ready(function () {
                 // Update Pagination UI
                 $('.prev').prop('disabled', currentPage === 1);
                 $('.next').prop('disabled', (currentPage * PAGE_SIZE) >= total);
-                $('.page-info').text(`Page ${currentPage} of ${Math.ceil(total / PAGE_SIZE) || 1}`);
+                
+                const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+                $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
             },
             error: function (xhr) {
                 console.error("Load failed:", xhr.responseText);
@@ -75,19 +75,15 @@ $(document).ready(function () {
         const $tbody = $('.history-table tbody');
         $tbody.empty();
 
-        // Get the currently selected parameter from the dropdown
         const selectedParam = $('#filter-parameter').val();
 
-        if (!rows || rows.length === 0) {
-            $tbody.append('<tr><td colspan="6" style="text-align:center;">No data found.</td></tr>');
-            return;
-        }
-
+        // 1. Render actual data
         rows.forEach(row => {
             let params = [], values = [], statusHtml = [], limits = [];
 
             const check = (val, fullLabel, unit, type) => {
-                if (selectedParam && selectedParam !== type) return;
+                // If user filtered for a specific param (e.g. CO2), skip rendering others in this row
+                if (selectedParam && selectedParam !== "" && selectedParam !== "null" && selectedParam !== type) return;
 
                 if (val !== null && val !== undefined && val !== "") {
                     const numVal = parseFloat(val);
@@ -96,9 +92,7 @@ $(document).ready(function () {
                     params.push(fullLabel);
                     values.push(`${numVal.toFixed(1)}${unit}`);
 
-                    let statText = "Normal";
-                    let isNorm = true;
-                    let limText = "";
+                    let statText = "Normal", isNorm = true, limText = "";
 
                     if (type === 'co2') {
                         isNorm = numVal >= 400 && numVal <= 1000;
@@ -119,33 +113,46 @@ $(document).ready(function () {
                         limText = "1013 hPa";
                     }
 
-                    statusHtml.push(`<span class="${isNorm ? 'normal-text' : 'warning'}" style="color: ${isNorm ? '#248b28' : 'red'}; font-weight: ${isNorm ? 'normal' : 'bold'};">${statText}</span>`);
+                    statusHtml.push(`<span style="color: ${isNorm ? '#248b28' : 'red'}; font-weight: ${isNorm ? 'normal' : 'bold'};">${statText}</span>`);
                     limits.push(limText);
                 }
             };
 
-            // Column Mapping
             check(row.co2, "CO2 Concentration", " ppm", 'co2');
             check(row.temperature, "Temperature", " °C", 'temperature');
             check(row.humidity, "Humidity", " %", 'humidity');
             check(row.pressure, "Barometric Pressure", " hPa", 'pressure');
 
-            if (params.length > 0) {
-                const timestamp = row.created_at ? new Date(row.created_at).toLocaleString() : '---';
-                const deviceName = row.device_name || row.device_id || 'Unknown';
+            const timestamp = row.created_at ? new Date(row.created_at).toLocaleString() : '---';
+            const deviceName = row.device_name || row.device_id || 'Unknown';
 
-                $tbody.append(`
-                    <tr>
-                        <td>${timestamp}</td>
-                        <td><strong>${deviceName}</strong></td>
-                        <td>${params.join('<br>')}</td>
-                        <td>${values.join('<br>')}</td>
-                        <td>${statusHtml.join('<br>')}</td>
-                        <td class="limit-cell">${limits.join('<br>')}</td>
-                    </tr>
-                `);
-            }
+            // We always append a row for every result from the server
+            $tbody.append(`
+                <tr>
+                    <td>${timestamp}</td>
+                    <td><strong>${deviceName}</strong></td>
+                    <td>${params.join('<br>') || '---'}</td>
+                    <td>${values.join('<br>') || '---'}</td>
+                    <td>${statusHtml.join('<br>') || '---'}</td>
+                    <td class="limit-cell">${limits.join('<br>') || '---'}</td>
+                </tr>
+            `);
         });
+
+        // 2. FILLER: Always ensure 10 rows are present for layout consistency
+        const emptyRowsNeeded = PAGE_SIZE - rows.length;
+        for (let i = 0; i < emptyRowsNeeded; i++) {
+            $tbody.append(`
+                <tr class="empty-row">
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+            `);
+        }
     }
 
     /* Event Listeners */
@@ -165,7 +172,6 @@ $(document).ready(function () {
     });
 
     $(document).on('click', '#update-values', function () {
-        console.log("Update button clicked");
         currentPage = 1;
         loadMeasurements();
     });
