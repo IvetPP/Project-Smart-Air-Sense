@@ -21,7 +21,6 @@ $(document).ready(function () {
                 data.forEach(dev => {
                     deviceSelect.append(`<option value="${dev.device_id}">${dev.device_name || dev.device_id}</option>`);
                 });
-                // Initial data load
                 loadMeasurements();
             },
             error: (err) => console.error("Device load error:", err)
@@ -36,7 +35,6 @@ $(document).ready(function () {
         const toDate = $('#filter-to').val();
         const selectedParam = $('#filter-parameter').val();
 
-        // Use standard query params matching your backend route
         let url = `${API_BASE_URL}/measurements?limit=${PAGE_SIZE}&offset=${offset}`;
         
         if (deviceId && deviceId !== "null") url += `&device_id=${encodeURIComponent(deviceId)}`;
@@ -62,7 +60,10 @@ $(document).ready(function () {
                 $('.next').prop('disabled', (currentPage * PAGE_SIZE) >= total);
                 
                 const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
-                $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
+                
+                // Enhanced pagination info: "Showing X of Y (Page 1 of Z)"
+                const showingCount = rows.length;
+                $('.page-info').text(`Showing ${showingCount} of ${total} records (Page ${currentPage} of ${totalPages})`);
             },
             error: function (xhr) {
                 console.error("Load failed:", xhr.responseText);
@@ -77,12 +78,15 @@ $(document).ready(function () {
 
         const selectedParam = $('#filter-parameter').val();
 
-        // 1. Render actual data
+        if (!rows || rows.length === 0) {
+            $tbody.append('<tr><td colspan="6" style="text-align:center; padding: 30px;">No measurements found.</td></tr>');
+            return;
+        }
+
         rows.forEach(row => {
             let params = [], values = [], statusHtml = [], limits = [];
 
             const check = (val, fullLabel, unit, type) => {
-                // If user filtered for a specific param (e.g. CO2), skip rendering others in this row
                 if (selectedParam && selectedParam !== "" && selectedParam !== "null" && selectedParam !== type) return;
 
                 if (val !== null && val !== undefined && val !== "") {
@@ -113,7 +117,7 @@ $(document).ready(function () {
                         limText = "1013 hPa";
                     }
 
-                    statusHtml.push(`<span style="color: ${isNorm ? '#248b28' : 'red'}; font-weight: ${isNorm ? 'normal' : 'bold'};">${statText}</span>`);
+                    statusHtml.push(`<span style="color: ${isNorm ? '#248b28' : 'red'}; font-weight: ${isNorm ? 'bold' : 'normal'};">${statText}</span>`);
                     limits.push(limText);
                 }
             };
@@ -126,7 +130,7 @@ $(document).ready(function () {
             const timestamp = row.created_at ? new Date(row.created_at).toLocaleString() : '---';
             const deviceName = row.device_name || row.device_id || 'Unknown';
 
-            // We always append a row for every result from the server
+            // Every result returned from server gets exactly one row
             $tbody.append(`
                 <tr>
                     <td>${timestamp}</td>
@@ -138,21 +142,8 @@ $(document).ready(function () {
                 </tr>
             `);
         });
-
-        // 2. FILLER: Always ensure 10 rows are present for layout consistency
-        const emptyRowsNeeded = PAGE_SIZE - rows.length;
-        for (let i = 0; i < emptyRowsNeeded; i++) {
-            $tbody.append(`
-                <tr class="empty-row">
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-            `);
-        }
+        
+        // NO FILLER LOOP HERE: Table will naturally shrink if rows.length < 10
     }
 
     /* Event Listeners */
