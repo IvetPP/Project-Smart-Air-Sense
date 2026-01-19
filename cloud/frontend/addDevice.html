@@ -10,9 +10,10 @@
 </head>
 <body>
     <div class="container">
+
         <div class="top-bar">
             <div class="top-left">
-                <img src="./logo.jpg" class="logo">
+                <img src="./logo.jpg" class="logo" alt="Logo">
                 <button class="back">&lt;</button>
                 <h1 class="page-title">Add Device</h1>
             </div>
@@ -21,23 +22,45 @@
 
         <div class="form-container">
             <form id="add-device-form">
+                
                 <div class="form-group">
-                    <input type="text" id="device-name" name="device-name" placeholder="Device name" required>
+                    <span class="field-label">Device ID</span>
+                    <input type="text" id="device-id" name="device-id" placeholder="ID (automatically)" readonly>
                 </div>
 
                 <div class="form-group">
-                    <input type="text" id="device-location" name="device-location" placeholder="Device location" required>
+                    <span class="field-label">Device type</span>
+                    <input type="text" id="device-type" name="device-type" placeholder="e.g. CO2 Monitor" required>
                 </div>
 
                 <div class="form-group">
-                    <input type="date" id="device-date" name="device-date" placeholder="Date of registration" required>
+                    <span class="field-label">Device name</span>
+                    <input type="text" id="device-name" name="device-name" placeholder="e.g. Office 1" required>
+                </div>
+
+                <div class="form-group">
+                    <span class="field-label">Device location</span>
+                    <input type="text" id="device-location" name="device-location" placeholder="e.g. Room 202" required>
+                </div>
+
+                <div class="form-group">
+                    <span class="field-label">User</span>
+                    <input type="text" id="device-user" name="device-user" placeholder="Assigned User" required>
+                </div>
+
+                <div class="form-group">
+                    <span class="field-label">Registration date</span>
+                    <input type="date" id="device-date" name="device-date" required>
                 </div>
 
                 <div class="form-buttons">
+                    <button type="button" class="delete-btn">Clear</button>
                     <button type="submit" class="save-btn">Save</button>
                 </div>
+
             </form>
         </div>
+
     </div>
     <script type="module" src="addDevice.js"></script>
 </body>

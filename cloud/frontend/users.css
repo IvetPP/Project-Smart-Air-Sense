@@ -34,8 +34,10 @@
     border-radius: 25px;
     background-color: #fff;
     color: #9400D3;
-    text-align: left;
-    padding: 10px 0px 10px 10px;
+    text-align: center; 
+    padding: 10px 20px; 
+    cursor: pointer;
+    width: 100%;
 }
 
 .user {

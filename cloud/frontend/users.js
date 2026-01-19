@@ -15,6 +15,8 @@ $(document).ready(function () {
 
     $('.user').text("LOG OUT");
 
+    $('.back').on('click', () => window.location.href = 'index.html');
+
     function loadDevices() {
         return $.ajax({
             url: `${API_URL}/devices`, 
