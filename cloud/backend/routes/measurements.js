@@ -4,22 +4,43 @@ const supabase = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
 /* ============================================================
+   HELPER: Check Device Permission
+   ============================================================ */
+async function hasDevicePermission(userId, deviceId, roles) {
+    if (roles.includes('admin')) return true;
+    
+    const { data, error } = await supabase
+        .from('device_users')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('device_id', deviceId)
+        .maybeSingle(); // Returns null if not found instead of throwing error
+    
+    return !!data; // returns true if mapping exists
+}
+
+/* ============================================================
    GET /api/measurements/
-   Updated to handle server-side parameter filtering and pagination
    ============================================================ */
 router.get('/', authMiddleware, async (req, res) => {
     try {
-        // 1. Destructure all possible query parameters
-        const { 
-            limit = 10, 
-            offset = 0, 
-            device_id, 
-            from, 
-            to, 
-            parameter // Added parameter filter
-        } = req.query;
+        const { limit = 10, offset = 0, device_id, from, to, parameter } = req.query;
+        const userId = req.user.user_id;
+        const userRoles = req.user.roles || [];
 
-        // 2. Prepare base query with 'exact' count for pagination
+        // 1. SECURITY CHECK: If device_id is provided, verify ownership
+        if (device_id && device_id.trim() !== "" && device_id !== "null") {
+            const allowed = await hasDevicePermission(userId, device_id.trim(), userRoles);
+            if (!allowed) {
+                return res.status(403).json({ error: 'Access denied to this device data' });
+            }
+        } else if (!userRoles.includes('admin')) {
+            // If no device_id specified and not admin, user shouldn't be allowed to 
+            // query "all" measurements globally.
+            return res.status(400).json({ error: 'device_id is required' });
+        }
+
+        // 2. Prepare base query
         let query = supabase
             .from('iot_data') 
             .select(`
@@ -28,17 +49,9 @@ router.get('/', authMiddleware, async (req, res) => {
             `, { count: 'exact' });
 
         // 3. Apply Filters
-        // Device ID Filter
-        if (device_id && device_id.trim() !== "" && device_id !== "null") {
-            query = query.eq('device_id', device_id.trim());
-        }
-
-        // Date Range Filters
+        if (device_id) query = query.eq('device_id', device_id.trim());
         if (from) query = query.gte('created_at', from);
         if (to) query = query.lte('created_at', to);
-
-        // Parameter Filter (The fix for your pagination issue)
-        // If a parameter is selected, only return rows where that specific column is NOT NULL
         if (parameter && parameter.trim() !== "" && parameter !== "null") {
             query = query.not(parameter, 'is', null);
         }
@@ -51,18 +64,11 @@ router.get('/', authMiddleware, async (req, res) => {
             .order('created_at', { ascending: false })
             .range(start, end);
 
-        // 5. Fallback: If join fails, fetch raw iot_data without the device name
+        // 5. Fallback for Relationship issues
         if (error && error.message.includes("relationship")) {
-            console.warn("Relationship missing, falling back to raw data...");
-            
-            let fallbackQuery = supabase
-                .from('iot_data')
-                .select('*', { count: 'exact' });
-
-            // Re-apply parameter filter to fallback query
-            if (parameter && parameter.trim() !== "" && parameter !== "null") {
-                fallbackQuery = fallbackQuery.not(parameter, 'is', null);
-            }
+            let fallbackQuery = supabase.from('iot_data').select('*', { count: 'exact' });
+            if (device_id) fallbackQuery = fallbackQuery.eq('device_id', device_id.trim());
+            if (parameter) fallbackQuery = fallbackQuery.not(parameter, 'is', null);
 
             const fallback = await fallbackQuery
                 .order('created_at', { ascending: false })
@@ -75,16 +81,12 @@ router.get('/', authMiddleware, async (req, res) => {
 
         if (error) throw error;
 
-        // 6. Format for UI
         const formatted = (data || []).map(m => ({
             ...m,
             device_name: m.devices?.device_name || m.device_id || 'Unknown Device'
         }));
 
-        res.json({
-            measurements: formatted,
-            totalCount: count || 0
-        });
+        res.json({ measurements: formatted, totalCount: count || 0 });
     } catch (err) {
         console.error('History Route Error:', err.message);
         res.status(500).json({ error: err.message });
@@ -97,18 +99,25 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/latest', authMiddleware, async (req, res) => {
     try {
         const { device_id } = req.query;
+        const userId = req.user.user_id;
+        const userRoles = req.user.roles || [];
 
-        let query = supabase
-            .from('iot_data')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-        if (device_id && device_id.trim() !== "" && device_id !== "null") {
-            query = query.eq('device_id', device_id.trim());
+        if (!device_id || device_id === "null") {
+            return res.status(400).json({ error: 'device_id is required' });
         }
 
-        const { data, error } = await query;
+        // SECURITY CHECK
+        const allowed = await hasDevicePermission(userId, device_id.trim(), userRoles);
+        if (!allowed) {
+            return res.status(403).json({ error: 'Access denied to this device' });
+        }
+
+        const { data, error } = await supabase
+            .from('iot_data')
+            .select('*')
+            .eq('device_id', device_id.trim())
+            .order('created_at', { ascending: false })
+            .limit(1);
 
         if (error) throw error;
         res.json(data || []);
