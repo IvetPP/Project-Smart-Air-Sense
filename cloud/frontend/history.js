@@ -61,9 +61,8 @@ $(document).ready(function () {
                 
                 const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
                 
-                // Enhanced pagination info: "Showing X of Y (Page 1 of Z)"
-                const showingCount = rows.length;
-                $('.page-info').text(`Showing ${showingCount} of ${total} records (Page ${currentPage} of ${totalPages})`);
+                // Clean Page Indicator
+                $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
             },
             error: function (xhr) {
                 console.error("Load failed:", xhr.responseText);
@@ -130,7 +129,6 @@ $(document).ready(function () {
             const timestamp = row.created_at ? new Date(row.created_at).toLocaleString() : '---';
             const deviceName = row.device_name || row.device_id || 'Unknown';
 
-            // Every result returned from server gets exactly one row
             $tbody.append(`
                 <tr>
                     <td>${timestamp}</td>
@@ -142,8 +140,6 @@ $(document).ready(function () {
                 </tr>
             `);
         });
-        
-        // NO FILLER LOOP HERE: Table will naturally shrink if rows.length < 10
     }
 
     /* Event Listeners */
