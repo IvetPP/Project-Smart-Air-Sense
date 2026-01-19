@@ -6,33 +6,36 @@ const { v4: uuidv4 } = require('uuid');
 
 /**
  * GET /api/devices
- * Returns all devices if ADMIN, or only assigned devices if regular USER.
+ * Returns filtered list based on user ownership or admin status.
  */
 router.get('/', authMiddleware, async (req, res) => {
     try {
-        const userId = req.user.user_id; // Check if your JWT uses 'id' or 'user_id'
-        const isAdmin = req.user.roles.includes('admin');
+        // 1. Extract the ID from the 'sub' field (from your auth.js login)
+        const userId = parseInt(req.user.sub, 10);
+        const isAdmin = req.user.roles && req.user.roles.includes('admin');
+
+        if (isNaN(userId) && !isAdmin) {
+            return res.status(401).json({ error: "Invalid User ID in token" });
+        }
 
         let query = supabase
             .from('devices')
             .select('device_id, device_name, location, device_type, registration_date');
 
-        // If NOT an admin, filter by the device_users mapping table
+        // 2. Apply filtering for regular users
         if (!isAdmin) {
-            // 1. Get the list of device IDs assigned to this specific user
             const { data: userMappings, error: mapError } = await supabase
                 .from('device_users')
                 .select('device_id')
-                .eq('user_id', userId);
+                .eq('user_id', userId); // userId is now a guaranteed integer
 
             if (mapError) throw mapError;
 
-            // If the user has no devices assigned, return an empty array early
+            // If user has no devices, stop here and return empty list
             if (!userMappings || userMappings.length === 0) {
                 return res.json([]);
             }
 
-            // 2. Filter the main devices query to only include those IDs
             const allowedIds = userMappings.map(m => m.device_id);
             query = query.in('device_id', allowedIds);
         }
@@ -49,22 +52,20 @@ router.get('/', authMiddleware, async (req, res) => {
 
 /**
  * GET /api/devices/:device_id
- * Security check: ensures user has permission to view this specific device.
  */
 router.get('/:device_id', authMiddleware, async (req, res) => {
     try {
         const { device_id } = req.params;
-        const userId = req.user.user_id;
-        const isAdmin = req.user.roles.includes('admin');
+        const userId = parseInt(req.user.sub, 10);
+        const isAdmin = req.user.roles && req.user.roles.includes('admin');
 
-        // Security Check for non-admins
         if (!isAdmin) {
             const { data: permission } = await supabase
                 .from('device_users')
                 .select('id')
                 .eq('user_id', userId)
                 .eq('device_id', device_id)
-                .single();
+                .maybeSingle();
 
             if (!permission) {
                 return res.status(403).json({ error: 'Access denied to this device' });
@@ -84,10 +85,14 @@ router.get('/:device_id', authMiddleware, async (req, res) => {
     }
 });
 
-// POST new device (usually kept for admins or specific setups)
+/**
+ * POST /api/devices
+ */
 router.post('/', authMiddleware, async (req, res) => {
     try {
         const { device_name, device_type, location, registration_date } = req.body;
+        const userId = parseInt(req.user.sub, 10);
+        
         const shortUuid = uuidv4().substring(0, 8);
         const formattedType = (device_type || 'sensor').toLowerCase().replace(/\s+/g, '-');
         const newDeviceId = `${formattedType}:${shortUuid}`;
@@ -105,9 +110,9 @@ router.post('/', authMiddleware, async (req, res) => {
 
         if (error) throw error;
 
-        // OPTIONAL: If a regular user creates a device, automatically assign it to them
+        // Automatically assign device to creator if not admin
         if (!req.user.roles.includes('admin')) {
-            await supabase.from('device_users').insert([{ user_id: req.user.user_id, device_id: newDeviceId }]);
+            await supabase.from('device_users').insert([{ user_id: userId, device_id: newDeviceId }]);
         }
 
         res.status(201).json(data);
@@ -116,13 +121,20 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 });
 
-// PUT update device
+/**
+ * PUT /api/devices/:device_id
+ */
 router.put('/:device_id', authMiddleware, async (req, res) => {
     try {
         const { device_name, location, device_type, registration_date } = req.body;
-        
-        // Safety: Only update if admin OR user owns the device
-        // (Implementation similar to GET /:device_id security check)
+        const userId = parseInt(req.user.sub, 10);
+        const isAdmin = req.user.roles.includes('admin');
+
+        // Verification check before update
+        if (!isAdmin) {
+            const { data } = await supabase.from('device_users').select('id').eq('user_id', userId).eq('device_id', req.params.device_id).maybeSingle();
+            if (!data) return res.status(403).json({ error: 'Not authorized' });
+        }
 
         const { error } = await supabase
             .from('devices')
@@ -136,7 +148,9 @@ router.put('/:device_id', authMiddleware, async (req, res) => {
     }
 });
 
-// DELETE device
+/**
+ * DELETE /api/devices/:device_id
+ */
 router.delete('/:device_id', authMiddleware, async (req, res) => {
     try {
         const { error } = await supabase.from('devices').delete().eq('device_id', req.params.device_id);
