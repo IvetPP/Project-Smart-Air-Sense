@@ -45,6 +45,7 @@ router.post('/ingest', async (req, res) => {
         co2: data.co2,
         temperature: data.temperature,
         humidity: data.humidity,
+        pressure: data.pressure,
         created_at: new Date().toISOString(),
       });
 
