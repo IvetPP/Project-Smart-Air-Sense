@@ -7,9 +7,14 @@ $(document).ready(function () {
         return; 
     }
 
-    // Set Default Date to Today
-    const today = new Date().toISOString().split('T')[0];
-    $('#device-date').val(today);
+    // Function to set date to today
+    const setTodayDate = () => {
+        const today = new Date().toISOString().split('T')[0];
+        $('#device-date').val(today);
+    };
+
+    // Set Default Date on Load
+    setTodayDate();
 
     // Dynamic Username logic
     try {
@@ -19,13 +24,21 @@ $(document).ready(function () {
         console.error("Token parsing failed"); 
     }
 
+    // --- NEW: Clear Button Logic ---
+    $('.clear-btn').on('click', function () {
+        if (confirm('Are you sure you want to clear all fields?')) {
+            $('#add-device-form')[0].reset(); // Resets all standard inputs
+            setTodayDate(); // Restore the default date
+        }
+    });
+
+    // Form Submission Logic
     $('#add-device-form').on('submit', function (e) {
         e.preventDefault();
 
-        // COLLECT DATA: Ensure #device-type matches the ID in your HTML
         const deviceData = {
             device_name: $('#device-name').val().trim(),
-            device_type: $('#device-type').val(), // Added this line to fix your issue
+            device_type: $('#device-type').val(), 
             location: $('#device-location').val().trim(),
             registration_date: $('#device-date').val()
         };
@@ -49,6 +62,7 @@ $(document).ready(function () {
         });
     });
 
+    // Navigation and Logout
     $('.back').on('click', () => window.location.href = 'index.html');
     
     $('.user').on('click', () => { 
