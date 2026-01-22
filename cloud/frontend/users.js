@@ -13,9 +13,18 @@ $(document).ready(function () {
         return; 
     }
 
+    // UI Initializations
     $('.user').text("LOG OUT");
 
+    // --- NAVIGATION CONTROLS ---
+    
+    // Back button (<)
     $('.back').on('click', () => window.location.href = 'index.html');
+
+    // "Current values" button (returns to dashboard)
+    $('.home').on('click', () => window.location.href = 'index.html');
+
+    // --- DATA LOADING ---
 
     function loadDevices() {
         return $.ajax({
@@ -41,6 +50,8 @@ $(document).ready(function () {
         });
     }
 
+    // --- TABLE RENDERING ---
+
     function renderTable() {
         const tbody = $(".history-table tbody");
         tbody.empty();
@@ -63,7 +74,6 @@ $(document).ready(function () {
 
                 let optionsHtml = allDevices.map(dev => {
                     const devIdStr = dev.device_id.toString();
-                    // Explicitly check if THIS user has THIS device
                     const isSelected = assignedIds.includes(devIdStr) ? 'selected' : '';
                     return `<option value="${devIdStr}" ${isSelected}>${dev.device_name || dev.device_id}</option>`;
                 }).join('');
@@ -95,6 +105,9 @@ $(document).ready(function () {
         updatePaginationUI();
     }
 
+    // --- EVENT HANDLERS ---
+
+    // Sync devices when selection changes
     $(document).on('change', '.device-mapper', function () {
         const userId = $(this).data('user-id');
         const selectedIds = $(this).val();
@@ -113,6 +126,7 @@ $(document).ready(function () {
         });
     });
 
+    // Pagination logic
     function updatePaginationUI() {
         const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE) || 1;
         $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
@@ -120,13 +134,21 @@ $(document).ready(function () {
         $('.next').prop('disabled', currentPage >= totalPages);
     }
 
+    $('.next').on('click', function() { currentPage++; renderTable(); });
+    $('.prev').on('click', function() { currentPage--; renderTable(); });
+
+    // Search functionality
     $('#user-search').on('keyup', function() {
         const term = $(this).val().toLowerCase().trim();
         filteredUsers = allUsers.filter(u => {
             const nameMatch = (u.full_name || "").toLowerCase().includes(term);
             const emailMatch = (u.email || "").toLowerCase().includes(term);
+            
+            // Safety check: ensure assigned_device_ids exists before using .includes
+            const userDeviceIds = Array.isArray(u.assigned_device_ids) ? u.assigned_device_ids : [];
+            
             const deviceMatch = allDevices.some(dev => 
-                u.assigned_device_ids.includes(dev.device_id) && 
+                userDeviceIds.includes(dev.device_id) && 
                 (dev.device_name || "").toLowerCase().includes(term)
             );
             return nameMatch || emailMatch || deviceMatch;
@@ -135,20 +157,21 @@ $(document).ready(function () {
         renderTable();
     });
 
+    // Edit User redirect
     $(document).on("click", ".edit-btn", function () {
         const id = $(this).attr("data-id");
         window.location.href = `editUser.html?id=${encodeURIComponent(id)}`;
     });
 
-    $('.next').on('click', function() { currentPage++; renderTable(); });
-    $('.prev').on('click', function() { currentPage--; renderTable(); });
-
+    // Logout logic
     $('.user').on('click', function() {
         if(confirm('Log out?')) {
             localStorage.clear();
+            sessionStorage.clear();
             window.location.href = 'login.html';
         }
     });
 
+    // --- INITIALIZE ---
     loadDevices().then(loadUsers);
 });

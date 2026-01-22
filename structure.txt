@@ -1,0 +1,110 @@
+Listado de rutas de carpetas para el volumen Windows-SSD
+El número de serie del volumen es DABD-66F0
+C:.
+-   iot_flow.json
+-   README.md
+-   structure.txt
+-   
+L¦¦¦cloud
+    +¦¦¦backend
+    -   -   .env
+    -   -   .gitignore
+    -   -   api_design.md
+    -   -   createAdmin.js
+    -   -   db.js
+    -   -   package-lock.json
+    -   -   package.json
+    -   -   server.js
+    -   -   
+    -   +¦¦¦database
+    -   -       data.db
+    -   -       database.db
+    -   -       schema.sql
+    -   -       
+    -   +¦¦¦db
+    -   -       alerts.js
+    -   -       connection.js
+    -   -       devices.js
+    -   -       measurements.js
+    -   -       treshholds.js
+    -   -       users.js
+    -   -       
+    -   +¦¦¦gateway
+    -   -       README.md
+    -   -       
+    -   +¦¦¦lib
+    -   -       supabase.js
+    -   -       
+    -   +¦¦¦middleware
+    -   -       auth.js
+    -   -       telemetryAuth.js
+    -   -       validation.js
+    -   -       
+    -   +¦¦¦node_modules
+    -   -   L¦¦¦dotenv
+    -   -       -   CHANGELOG.md
+    -   -       -   config.d.ts
+    -   -       -   config.js
+    -   -       -   LICENSE
+    -   -       -   package.json
+    -   -       -   README-es.md
+    -   -       -   README.md
+    -   -       -   SECURITY.md
+    -   -       -   
+    -   -       L¦¦¦lib
+    -   -               cli-options.js
+    -   -               env-options.js
+    -   -               main.d.ts
+    -   -               main.js
+    -   -               
+    -   +¦¦¦routes
+    -   -       alerts.js
+    -   -       auth.js
+    -   -       device-users.js
+    -   -       devices.js
+    -   -       iot.js
+    -   -       measurements.js
+    -   -       thresholds.js
+    -   -       user.js
+    -   -       
+    -   L¦¦¦scripts
+    -           generateTestData.js
+    -           initDb.js
+    -           
+    L¦¦¦frontend
+        -   .env
+        -   .gitignore
+        -   addDevice.css
+        -   addDevice.html
+        -   addDevice.js
+        -   dashboard.css
+        -   dashboard.js
+        -   deviceSwitcher.js
+        -   editDevice.css
+        -   editDevice.html
+        -   editDevice.js
+        -   editUser.css
+        -   editUser.html
+        -   editUser.js
+        -   eslint.config.js
+        -   history.css
+        -   history.html
+        -   history.js
+        -   index.html
+        -   login.css
+        -   login.html
+        -   login.js
+        -   logo.jpg
+        -   package-lock.json
+        -   package.json
+        -   README.md
+        -   style.css
+        -   users.css
+        -   users.html
+        -   users.js
+        -   vite.config.js
+        -   
+        L¦¦¦src
+            L¦¦¦lib
+                    supabase.js
+                    
