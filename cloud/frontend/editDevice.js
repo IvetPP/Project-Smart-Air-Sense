@@ -1,20 +1,35 @@
 $(document).ready(function () {
+    // 1. Configuration & Setup
     const API_URL = window.location.origin + '/api';
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     const params = new URLSearchParams(window.location.search);
     const deviceId = params.get('id');
 
-    // Redirect if no ID is present in the URL
+    // 2. Navigation Logic (Back and Cancel)
+    // This is placed at the top so navigation works even if API calls fail
+    $('.back, .cancel-btn').on('click', function(e) {
+        e.preventDefault();
+        window.location.href = 'index.html';
+    });
+
+    // Logout logic
+    $('.user').on('click', function() {
+        localStorage.removeItem('auth_token');
+        sessionStorage.removeItem('auth_token');
+        window.location.href = 'login.html';
+    });
+
+    // 3. Validation
     if (!deviceId) { 
         alert('No Device ID found in URL.');
         window.location.href = 'index.html'; 
         return; 
     }
 
-    // Set the ID field immediately
+    // Set the ID field visually immediately
     $('#device-id').val(deviceId);
 
-    // 1. Fetch current data
+    // 4. Fetch Current Device Data
     $.ajax({
         url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
         method: 'GET',
@@ -23,20 +38,10 @@ $(document).ready(function () {
             'Accept': 'application/json'
         },
         success: function(dev) {
-            // Populate fields based on your API response structure
+            // Mapping API response to HTML input IDs
             $('#device-name').val(dev.device_name || '');
             $('#device-type').val(dev.device_type || '');
             $('#device-location').val(dev.location || '');
-            $('#device-user').val(dev.user || 'Admin'); // Fallback if user field exists
-            
-            // Handle Date: Format must be YYYY-MM-DD for <input type="date">
-            if (dev.date) {
-                const dateVal = new Date(dev.date).toISOString().split('T')[0];
-                $('#device-date').val(dateVal);
-            } else {
-                // Fallback to today's date if empty
-                $('#device-date').val(new Date().toISOString().split('T')[0]);
-            }
         },
         error: function(xhr) {
             console.error("Fetch Error:", xhr);
@@ -45,15 +50,14 @@ $(document).ready(function () {
         }
     });
 
-    // 2. Update Device Logic
+    // 5. Save/Update Logic
     $('#edit-device-form').on('submit', function (e) {
         e.preventDefault();
         
         const payload = {
             device_name: $('#device-name').val().trim(),
             location: $('#device-location').val().trim(),
-            device_type: $('#device-type').val().trim(),
-            // add other fields if your API expects them
+            device_type: $('#device-type').val().trim()
         };
 
         $.ajax({
@@ -69,36 +73,32 @@ $(document).ready(function () {
                 window.location.href = 'index.html';
             },
             error: (xhr) => {
-                alert('Update Error: ' + (xhr.responseJSON?.error || 'Server error'));
+                const msg = xhr.responseJSON?.error || 'Server error';
+                alert('Update Error: ' + msg);
             }
         });
     });
 
-    // 3. Delete Device Logic
-    $('.delete-btn').on('click', function() {
+    // 6. Delete Logic
+    $('.delete-btn').on('click', function(e) {
+        e.preventDefault();
+        
         if(confirm('Are you sure you want to delete this device?')) {
             $.ajax({
                 url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
                 method: 'DELETE',
-                headers: { Authorization: 'Bearer ' + token },
+                headers: { 
+                    'Authorization': 'Bearer ' + token 
+                },
                 success: () => {
-                    alert('Device deleted.');
+                    alert('Device deleted successfully.');
                     window.location.href = 'index.html';
                 },
                 error: (xhr) => {
-                    alert('Delete Error: ' + (xhr.responseJSON?.error || 'Could not delete device'));
+                    const msg = xhr.responseJSON?.error || 'Could not delete device';
+                    alert('Delete Error: ' + msg);
                 }
             });
         }
-    });
-
-    // Navigation back to dashboard
-    $('.back, .cancel-btn').on('click', () => window.location.href = 'index.html');
-    
-    // Logout logic (optional)
-    $('.user').on('click', function() {
-        localStorage.removeItem('auth_token');
-        sessionStorage.removeItem('auth_token');
-        window.location.href = 'login.html';
     });
 });
