@@ -124,53 +124,64 @@ $(document).ready(function () {
 
                 // Pressure Logic
                 if (latest.press !== null) {
+                    // Standardize pressure to hPa if it comes in Pa (e.g., 101325 -> 1013)
                     const p = latest.press > 5000 ? Math.round(latest.press / 100) : Math.round(latest.press);
-                    const isStandard = (p === 1013);
-                    const pressText = p >= 1013 ? 'Higher' : 'Lower';
-                    updateBox('bar', p, isStandard, (isStandard ? 'Normal' : pressText));
-                }
-                // ... rest of your logic to display data
-            })
-            .catch(err => {
-                console.error("Error loading measurements:", err);
-                clearUI();
-                // DO NOT disable the button here.
-            });
-    }
+                    
+                    // Updated range logic: 950 to 1050 hPa
+                    const isNormal = (p >= 950 && p <= 1050);
 
-    // --- Event Listeners ---
+                    // Determine the label based on the range
+                    let pressLabel;
+                    if (isNormal) {
+                        pressLabel = 'Normal';
+                    } else {
+                        pressLabel = p < 950 ? 'Low' : 'High';
+                    }
 
-    $('#device-select').on('change', function() {
-        const id = $(this).val();
-        $('#current-device-name').text(id ? $(this).find('option:selected').text() : "Select a device");
-        loadLatestMeasurements(id);
+                    // Update the UI box
+                    updateBox('bar', p, isNormal, pressLabel);
+                    }
+                })
+
+                .catch(err => {
+                    console.error("Error loading measurements:", err);
+                    clearUI();
+                });
+            }
+
+        // --- Event Listeners ---
+
+        $('#device-select').on('change', function() {
+            const id = $(this).val();
+            $('#current-device-name').text(id ? $(this).find('option:selected').text() : "Select a device");
+            loadLatestMeasurements(id);
+        });
+
+        // Forced Click Handler: Works even if sensors are empty
+        $(".edit").on("click", function(e) {
+            e.preventDefault();
+            const id = $('#device-select').val();
+            if(id && id !== "" && id !== "null") {
+                window.location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
+            } else {
+                alert("Please select a device first");
+            }
+        });
+
+        $(".his-values").on("click", () => location.href = "history.html");
+        $(".add-device").on("click", () => location.href = "addDevice.html");
+        $(".man").on("click", () => location.href = "users.html");
+
+        $(".user.pers").on("click", () => {
+            if (confirm('Do you want to log out?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                location.href = 'login.html';
+            }
+        });
+
+        // Initialize
+        loadDeviceList();
+        clearUI();
+        $(".edit").prop('disabled', true).css("opacity", "0.5");
     });
-
-    // Forced Click Handler: Works even if sensors are empty
-    $(".edit").on("click", function(e) {
-        e.preventDefault();
-        const id = $('#device-select').val();
-        if(id && id !== "" && id !== "null") {
-            window.location.href = `editDevice.html?id=${encodeURIComponent(id)}`;
-        } else {
-            alert("Please select a device first");
-        }
-    });
-
-    $(".his-values").on("click", () => location.href = "history.html");
-    $(".add-device").on("click", () => location.href = "addDevice.html");
-    $(".man").on("click", () => location.href = "users.html");
-
-    $(".user.pers").on("click", () => {
-        if (confirm('Do you want to log out?')) {
-            localStorage.clear();
-            sessionStorage.clear();
-            location.href = 'login.html';
-        }
-    });
-
-    // Initialize
-    loadDeviceList();
-    clearUI();
-    $(".edit").prop('disabled', true).css("opacity", "0.5");
-});

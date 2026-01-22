@@ -6,21 +6,43 @@ $(document).ready(function () {
 
     // Redirect if no ID is present in the URL
     if (!deviceId) { 
+        alert('No Device ID found in URL.');
         window.location.href = 'index.html'; 
         return; 
     }
 
-    // 1. Fetch current data and populate remaining fields
+    // Set the ID field immediately
+    $('#device-id').val(deviceId);
+
+    // 1. Fetch current data
     $.ajax({
         url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
         method: 'GET',
-        headers: { Authorization: 'Bearer ' + token },
-        success: function(dev) {
-            $('#device-name').val(dev.device_name);
-            $('#device-type').val(dev.device_type);
-            $('#device-location').val(dev.location);
+        headers: { 
+            'Authorization': 'Bearer ' + token,
+            'Accept': 'application/json'
         },
-        error: () => alert('Could not fetch device details.')
+        success: function(dev) {
+            // Populate fields based on your API response structure
+            $('#device-name').val(dev.device_name || '');
+            $('#device-type').val(dev.device_type || '');
+            $('#device-location').val(dev.location || '');
+            $('#device-user').val(dev.user || 'Admin'); // Fallback if user field exists
+            
+            // Handle Date: Format must be YYYY-MM-DD for <input type="date">
+            if (dev.date) {
+                const dateVal = new Date(dev.date).toISOString().split('T')[0];
+                $('#device-date').val(dateVal);
+            } else {
+                // Fallback to today's date if empty
+                $('#device-date').val(new Date().toISOString().split('T')[0]);
+            }
+        },
+        error: function(xhr) {
+            console.error("Fetch Error:", xhr);
+            const msg = xhr.responseJSON?.error || xhr.statusText;
+            alert(`Could not fetch device details: ${xhr.status} (${msg})`);
+        }
     });
 
     // 2. Update Device Logic
@@ -30,7 +52,8 @@ $(document).ready(function () {
         const payload = {
             device_name: $('#device-name').val().trim(),
             location: $('#device-location').val().trim(),
-            device_type: $('#device-type').val().trim()
+            device_type: $('#device-type').val().trim(),
+            // add other fields if your API expects them
         };
 
         $.ajax({
@@ -45,7 +68,9 @@ $(document).ready(function () {
                 alert('Device updated successfully!');
                 window.location.href = 'index.html';
             },
-            error: (xhr) => alert('Error: ' + (xhr.responseJSON?.error || 'Server error'))
+            error: (xhr) => {
+                alert('Update Error: ' + (xhr.responseJSON?.error || 'Server error'));
+            }
         });
     });
 
@@ -60,11 +85,20 @@ $(document).ready(function () {
                     alert('Device deleted.');
                     window.location.href = 'index.html';
                 },
-                error: (xhr) => alert('Error: ' + (xhr.responseJSON?.error || 'Could not delete device'))
+                error: (xhr) => {
+                    alert('Delete Error: ' + (xhr.responseJSON?.error || 'Could not delete device'));
+                }
             });
         }
     });
 
     // Navigation back to dashboard
     $('.back, .cancel-btn').on('click', () => window.location.href = 'index.html');
+    
+    // Logout logic (optional)
+    $('.user').on('click', function() {
+        localStorage.removeItem('auth_token');
+        sessionStorage.removeItem('auth_token');
+        window.location.href = 'login.html';
+    });
 });
