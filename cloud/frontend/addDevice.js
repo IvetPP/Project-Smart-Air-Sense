@@ -22,8 +22,10 @@ $(document).ready(function () {
     $('#add-device-form').on('submit', function (e) {
         e.preventDefault();
 
+        // COLLECT DATA: Ensure #device-type matches the ID in your HTML
         const deviceData = {
             device_name: $('#device-name').val().trim(),
+            device_type: $('#device-type').val(), // Added this line to fix your issue
             location: $('#device-location').val().trim(),
             registration_date: $('#device-date').val()
         };
@@ -40,7 +42,10 @@ $(document).ready(function () {
                 alert('Device successfully added!');
                 window.location.href = 'index.html';
             },
-            error: (xhr) => alert(xhr.responseJSON?.error || 'Failed to add device')
+            error: (xhr) => {
+                console.error("Error details:", xhr.responseJSON);
+                alert(xhr.responseJSON?.error || 'Failed to add device');
+            }
         });
     });
 
@@ -49,6 +54,7 @@ $(document).ready(function () {
     $('.user').on('click', () => { 
         if(confirm('Do you want to log out?')) { 
             localStorage.clear(); 
+            sessionStorage.clear();
             window.location.href='login.html'; 
         }
     });
