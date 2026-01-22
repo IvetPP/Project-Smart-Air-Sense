@@ -1,18 +1,16 @@
 $(document).ready(function () {
-    console.log("Edit Device script initialized...");
+    console.log("Edit Device script initialized for Render...");
 
-    // 1. Configuration & Setup
-    // If you are running the frontend on a different port than the server (3000), 
-    // change window.location.origin to 'http://localhost:3000'
-    const API_URL = window.location.origin + '/api';
+    // 1. Configuration (Relative path for same-origin deployment)
+    const API_BASE = '/api/devices'; 
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     
     const params = new URLSearchParams(window.location.search);
     const deviceId = params.get('id');
 
-    // 2. Initial Validation
+    // 2. Initial Security & Validation Checks
     if (!token) {
-        console.error("No auth token found. Redirecting to login...");
+        console.warn("No auth token found. Redirecting to login...");
         window.location.href = 'login.html';
         return;
     }
@@ -23,27 +21,14 @@ $(document).ready(function () {
         return; 
     }
 
-    // Set the ID field visually
-    $('#device-id').val(deviceId);
+    // Set the ID field visually if it exists in your HTML
+    if ($('#device-id').length) {
+        $('#device-id').val(deviceId);
+    }
 
-    // 3. Navigation & Logout Logic
-    $('.back, .cancel-btn').on('click', function(e) {
-        e.preventDefault();
-        console.log("Navigation: Returning to index.html");
-        window.location.href = 'index.html';
-    });
-
-    $('.user').on('click', function() {
-        console.log("Logging out...");
-        localStorage.removeItem('auth_token');
-        sessionStorage.removeItem('auth_token');
-        window.location.href = 'login.html';
-    });
-
-    // 4. Fetch Current Device Data
-    // This populates the form fields so you know what you are editing
+    // 3. Fetch Current Device Data
     $.ajax({
-        url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
+        url: `${API_BASE}/${encodeURIComponent(deviceId)}`,
         method: 'GET',
         headers: { 
             'Authorization': 'Bearer ' + token,
@@ -51,31 +36,39 @@ $(document).ready(function () {
         },
         success: function(dev) {
             console.log("Device data loaded successfully:", dev);
-            // We use the column names from your payload logic
-            $('#device-name').val(dev.device_name || '');
-            $('#device-type').val(dev.device_type || '');
+            
+            // Using || to handle different potential naming conventions (camelCase vs snake_case)
+            $('#device-name').val(dev.device_name || dev.deviceName || '');
+            $('#device-type').val(dev.device_type || dev.deviceType || '');
             $('#device-location').val(dev.location || '');
         },
         error: function(xhr) {
             console.error("Fetch Error:", xhr);
             const msg = xhr.responseJSON?.error || 'Could not fetch device details.';
             alert(`Error ${xhr.status}: ${msg}`);
+            // If the device doesn't exist, go back
+            if (xhr.status === 404) window.location.href = 'index.html';
         }
     });
 
-    // 5. Save/Update Logic (The Submit Button)
+    // 4. Update Logic (The Submit Form)
     $('#edit-device-form').on('submit', function (e) {
         e.preventDefault();
-        console.log("Save button clicked. Preparing update...");
-
+        
         const payload = {
             device_name: $('#device-name').val().trim(),
             device_type: $('#device-type').val().trim(),
             location: $('#device-location').val().trim()
         };
 
+        // Basic validation
+        if (!payload.device_name || !payload.device_type) {
+            alert("Please fill in the required fields.");
+            return;
+        }
+
         $.ajax({
-            url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
+            url: `${API_BASE}/${encodeURIComponent(deviceId)}`,
             method: 'PUT',
             headers: { 
                 'Authorization': 'Bearer ' + token,
@@ -95,14 +88,13 @@ $(document).ready(function () {
         });
     });
 
-    // 6. Delete Logic
+    // 5. Delete Logic
     $('.delete-btn').on('click', function(e) {
         e.preventDefault();
         
         if (confirm('Are you sure you want to delete this device? This action cannot be undone.')) {
-            console.log("Deleting device:", deviceId);
             $.ajax({
-                url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
+                url: `${API_BASE}/${encodeURIComponent(deviceId)}`,
                 method: 'DELETE',
                 headers: { 
                     'Authorization': 'Bearer ' + token 
@@ -117,6 +109,21 @@ $(document).ready(function () {
                     alert('Delete Failed: ' + msg);
                 }
             });
+        }
+    });
+
+    // 6. Navigation Buttons
+    $('.back, .cancel-btn').on('click', function(e) {
+        e.preventDefault();
+        window.location.href = 'index.html';
+    });
+
+    // 7. Logout Logic (User Profile Click)
+    $('.user').on('click', function() {
+        if(confirm("Do you want to logout?")) {
+            localStorage.removeItem('auth_token');
+            sessionStorage.removeItem('auth_token');
+            window.location.href = 'login.html';
         }
     });
 });
