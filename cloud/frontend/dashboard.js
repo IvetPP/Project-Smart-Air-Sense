@@ -119,7 +119,7 @@ $(document).ready(function () {
                     if (p <1013) stateText  ="Lower";
                     else if (p> 1013) stateText = "Higher"
 
-                    updateBox('bar', p, True, stateText)
+                    updateBox('bar', p, true, stateText)
 
                     /*
                     // old code for when pressure had a warning
