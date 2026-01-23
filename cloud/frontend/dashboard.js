@@ -45,14 +45,19 @@ $(document).ready(function () {
 
     /**
      * Main UI Update Logic
+     * FIXED: Button state is now managed independently of data presence.
      */
+    // Inside dashboard.js -> loadLatestMeasurements(deviceId)
+
     function loadLatestMeasurements(deviceId = null) {
+        // 1. If NO device is selected in the dropdown
         if (!deviceId || deviceId === "" || deviceId === "null") { 
             clearUI(); 
             $(".edit").prop('disabled', true).css({"opacity": "0.5", "cursor": "not-allowed"});
-            return; 
+        return; 
         }
-
+        // 2. A device IS selected, so enable the button IMMEDIATELY
+        // This allows editing even if the device has 0 measurements
         $(".edit").prop('disabled', false).css({"opacity": "1", "cursor": "pointer"});
 
         fetch(`${API_URL}/measurements?limit=20&device_id=${encodeURIComponent(deviceId)}`, { headers: authHeaders })
@@ -69,7 +74,7 @@ $(document).ready(function () {
                     if (latest.press === null) latest.press = r.pressure;
                 }
 
-                // Status IoT & Time
+                // Status IoT & Time (Grey borders, split colors)
                 $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
                                .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
 
@@ -80,21 +85,29 @@ $(document).ready(function () {
                 /**
                  * Helper to update UI boxes
                  */
-                const updateBox = (selector, val, isNorm, stateText) => {
+                const updateBox = (selector, val, isNorm, stateText, isFirstSquare = false) => {
                     const stateColor = isNorm ? "black" : "red";
                     const borderColor = isNorm ? "#9400D3" : "red";
-                    const valueTextColor = "black";
+                    
+                    // CO2 (First Square) value text always stays black.
+                    const valueTextColor = "black" // isFirstSquare ? "black" : (isNorm ? "black" : "red");
 
+                    // 1. Set text colors
                     $(`.${selector}.value`).text(val).css("color", valueTextColor);
                     $(`.${selector}.state`).text(stateText).css("color", stateColor);
+                    
+                    // 2. Set border color of the parent box
                     $(`.${selector}`).closest('.box').css("border-color", borderColor);
+
+                    // 3. FIX: Set border color for the state indicator (the "Normal/Low" box)
+                    // This targets the specific element with the class '.state'
                     $(`.${selector}.state`).css("border-color", borderColor);
                 };
 
                 // CO2 Logic
                 if (latest.co2 !== null) {
                     const v = Math.round(latest.co2);
-                    updateBox('co2', v, (v >= 400 && v <= 1000), (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal'));
+                    updateBox('co2', v, (v >= 400 && v <= 1000), (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal'), true);
                 }
 
                 // Temp Logic
@@ -109,18 +122,19 @@ $(document).ready(function () {
                     updateBox('hum', v, (v >= 40 && v <= 60), (v < 40 ? 'Low' : v > 60 ? 'High' : 'Normal'));
                 }
 
-                // Pressure Logic (UPDATED RANGE: 950 - 1050 hPa)
+                // Pressure Logic
                 if (latest.press !== null) {
                     const p = latest.press > 5000 ? Math.round(latest.press / 100) : Math.round(latest.press);
-                    const isNormal = (p >= 950 && p <= 1050);
-                    let pressLabel = isNormal ? 'Normal' : (p < 950 ? 'Low' : 'High');
-                    
-                    updateBox('bar', p, isNormal, pressLabel);
+                    const isStandard = (p === 1013);
+                    const pressText = p >= 1013 ? 'Higher' : 'Lower';
+                    updateBox('bar', p, isStandard, (isStandard ? 'Normal' : pressText));
                 }
+                // ... rest of your logic to display data
             })
             .catch(err => {
                 console.error("Error loading measurements:", err);
                 clearUI();
+                // DO NOT disable the button here.
             });
     }
 
@@ -132,6 +146,7 @@ $(document).ready(function () {
         loadLatestMeasurements(id);
     });
 
+    // Forced Click Handler: Works even if sensors are empty
     $(".edit").on("click", function(e) {
         e.preventDefault();
         const id = $('#device-select').val();
