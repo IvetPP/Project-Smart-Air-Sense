@@ -60,6 +60,8 @@ $(document).ready(function () {
                 $('.next').prop('disabled', (currentPage * PAGE_SIZE) >= total);
                 
                 const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+                
+                // Clean Page Indicator
                 $('.page-info').text(`Page ${currentPage} of ${totalPages}`);
             },
             error: function (xhr) {
@@ -108,12 +110,24 @@ $(document).ready(function () {
                         statText = isNorm ? 'Normal' : (numVal < 40 ? 'Low' : 'High');
                         limText = "40 - 60 %";
                     } else if (type === 'pressure') {
-                        // Standardize pressure
                         const p = numVal > 5000 ? numVal / 100 : numVal;
-                        // UPDATED LOGIC: Range 950 - 1050
-                        isNorm = p >= 950 && p <= 1050;
-                        statText = isNorm ? 'Normal' : (p < 950 ? 'Low' : 'High');
-                        limText = "950 - 1050 hPa";
+
+                        const rounded = Math.round(0);
+
+                        if (rounded<1013) statText = "Lower";
+                        else if (rounded>1013) statText = "Higher";
+                        else statText = "Normal"
+                        
+                        isNorm = true;
+
+                        limText = "≈ 1013 hPa";
+
+                        /*
+                        // old code for when pressure had a warning                        
+                        isNorm = Math.round(p) === 1013;
+                        statText = isNorm ? 'Normal' : (p > 1013 ? 'Higher' : 'Lower');
+                        limText = "1013 hPa";
+                        */
                     }
 
                     statusHtml.push(`<span style="color: ${isNorm ? '#248b28' : 'red'}; font-weight: ${isNorm ? 'bold' : 'normal'};">${statText}</span>`);
