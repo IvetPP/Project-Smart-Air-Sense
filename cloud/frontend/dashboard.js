@@ -125,16 +125,25 @@ $(document).ready(function () {
                 // Pressure Logic
                 if (latest.press !== null) {
                     const p = latest.press > 5000 ? Math.round(latest.press / 100) : Math.round(latest.press);
+
+                    let stateText = "Normal";
+
+                    if (p <1013) stateText  ="Lower";
+                    else if (p> 1013) stateText = "Higher"
+
+                    updateBox('bar', p, True, stateText)
+
+                    /*
+                    // old code for when pressure had a warning
                     const isStandard = (p === 1013);
                     const pressText = p >= 1013 ? 'Higher' : 'Lower';
                     updateBox('bar', p, isStandard, (isStandard ? 'Normal' : pressText));
+                    */
                 }
-                // ... rest of your logic to display data
             })
             .catch(err => {
                 console.error("Error loading measurements:", err);
                 clearUI();
-                // DO NOT disable the button here.
             });
     }
 
