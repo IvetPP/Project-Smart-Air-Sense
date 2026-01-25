@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Device</title>
+    <title>Edit device</title>
     <link rel="stylesheet" href="addDevice.css">
     <link rel="stylesheet" href="editDevice.css">
     <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap" rel="stylesheet">
@@ -11,6 +11,7 @@
 </head>
 <body>
     <div class="container">
+
         <div class="top-bar">
             <div class="top-left">
                 <img src="./logo.jpg" class="logo" alt="Logo">
@@ -22,6 +23,7 @@
 
         <div class="form-container">
             <form id="edit-device-form">
+                
                 <div class="form-group">
                     <span class="field-label">Device ID</span>
                     <input
@@ -35,29 +37,47 @@
 
                 <div class="form-group">
                     <span class="field-label">Device type</span>
-                    <input type="text" id="device-type" name="device-type" required>
+                    <input
+                        type="text"
+                        id="device-type"
+                        name="device-type"
+                        value="CO2 monitor Kit"
+                        required
+                    >
                 </div>
 
                 <div class="form-group">
                     <span class="field-label">Device name</span>
-                    <input type="text" id="device-name" name="device-name" required>
+                    <input
+                        type="text"
+                        id="device-name"
+                        name="device-name"
+                        value="Office 1"
+                        required
+                    >
                 </div>
 
                 <div class="form-group">
                     <span class="field-label">Device location</span>
-                    <input type="text" id="device-location" name="device-location" required>
+                    <input
+                        type="text"
+                        id="device-location"
+                        name="device-location"
+                        value="Office No. 17 - 1.NP"
+                        required
+                    >
                 </div>
-
-                <input type="hidden" id="device-date" name="device-date">
 
                 <div class="form-buttons">
                     <button type="button" class="cancel-btn">Cancel</button>
                     <button type="button" class="delete-btn">Delete</button>
                     <button type="submit" class="save-btn">Save</button>
                 </div>
+
             </form>
         </div>
+
     </div>
-    <script type="module" src="editDevice.js"></script>
+    <script src="editDevice.js"></script>
 </body>
 </html>
