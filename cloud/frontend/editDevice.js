@@ -28,26 +28,26 @@ $(document).ready(function () {
 
     // 3. Fetch Current Device Data
     $.ajax({
-        url: `${API_URL}/${encodeURIComponent(deviceId)}`,
+        // Make sure there is exactly one slash between API_URL and deviceId
+        url: API_URL + '/' + encodeURIComponent(deviceId), 
         method: 'GET',
         headers: { 
             'Authorization': 'Bearer ' + token,
             'Accept': 'application/json'
         },
         success: function(dev) {
-            console.log("Device data loaded successfully:", dev);
-            
-            // Using || to handle different potential naming conventions (camelCase vs snake_case)
-            $('#device-name').val(dev.device_name || dev.deviceName || '');
-            $('#device-type').val(dev.device_type || dev.deviceType || '');
-            $('#device-location').val(dev.location || '');
+            console.log("Device data loaded:", dev);
+            // Your backend uses snake_case, so ensure these match exactly
+            $('#device-id').val(dev.device_id);
+            $('#device-name').val(dev.device_name);
+            $('#device-type').val(dev.device_type);
+            $('#device-location').val(dev.location);
         },
         error: function(xhr) {
-            console.error("Fetch Error:", xhr);
+            // Detailed logging to see the ACTUAL error from Supabase
+            console.error("Fetch Error:", xhr.status, xhr.responseJSON);
             const msg = xhr.responseJSON?.error || 'Could not fetch device details.';
             alert(`Error ${xhr.status}: ${msg}`);
-            // If the device doesn't exist, go back
-            if (xhr.status === 404) window.location.href = 'index.html';
         }
     });
 
