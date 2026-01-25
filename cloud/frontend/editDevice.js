@@ -50,6 +50,7 @@ $(document).ready(function () {
             alert(`Error ${xhr.status}: ${msg}`);
         }
     });
+    //
 
     // 4. Update Logic (The Submit Form)
     $('#edit-device-form').on('submit', function (e) {
