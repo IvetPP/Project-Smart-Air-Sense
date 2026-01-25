@@ -36,6 +36,7 @@ $(document).ready(function () {
             window.location.href = 'index.html';
         }
     });
+    //
 
     // 2. Save Logic (PUT)
     $('#edit-device-form').on('submit', function (e) {
