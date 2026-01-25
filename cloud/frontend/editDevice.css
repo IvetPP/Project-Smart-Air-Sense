@@ -1,10 +1,19 @@
-/* Inherit base styles from addDevice.css, only override specifics */
+/* Inherit common styles from addDevice.css */
+
+.form-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
 
 .form-group input {
-    color: #333; /* Darker text for readability */
+    flex: 1; 
+    padding: 12px;
+    border: 1px solid #DCDCDC;
+    border-radius: 8px;
     font-family: 'ADLaM Display';
-    flex: 1;
-    /* Removed the massive 200px padding-right */
+    color: #333;
 }
 
 .form-group input[readonly] {
@@ -13,20 +22,42 @@
     cursor: not-allowed;
 }
 
-/* Ensure buttons have enough space */
-.form-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 30px;
-}
-
-/* Styling the Logout/User circle consistently */
+/* User Circle UI Consistency */
 .user {
+    background-color: #dcdcdc;
+    border: 1px solid #9400D3;
+    border-radius: 50%; 
+    width: 50px; 
+    height: 50px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     cursor: pointer;
-    transition: opacity 0.2s;
+    font-size: 10px;
+    font-weight: bold;
+    overflow: hidden;
+    word-wrap: break-word;
+    line-height: 1.1;
+    padding: 2px;
 }
 
-.user:hover {
-    opacity: 0.8;
+/* Specific button color for Delete on Edit page */
+.delete-btn {
+    background-color: #FFCFCF;
+    color: #FF0606;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 25px;
+    cursor: pointer;
+    font-family: 'ADLaM Display';
+}
+
+.cancel-btn {
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 25px;
+    cursor: pointer;
+    font-family: 'ADLaM Display';
 }
