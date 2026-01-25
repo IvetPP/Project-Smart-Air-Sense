@@ -2,7 +2,7 @@ $(document).ready(function () {
     console.log("Edit Device script initialized for Render...");
 
     // 1. Configuration (Relative path for same-origin deployment)
-    const API_BASE = window.location.origin + '/api/devices'; 
+    const API_URL = window.location.origin + '/api/devices'; 
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     
     const params = new URLSearchParams(window.location.search);
@@ -28,7 +28,7 @@ $(document).ready(function () {
 
     // 3. Fetch Current Device Data
     $.ajax({
-        url: `${API_BASE}/${encodeURIComponent(deviceId)}`,
+        url: `${API_URL}/${encodeURIComponent(deviceId)}`,
         method: 'GET',
         headers: { 
             'Authorization': 'Bearer ' + token,
@@ -68,7 +68,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: `${API_BASE}/${encodeURIComponent(deviceId)}`,
+            url: `${API_URL}/${encodeURIComponent(deviceId)}`,
             method: 'PUT',
             headers: { 
                 'Authorization': 'Bearer ' + token,
@@ -94,7 +94,7 @@ $(document).ready(function () {
         
         if (confirm('Are you sure you want to delete this device? This action cannot be undone.')) {
             $.ajax({
-                url: `${API_BASE}/${encodeURIComponent(deviceId)}`,
+                url: `${API_URL}/${encodeURIComponent(deviceId)}`,
                 method: 'DELETE',
                 headers: { 
                     'Authorization': 'Bearer ' + token 
