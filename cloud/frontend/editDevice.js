@@ -1,5 +1,4 @@
 $(document).ready(function () {
-    // 1. Use consistent URL logic
     const API_URL = window.location.origin + '/api';
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     const params = new URLSearchParams(window.location.search);
@@ -8,36 +7,37 @@ $(document).ready(function () {
     if (!token) { window.location.href = 'login.html'; return; }
     if (!deviceId) { window.location.href = 'index.html'; return; }
 
-    // Display ID immediately
-    $('#device-id').val(deviceId);
-
-    // 2. Set Username in the circle (like you did in addDevice)
+    // Display Username in Circle
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         $('.user').text((payload.user_name || "LOG OUT").substring(0, 10).toUpperCase());
-    } catch (e) { console.error("Token parsing failed"); }
+    } catch (e) { 
+        console.error("Token parsing failed"); 
+    }
 
-    // 3. Fetch existing data
+    // Fetch existing data
     $.ajax({
         url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + token },
         success: function(dev) {
-            // Map DB columns to form IDs
+            $('#device-id').val(dev.device_id);
             $('#device-name').val(dev.device_name || '');
             $('#device-type').val(dev.device_type || '');
             $('#device-location').val(dev.location || '');
+            $('#device-date').val(dev.registration_date || '');
         },
-        error: (xhr) => alert("Could not fetch device data. Check if the ID exists.")
+        error: (xhr) => alert("Could not fetch device data.")
     });
 
-    // 4. Save Logic
+    // Save Logic (PUT)
     $('#edit-device-form').on('submit', function (e) {
         e.preventDefault();
         const payload = {
             device_name: $('#device-name').val().trim(),
             device_type: $('#device-type').val().trim(),
-            location: $('#device-location').val().trim()
+            location: $('#device-location').val().trim(),
+            registration_date: $('#device-date').val() // Required by your BE route
         };
 
         $.ajax({
@@ -56,15 +56,15 @@ $(document).ready(function () {
         });
     });
 
-    // 5. Delete Logic
+    // Delete Logic
     $('.delete-btn').on('click', function() {
-        if(confirm('Are you sure you want to delete this device? This cannot be undone.')) {
+        if(confirm('Are you sure you want to delete this device permanently?')) {
             $.ajax({
                 url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
                 method: 'DELETE',
                 headers: { 'Authorization': 'Bearer ' + token },
                 success: () => { 
-                    alert('Device deleted.');
+                    alert('Device deleted successfully.');
                     window.location.href = 'index.html'; 
                 },
                 error: (xhr) => alert('Delete failed.')
@@ -72,9 +72,9 @@ $(document).ready(function () {
         }
     });
 
-    // Logout & Navigation
+    // Logout and Back
     $('.user').on('click', () => { 
-        if(confirm('Do you want to log out?')) { 
+        if(confirm('Log out?')) { 
             localStorage.clear(); 
             sessionStorage.clear();
             window.location.href='login.html'; 
