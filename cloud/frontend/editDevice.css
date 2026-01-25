@@ -1,4 +1,4 @@
-/* Inherit common styles from addDevice.css */
+/* Inherit from addDevice.css primarily */
 
 .form-group {
     position: relative;
@@ -13,7 +13,7 @@
     border: 1px solid #DCDCDC;
     border-radius: 8px;
     font-family: 'ADLaM Display';
-    color: #333;
+    color: #333; /* Fixed visibility */
 }
 
 .form-group input[readonly] {
@@ -22,42 +22,23 @@
     cursor: not-allowed;
 }
 
-/* User Circle UI Consistency */
-.user {
-    background-color: #dcdcdc;
-    border: 1px solid #9400D3;
-    border-radius: 50%; 
-    width: 50px; 
-    height: 50px; 
+.form-buttons {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    cursor: pointer;
-    font-size: 10px;
-    font-weight: bold;
-    overflow: hidden;
-    word-wrap: break-word;
-    line-height: 1.1;
-    padding: 2px;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
 }
 
-/* Specific button color for Delete on Edit page */
-.delete-btn {
-    background-color: #FFCFCF;
-    color: #FF0606;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 25px;
-    cursor: pointer;
-    font-family: 'ADLaM Display';
-}
-
+/* Ensure the cancel button doesn't look like a primary button */
 .cancel-btn {
     background-color: #f0f0f0;
-    border: none;
+    border: 0.5px solid #dcdcdc;
     border-radius: 5px;
     padding: 10px 25px;
     cursor: pointer;
     font-family: 'ADLaM Display';
+}
+
+.cancel-btn:hover {
+    background-color: #e0e0e0;
 }
