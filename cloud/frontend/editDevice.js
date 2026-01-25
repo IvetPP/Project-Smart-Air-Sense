@@ -57,6 +57,7 @@ $(document).ready(function () {
         e.preventDefault();
         
         const payload = {
+            device_id: deviceId,
             device_name: $('#device-name').val().trim(),
             device_type: $('#device-type').val().trim(),
             location: $('#device-location').val().trim()
