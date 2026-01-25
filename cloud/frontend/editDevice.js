@@ -2,7 +2,7 @@ $(document).ready(function () {
     console.log("Edit Device script initialized for Render...");
 
     // 1. Configuration (Relative path for same-origin deployment)
-    const API_BASE = '/api/devices'; 
+    const API_BASE = window.location.origin + '/api/devices'; 
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     
     const params = new URLSearchParams(window.location.search);
