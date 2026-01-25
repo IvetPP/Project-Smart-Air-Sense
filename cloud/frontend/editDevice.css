@@ -1,53 +1,32 @@
+/* Inherit base styles from addDevice.css, only override specifics */
+
 .form-group input {
-    color: #999999;
+    color: #333; /* Darker text for readability */
     font-family: 'ADLaM Display';
+    flex: 1;
+    /* Removed the massive 200px padding-right */
 }
 
 .form-group input[readonly] {
-    color: #cccaca;
+    background-color: #f5f5f5;
+    color: #999;
     cursor: not-allowed;
 }
 
-.form-group {
-    position: relative;
+/* Ensure buttons have enough space */
+.form-buttons {
     display: flex;
-    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 30px;
 }
 
-.form-group input {
-    flex: 1; 
-    padding-right: 200px; 
-}
-
-.for-admin {
-    position: absolute;
-    left: 510px;
-    color: #999;
-    font-size: 12px;
-    pointer-events: none; 
-}
-
-/* Update the .user class in both CSS files */
+/* Styling the Logout/User circle consistently */
 .user {
-    background-color: #dcdcdc;
-    border: 1px solid #9400D3;
-    border-radius: 50%; 
-    width: 50px; 
-    height: 50px; 
-    display: flex;             /* Use flexbox */
-    align-items: center;       /* Center vertically */
-    justify-content: center;    /* Center horizontally */
-    text-align: center;
     cursor: pointer;
-    font-size: 10px;           /* Slightly smaller font for longer names */
-    font-weight: bold;
-    overflow: hidden;          /* Keep text inside circle */
-    word-wrap: break-word;
-    line-height: 1.1;          /* Tighter line height for name stacking */
-    padding: 2px;              /* Small padding to keep text off edges */
+    transition: opacity 0.2s;
 }
 
-/* Specific fix for dashboard alignment */
-.row .user {
-    margin-left: 15px;
+.user:hover {
+    opacity: 0.8;
 }
