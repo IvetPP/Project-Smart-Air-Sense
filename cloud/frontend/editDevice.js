@@ -7,7 +7,7 @@ $(document).ready(function () {
     if (!token) { window.location.href = 'login.html'; return; }
     if (!deviceId) { window.location.href = 'index.html'; return; }
 
-    // Display Username in Circle
+    // Dynamic Username logic (match Add Device)
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         $('.user').text((payload.user_name || "LOG OUT").substring(0, 10).toUpperCase());
@@ -15,7 +15,7 @@ $(document).ready(function () {
         console.error("Token parsing failed"); 
     }
 
-    // Fetch existing data
+    // 1. Fetch existing data
     $.ajax({
         url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
         method: 'GET',
@@ -25,19 +25,23 @@ $(document).ready(function () {
             $('#device-name').val(dev.device_name || '');
             $('#device-type').val(dev.device_type || '');
             $('#device-location').val(dev.location || '');
-            $('#device-date').val(dev.registration_date || '');
+            // Store registration date to send back during Save
+            $('#registration-date').val(dev.registration_date || '');
         },
-        error: (xhr) => alert("Could not fetch device data.")
+        error: (xhr) => {
+            alert("Could not fetch device data.");
+            window.location.href = 'index.html';
+        }
     });
 
-    // Save Logic (PUT)
+    // 2. Save Logic (PUT)
     $('#edit-device-form').on('submit', function (e) {
         e.preventDefault();
         const payload = {
             device_name: $('#device-name').val().trim(),
             device_type: $('#device-type').val().trim(),
             location: $('#device-location').val().trim(),
-            registration_date: $('#device-date').val() // Required by your BE route
+            registration_date: $('#registration-date').val() 
         };
 
         $.ajax({
@@ -49,22 +53,22 @@ $(document).ready(function () {
             },
             data: JSON.stringify(payload),
             success: () => {
-                alert('Device updated!');
+                alert('Device updated successfully!');
                 window.location.href = 'index.html';
             },
             error: (xhr) => alert('Update failed: ' + (xhr.responseJSON?.error || 'Error'))
         });
     });
 
-    // Delete Logic
+    // 3. Delete Logic
     $('.delete-btn').on('click', function() {
-        if(confirm('Are you sure you want to delete this device permanently?')) {
+        if(confirm('Are you sure you want to delete this device? This action cannot be undone.')) {
             $.ajax({
                 url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
                 method: 'DELETE',
                 headers: { 'Authorization': 'Bearer ' + token },
                 success: () => { 
-                    alert('Device deleted successfully.');
+                    alert('Device deleted.');
                     window.location.href = 'index.html'; 
                 },
                 error: (xhr) => alert('Delete failed.')
@@ -72,13 +76,14 @@ $(document).ready(function () {
         }
     });
 
-    // Logout and Back
+    // Navigation and Logout
+    $('.back, .cancel-btn').on('click', () => window.location.href = 'index.html');
+
     $('.user').on('click', () => { 
-        if(confirm('Log out?')) { 
+        if(confirm('Do you want to log out?')) { 
             localStorage.clear(); 
             sessionStorage.clear();
             window.location.href='login.html'; 
         }
     });
-    $('.back, .cancel-btn').on('click', () => window.location.href = 'index.html');
 });
