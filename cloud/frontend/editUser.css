@@ -1,4 +1,4 @@
-/* Matching the unified layout of Device pages */
+/* Layout consistency */
 .form-group {
     display: flex;
     align-items: center;
@@ -7,7 +7,7 @@
 }
 
 .field-label {
-    width: 180px; /* Fixed width for alignment consistency */
+    width: 180px; 
     color: #999;
     font-size: 16px;
     font-family: 'ADLaM Display';
@@ -49,7 +49,7 @@
     padding: 2px;
 }
 
-/* Form Buttons Positioning */
+/* Form Buttons Container */
 .form-buttons {
     display: flex;
     justify-content: flex-end;
@@ -57,7 +57,31 @@
     margin-top: 30px;
 }
 
-/* Buttons specific styles (overriding if not handled by addDevice.css) */
+/* --- BUTTON STYLES --- */
+
+.save-btn {
+    background-color: #9400D3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: 'ADLaM Display';
+    min-width: 100px;
+}
+
+/* FIXED: Cancel Button colors matched to Device design */
+.cancel-btn {
+    background-color: #f0f0f0; /* Light neutral grey */
+    color: #000000;           /* Purple text to stay on brand */
+    border: 1px solid #dcdcdc;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: 'ADLaM Display';
+    min-width: 100px;
+}
+
 .delete-btn {
     background-color: #FFCFCF;
     color: #FF0606;
@@ -66,14 +90,10 @@
     padding: 10px 20px;
     cursor: pointer;
     font-family: 'ADLaM Display';
+    min-width: 100px;
 }
 
-.save-btn, .cancel-btn {
-    background-color: #9400D3;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 20px;
-    cursor: pointer;
-    font-family: 'ADLaM Display';
+/* Hover effects for interactivity */
+.form-buttons button:hover {
+    filter: brightness(0.95);
 }
