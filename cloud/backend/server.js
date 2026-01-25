@@ -50,20 +50,22 @@ app.use('/api', (req, res) => {
 const frontendPath = path.join(__dirname, '../frontend/dist');
 app.use(express.static(frontendPath));
 
-// 1. Try to serve the specific file if it exists (e.g., /editUser.html)
-// 2. If it's an API route, do nothing here (it's handled above)
-// 3. ONLY if the file doesn't exist and it's not an API, send index.html
+// Fix: Improved SPA routing and static file handling
 app.get(/^\/(?!api).*/, (req, res) => {
-    const requestedPath = path.join(frontendPath, req.path);
+    // Strip query parameters to check if the file exists on disk
+    const cleanPath = req.path === '/' ? 'index.html' : req.path;
+    const requestedPath = path.join(frontendPath, cleanPath);
     
-    // Check if the requested file (like editUser.html) actually exists
     res.sendFile(requestedPath, (err) => {
         if (err) {
-            // If file doesn't exist, fall back to index.html (SPA routing)
+            // If file doesn't exist (like a refresh on a virtual route), serve index.html
             res.sendFile(path.join(frontendPath, 'index.html'));
         }
     });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is booming on port ${PORT}`);
+});
