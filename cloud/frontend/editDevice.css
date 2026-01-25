@@ -1,69 +1,53 @@
-/* Layout for the form rows */
-.form-group {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-    width: 100%;
-}
-
-/* Labels on the left */
-.field-label {
-    width: 160px; /* Fixed width ensures all inputs start at the same vertical line */
-    color: #999;
-    font-size: 16px;
-    font-family: 'ADLaM Display';
-    text-align: left;
-    flex-shrink: 0; /* Prevents label from squishing */
-}
-
-/* Input styling */
 .form-group input {
-    flex: 1; 
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
     color: #999999;
     font-family: 'ADLaM Display';
-    background-color: white;
 }
 
-/* Readonly / Disabled state */
 .form-group input[readonly] {
     color: #cccaca;
-    background-color: #f9f9f9;
     cursor: not-allowed;
-    border-color: #eee;
 }
 
-/* Buttons Container */
-.form-buttons {
+.form-group {
+    position: relative;
     display: flex;
-    justify-content: flex-end;
-    gap: 15px;
-    margin-top: 30px;
+    align-items: center;
 }
 
-/* User Circle / Logout styling */
+.form-group input {
+    flex: 1; 
+    padding-right: 200px; 
+}
+
+.for-admin {
+    position: absolute;
+    left: 510px;
+    color: #999;
+    font-size: 12px;
+    pointer-events: none; 
+}
+
+/* Update the .user class in both CSS files */
 .user {
     background-color: #dcdcdc;
     border: 1px solid #9400D3;
     border-radius: 50%; 
     width: 50px; 
     height: 50px; 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex;             /* Use flexbox */
+    align-items: center;       /* Center vertically */
+    justify-content: center;    /* Center horizontally */
     text-align: center;
     cursor: pointer;
-    font-size: 10px;
+    font-size: 10px;           /* Slightly smaller font for longer names */
     font-weight: bold;
-    overflow: hidden;
+    overflow: hidden;          /* Keep text inside circle */
     word-wrap: break-word;
-    line-height: 1.1;
-    padding: 2px;
+    line-height: 1.1;          /* Tighter line height for name stacking */
+    padding: 2px;              /* Small padding to keep text off edges */
 }
 
-/* Specific fix for dashboard alignment if needed */
+/* Specific fix for dashboard alignment */
 .row .user {
     margin-left: 15px;
 }
