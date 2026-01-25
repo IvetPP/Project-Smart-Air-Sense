@@ -1,10 +1,11 @@
 $(document).ready(function () {
     const API_URL = window.location.origin + '/api';
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    
+    // Get the ID from URL: editdevice.html?id=sensor-123
     const params = new URLSearchParams(window.location.search);
     const deviceId = params.get('id');
 
-    // 1. Initial Validation
     if (!token) {
         window.location.href = 'login.html';
         return;
@@ -16,36 +17,28 @@ $(document).ready(function () {
         return; 
     }
 
-    // Set the ID field visually
+    // Display the ID in the readonly input
     $('#device-id').val(deviceId);
 
-    // 2. Fetch current data
+    // 1. Fetch current data to fill the form
     $.ajax({
         url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + token },
-        success: function(res) {
-            // Handle Supabase/Postgres returning an array or a single object
-            const dev = Array.isArray(res) ? res[0] : res;
-
-            if (!dev) {
-                alert("Device not found.");
-                window.location.href = 'index.html';
-                return;
-            }
-
-            console.log("Data loaded:", dev);
-            $('#device-name').val(dev.device_name || dev.deviceName || '');
-            $('#device-type').val(dev.device_type || dev.deviceType || '');
+        success: function(dev) {
+            console.log("Device loaded:", dev);
+            // Match your Supabase column names
+            $('#device-name').val(dev.device_name || '');
+            $('#device-type').val(dev.device_type || '');
             $('#device-location').val(dev.location || '');
         },
         error: function(xhr) {
             console.error("Fetch Error:", xhr);
-            alert('Could not fetch device details. Make sure the ID is correct.');
+            alert('Error: Could not find this device in the database.');
         }
     });
 
-    // 3. Update Device Logic (PUT)
+    // 2. Save/Update Logic
     $('#edit-device-form').on('submit', function (e) {
         e.preventDefault();
         
@@ -68,16 +61,15 @@ $(document).ready(function () {
                 window.location.href = 'index.html';
             },
             error: (xhr) => {
-                const msg = xhr.responseJSON?.error || 'Server error';
-                alert('Error: ' + msg);
+                alert('Update failed: ' + (xhr.responseJSON?.error || 'Server error'));
             }
         });
     });
 
-    // 4. Delete Device Logic
+    // 3. Delete Logic
     $('.delete-btn').on('click', function(e) {
         e.preventDefault();
-        if(confirm('Are you sure you want to delete this device?')) {
+        if(confirm('Are you sure you want to delete this device? This action cannot be undone.')) {
             $.ajax({
                 url: `${API_URL}/devices/${encodeURIComponent(deviceId)}`,
                 method: 'DELETE',
@@ -86,19 +78,19 @@ $(document).ready(function () {
                     alert('Device deleted.');
                     window.location.href = 'index.html';
                 },
-                error: (xhr) => alert('Error: ' + (xhr.responseJSON?.error || 'Could not delete'))
+                error: (xhr) => alert('Delete failed: ' + (xhr.responseJSON?.error || 'Could not delete'))
             });
         }
     });
 
-    // 5. Navigation & Logout
+    // Navigation & Logout
     $('.back, .cancel-btn').on('click', () => window.location.href = 'index.html');
-
-    $('.user').on('click', () => {
-        if(confirm('Do you want to log out?')) {
-            localStorage.clear();
+    
+    $('.user').on('click', () => { 
+        if(confirm('Do you want to log out?')) { 
+            localStorage.clear(); 
             sessionStorage.clear();
-            window.location.href = 'login.html';
+            window.location.href='login.html'; 
         }
     });
 });
