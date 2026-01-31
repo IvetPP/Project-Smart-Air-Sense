@@ -92,9 +92,20 @@ $(document).ready(function () {
                 };
 
                 // CO2 Logic
-                if (latest.co2 !== null) {
-                    const v = Math.round(latest.co2);
-                    updateBox('co2', v, (v >= 400 && v <= 1000), (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal'));
+                if (latest.co2 !== null && latest.co2 !== "") {
+                    const v = Math.round(Number(latest.co2));
+                    const isNormal = (v >= 400 && v <= 1000);
+
+                    let stateText = "Normal";
+                    if (v < 400) stateText = "Low";
+                    else if (v > 1000) stateText = "High";
+                    
+                    updateBox('co2', v, isNormal, stateText);
+                } else {
+                    // Optional: Explicitly reset to "No Data" if value is empty/null
+                    $(`.co2.value`).text("--");
+                    $(`.co2.state`).text("No Data").css("color", "black");
+                    $(`.co2`).closest('.box').css("border-color", "#9400D3");
                 }
 
                 // Temp Logic
@@ -110,10 +121,11 @@ $(document).ready(function () {
                 }
 
                 // Humidity Logic
-                if (latest.hum !== null) {
-                    const v = Number(latest.hum).toFixed(1);
-                    updateBox('hum', v, (v >= 40 && v <= 60), (v < 40 ? 'Low' : v > 60 ? 'High' : 'Normal'));
-                }
+                let stateText = "Normal";
+                if (p < 1013) stateText = "Lower";
+                else if (p > 1013) stateText = "Higher";
+
+                updateBox('bar', p, true, stateText);
 
                 // Pressure Logic (UPDATED RANGE: 950 - 1050 hPa)
                 if (latest.press !== null) {
