@@ -103,7 +103,7 @@ $(document).ready(function () {
                         limText = "400 - 1000 ppm";
                     } else if (type === 'temperature') {
                         isNorm = numVal >= 20 && numVal <= 24;
-                        statText = isNorm ? 'Normal' : 'Out of range';
+                        statText = isNorm ? 'Normal' : (numVal < 24 ? 'Low' : 'High');
                         limText = "20 - 24 °C";
                     } else if (type === 'humidity') {
                         isNorm = numVal >= 40 && numVal <= 60;
