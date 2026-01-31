@@ -14,12 +14,12 @@ $(document).ready(function () {
     }
 
     /**
-     * Resets sensor text only.
+     * Resets UI to default state
      */
     function clearUI() {
         $(".co2.value, .temp.value, .hum.value, .bar.value").text("--").css("color", "black");
         $(".co2.state, .temp.state, .hum.state, .bar.state").text("No Data").css("color", "black");
-        $(".box").css("border-color", "#9400D3");
+        $(".box, .state").css("border-color", "#9400D3");
         $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
                   .html('Date and time value: <span style="color: black;">No records found</span>');
         $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px", "border-radius": "5px"})
@@ -70,24 +70,25 @@ $(document).ready(function () {
                 }
 
                 // Status IoT & Time
-                $(".iot-status").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
+                $(".iot-status").css({"border": "1px solid #228B22", "padding": "5px 10px"})
                                .html('Status IoT: <span style="color: #228B22; font-weight: bold;">ON</span>');
 
                 const dt = new Date(latest.time);
-                $(".time").css({"border": "1px solid #6e6d6d", "color": "#6e6d6d", "padding": "5px 10px", "border-radius": "5px"})
+                $(".time").css({"border": "1px solid #6e6d6d", "padding": "5px 10px"})
                           .html(`Date and time value: <span style="color: black;">${dt.toLocaleString()}</span>`);
 
                 /**
-                 * Helper to update UI boxes
+                 * Helper to update UI boxes specifically
                  */
                 const updateBox = (selector, val, isNorm, stateText) => {
                     const stateColor = isNorm ? "black" : "red";
                     const borderColor = isNorm ? "#9400D3" : "red";
-                    const valueTextColor = "black";
 
-                    $(`.${selector}.value`).text(val).css("color", valueTextColor);
+                    $(`.${selector}.value`).text(val).css("color", "black");
                     $(`.${selector}.state`).text(stateText).css("color", stateColor);
-                    $(`.${selector}`).closest('.box').css("border-color", borderColor);
+                    
+                    // We target the .value class to find the parent box specifically
+                    $(`.${selector}.value`).closest('.box').css("border-color", borderColor);
                     $(`.${selector}.state`).css("border-color", borderColor);
                 };
 
@@ -100,7 +101,8 @@ $(document).ready(function () {
                 } else {
                     $(`.co2.value`).text("--");
                     $(`.co2.state`).text("No Data").css("color", "black");
-                    $(`.co2`).closest('.box').css("border-color", "#9400D3");
+                    $(`.co2.value`).closest('.box').css("border-color", "#9400D3");
+                    $(`.co2.state`).css("border-color", "#9400D3");
                 }
 
                 // Temp Logic
@@ -112,7 +114,8 @@ $(document).ready(function () {
                 } else {
                     $(`.temp.value`).text("--");
                     $(`.temp.state`).text("No Data").css("color", "black");
-                    $(`.temp`).closest('.box').css("border-color", "#9400D3");
+                    $(`.temp.value`).closest('.box').css("border-color", "#9400D3");
+                    $(`.temp.state`).css("border-color", "#9400D3");
                 }
 
                 // Humidity Logic
@@ -124,7 +127,8 @@ $(document).ready(function () {
                 } else {
                     $(`.hum.value`).text("--");
                     $(`.hum.state`).text("No Data").css("color", "black");
-                    $(`.hum`).closest('.box').css("border-color", "#9400D3");
+                    $(`.hum.value`).closest('.box').css("border-color", "#9400D3");
+                    $(`.hum.state`).css("border-color", "#9400D3");
                 }
 
                 // Pressure Logic
@@ -135,9 +139,9 @@ $(document).ready(function () {
                 } else {
                     $(`.bar.value`).text("--");
                     $(`.bar.state`).text("No Data").css("color", "black");
-                    $(`.bar`).closest('.box').css("border-color", "#9400D3");
+                    $(`.bar.value`).closest('.box').css("border-color", "#9400D3");
+                    $(`.bar.state`).css("border-color", "#9400D3");
                 }
-                
             })
             .catch(err => {
                 console.error("Error loading measurements:", err);
