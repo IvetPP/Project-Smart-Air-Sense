@@ -95,14 +95,9 @@ $(document).ready(function () {
                 if (latest.co2 !== null && latest.co2 !== "") {
                     const v = Math.round(Number(latest.co2));
                     const isNormal = (v >= 400 && v <= 1000);
-
-                    let stateText = "Normal";
-                    if (v < 400) stateText = "Low";
-                    else if (v > 1000) stateText = "High";
-                    
+                    let stateText = (v < 400 ? 'Low' : v > 1000 ? 'High' : 'Normal');
                     updateBox('co2', v, isNormal, stateText);
                 } else {
-                    // Optional: Explicitly reset to "No Data" if value is empty/null
                     $(`.co2.value`).text("--");
                     $(`.co2.state`).text("No Data").css("color", "black");
                     $(`.co2`).closest('.box').css("border-color", "#9400D3");
@@ -112,48 +107,37 @@ $(document).ready(function () {
                 if (latest.temp !== null && latest.temp !== "") {
                     const v = parseFloat(latest.temp);
                     const isNormal = (v >= 20 && v <= 24);
-
-                    let stateText = "Normal";
-                    if (v < 20) stateText = "Low";
-                    if (v > 24) stateText = "High";
-                    
+                    let stateText = (v < 20 ? 'Low' : v > 24 ? 'High' : 'Normal');
                     updateBox('temp', v.toFixed(1), isNormal, stateText);
+                } else {
+                    $(`.temp.value`).text("--");
+                    $(`.temp.state`).text("No Data").css("color", "black");
+                    $(`.temp`).closest('.box').css("border-color", "#9400D3");
                 }
 
                 // Humidity Logic
-                let stateText = "Normal";
-                if (p < 1013) stateText = "Lower";
-                else if (p > 1013) stateText = "Higher";
-
-                updateBox('bar', p, true, stateText);
-
-                // Pressure Logic (UPDATED RANGE: 950 - 1050 hPa)
-                if (latest.press !== null) {
-
-                    const p = latest.press > 5000 ? Math.round(latest.press / 100) : Math.round(latest.press);
-
-                    let stateText = "Normal";
-
-                    if (p <1013) stateText  ="Lower";
-                    else if (p> 1013) stateText = "Higher"
-
-                    updateBox('bar', p, true, stateText)
-
-                    /*
-                    // old code for when pressure had a warning
-                    const isStandard = (p === 1013);
-                    const pressText = p >= 1013 ? 'Higher' : 'Lower';
-                    updateBox('bar', p, isStandard, (isStandard ? 'Normal' : pressText));
-                    */
-
-                    /*
-                    const p = latest.press > 5000 ? Math.round(latest.press / 100) : Math.round(latest.press);
-                    const isNormal = (p >= 950 && p <= 1050);
-                    let pressLabel = isNormal ? 'Normal' : (p < 950 ? 'Low' : 'High');
-                    
-                    updateBox('bar', p, isNormal, pressLabel);
-                    */
+                if (latest.hum !== null && latest.hum !== "") {
+                    const v = parseFloat(latest.hum);
+                    const isNormal = (v >= 40 && v <= 60);
+                    let stateText = (v < 40 ? 'Low' : v > 60 ? 'High' : 'Normal');
+                    updateBox('hum', v.toFixed(1), isNormal, stateText);
+                } else {
+                    $(`.hum.value`).text("--");
+                    $(`.hum.state`).text("No Data").css("color", "black");
+                    $(`.hum`).closest('.box').css("border-color", "#9400D3");
                 }
+
+                // Pressure Logic
+                if (latest.press !== null && latest.press !== "") {
+                    const p = latest.press > 5000 ? Math.round(latest.press / 100) : Math.round(latest.press);
+                    let stateText = (p < 1013 ? "Lower" : p > 1013 ? "Higher" : "Normal");
+                    updateBox('bar', p, true, stateText);
+                } else {
+                    $(`.bar.value`).text("--");
+                    $(`.bar.state`).text("No Data").css("color", "black");
+                    $(`.bar`).closest('.box').css("border-color", "#9400D3");
+                }
+                
             })
             .catch(err => {
                 console.error("Error loading measurements:", err);
