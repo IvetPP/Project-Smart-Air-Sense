@@ -98,9 +98,15 @@ $(document).ready(function () {
                 }
 
                 // Temp Logic
-                if (latest.temp !== null) {
-                    const v = Number(latest.temp).toFixed(1);
-                    updateBox('temp', v, (v >= 20 && v <= 24), (v >= 20 && v <= 24 ? 'Normal' : (v < 24 ? 'Low' : 'High')));
+                if (latest.temp !== null && latest.temp !== "") {
+                    const v = parseFloat(latest.temp);
+                    const isNormal = (v >= 20 && v <= 24);
+
+                    let stateText = "Normal";
+                    if (v < 20) stateText = "Low";
+                    if (v > 24) stateText = "High";
+                    
+                    updateBox('temp', v.toFixed(1), isNormal, stateText);
                 }
 
                 // Humidity Logic
