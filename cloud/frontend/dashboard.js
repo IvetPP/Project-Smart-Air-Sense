@@ -100,7 +100,7 @@ $(document).ready(function () {
                 // Temp Logic
                 if (latest.temp !== null) {
                     const v = Number(latest.temp).toFixed(1);
-                    updateBox('temp', v, (v >= 20 && v <= 24), (v >= 20 && v <= 24 ? 'Normal' : 'Out of range'));
+                    updateBox('temp', v, (v >= 20 && v <= 24), (v >= 20 && v <= 24 ? 'Normal' : (v < 24 ? 'Low' : 'High')));
                 }
 
                 // Humidity Logic
